@@ -76,7 +76,7 @@
     <!-- CONTEÚDO PRINCIPAL DO APP -->
     <div id="app-content" class="hidden flex flex-col min-h-screen">
         
-        <!-- Navbar Superior -->
+        <!-- Navbar Superior (Fixa ou topo) -->
         <header class="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm no-print">
             <div class="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -300,7 +300,6 @@
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Colaborador</label>
-                                    <!-- LISTA SUSPENSA RESTAURADA -->
                                     <select id="empName" onchange="autoFillSalary()" required class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all cursor-pointer">
                                         <option value="">Selecione um colaborador...</option>
                                     </select>
@@ -308,7 +307,6 @@
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Salário (R$)</label>
-                                        <!-- CAMPO FORMATADO -->
                                         <input type="text" id="empSalary" required placeholder="0,00" oninput="formatCurrencyField(this)" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
                                     </div>
                                     <div>
@@ -422,6 +420,7 @@
 
     <script>
         // --- JAVASCRIPT LOGIC ---
+        // (Mantido o mesmo funcional, apenas adaptado para as classes visuais do novo layout)
         let currentUser = null;
         const users = {
             'alesandra': { pass: 'bkekt4co@', role: 'admin', name: 'Alesandra' },
@@ -436,26 +435,75 @@
             
             if (users[user] && users[user].pass === pass) {
                 currentUser = users[user];
+                // Save user and timestamp
+                localStorage.setItem('bonusApp_user', JSON.stringify(currentUser));
+                localStorage.setItem('bonusApp_lastActive', Date.now());
+
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-content').classList.remove('hidden');
                 document.getElementById('userRoleDisplay').innerText = currentUser.name;
                 
-                if (currentUser.role === 'lider') {
-                    document.getElementById('admin-dashboard-content').classList.add('hidden');
-                    document.getElementById('leader-dashboard').classList.remove('hidden');
-                    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden-force'));
-                } else {
-                    document.getElementById('admin-dashboard-content').classList.remove('hidden');
-                    document.getElementById('leader-dashboard').classList.add('hidden');
-                    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden-force'));
-                }
+                applyUserRole(currentUser.role);
                 lucide.createIcons();
+                
+                // Start activity listeners
+                setupActivityListeners();
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
             }
         }
 
-        function handleLogout() { location.reload(); }
+        function handleLogout() { 
+            localStorage.removeItem('bonusApp_user');
+            localStorage.removeItem('bonusApp_lastActive');
+            location.reload(); 
+        }
+
+        // --- SESSION MANAGEMENT ---
+        function checkAuth() {
+            const storedUser = localStorage.getItem('bonusApp_user');
+            const storedTime = localStorage.getItem('bonusApp_lastActive');
+            
+            if (storedUser && storedTime) {
+                const now = Date.now();
+                if (now - parseInt(storedTime) < 3600000) { // 1 hour
+                    // Valid session
+                    currentUser = JSON.parse(storedUser);
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
+                    document.getElementById('userRoleDisplay').innerText = currentUser.name;
+                    applyUserRole(currentUser.role);
+                    updateActivityTime();
+                    setupActivityListeners();
+                    lucide.createIcons();
+                } else {
+                    // Expired
+                    handleLogout();
+                }
+            }
+        }
+
+        function applyUserRole(role) {
+            if (role === 'lider') {
+                document.getElementById('admin-dashboard-content').classList.add('hidden');
+                document.getElementById('leader-dashboard').classList.remove('hidden');
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden-force'));
+            } else {
+                document.getElementById('admin-dashboard-content').classList.remove('hidden');
+                document.getElementById('leader-dashboard').classList.add('hidden');
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden-force'));
+            }
+        }
+
+        function setupActivityListeners() {
+            document.addEventListener('click', updateActivityTime);
+            document.addEventListener('keypress', updateActivityTime);
+            document.addEventListener('mousemove', updateActivityTime);
+        }
+
+        function updateActivityTime() {
+            localStorage.setItem('bonusApp_lastActive', Date.now());
+        }
 
         // --- CORE ---
         let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { pointValue: 2.00, referenceMonth: new Date().toISOString().slice(0, 7) };
@@ -484,6 +532,8 @@
 
         window.onload = function() {
             lucide.createIcons();
+            checkAuth(); // Check session on load
+            
             document.getElementById('referenceMonth').value = config.referenceMonth;
             document.getElementById('pointValue').value = config.pointValue;
             updateTeamCountBadge();
@@ -522,7 +572,7 @@
         }
         function closeViewTeam() { document.getElementById('viewTeamModal').classList.add('hidden'); }
 
-        // --- AUTOCOMPLETE SALARY (Updated) ---
+        // --- AUTOCOMPLETE SALARY (Updated for Select) ---
         function autoFillSalary() {
             const select = document.getElementById('empName');
             const salaryInput = document.getElementById('empSalary');
@@ -530,6 +580,7 @@
             
             const member = teamDatabase.find(m => m.name === selectedName);
             if (member) {
+                // Set and format the salary automatically
                 salaryInput.value = formatCurrencyValue(member.salary);
             } else {
                  salaryInput.value = "";
