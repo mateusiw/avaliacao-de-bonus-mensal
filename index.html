@@ -767,13 +767,17 @@
                 ];
                 csvContent += row.join(";") + "\n";
             });
-            let filename = `Pagamento_Bonus_${suffix}.csv`;
+            
+            // Lógica de nome do arquivo ajustada
+            let filename = `Bonus_${suffix}_CSV.csv`;
             if (config.referenceMonth) {
                 const [y, m] = config.referenceMonth.split('-');
                 const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
                 const monthCap = mn.charAt(0).toUpperCase() + mn.slice(1);
-                filename = `Pagamento_Bonus_${monthCap}_${y}.csv`;
+                // Alterado para salvar como "Bonus_Mes_Ano_CSV.csv"
+                filename = `Bonus_${monthCap}_${y}_CSV.csv`;
             }
+            
             const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
             const link = document.createElement("a");
             if (link.download !== undefined) {
@@ -1082,9 +1086,19 @@
              window.scrollTo(0,0);
 
              setTimeout(() => {
+                 // Define o nome do arquivo dinamicamente
+                 let filename = 'Relatorio_Digital.pdf';
+                 if (config.referenceMonth) {
+                    const [y, m] = config.referenceMonth.split('-');
+                    const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                    const monthCap = mn.charAt(0).toUpperCase() + mn.slice(1);
+                    // Formato: Bonus_Mes_Ano_PDF.pdf
+                    filename = `Bonus_${monthCap}_${y}_PDF.pdf`;
+                 }
+
                  const contentHeight = container.scrollHeight;
                  const contentWidth = container.scrollWidth;
-                 const opt = { margin: 10, filename: 'Relatorio_Digital.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'px', format: [contentWidth + 20, contentHeight + 20], orientation: contentWidth > contentHeight ? 'landscape' : 'portrait' } };
+                 const opt = { margin: 10, filename: filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'px', format: [contentWidth + 20, contentHeight + 20], orientation: contentWidth > contentHeight ? 'landscape' : 'portrait' } };
                  html2pdf().set(opt).from(container).save().then(() => {
                      container.classList.add('hidden');
                      appContent.style.display = 'block';
