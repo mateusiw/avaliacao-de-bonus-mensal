@@ -18,6 +18,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Chart.js para gráficos profissionais -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         body { font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -35,7 +37,6 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
-    <!-- Fonte Inter para um visual mais moderno -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-gray-50 text-slate-800 min-h-screen font-sans">
@@ -76,7 +77,7 @@
     <!-- CONTEÚDO PRINCIPAL DO APP -->
     <div id="app-content" class="hidden flex flex-col min-h-screen">
         
-        <!-- Navbar Superior (Fixa ou topo) -->
+        <!-- Navbar Superior -->
         <header class="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm no-print">
             <div class="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -110,28 +111,39 @@
                 </div>
 
                 <!-- Botões de Ação -->
-                <div class="flex flex-wrap gap-2 w-full xl:w-auto">
+                <div class="flex flex-wrap gap-2 w-full xl:w-auto items-center">
                     
-                    <!-- Seletor de Mês -->
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                    <!-- Seletor de Mês (CORRIGIDO PARA USAR CONTAINER IDÊNTICO) -->
+                    <div class="relative group bg-white border border-gray-200 rounded-lg shadow-sm flex items-center h-10">
+                        <div class="pl-3 text-slate-400">
                             <i data-lucide="calendar" class="w-4 h-4"></i>
                         </div>
-                        <input type="month" id="referenceMonth" onchange="updateConfig('referenceMonth', this.value); updateTitle();" class="pl-10 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none cursor-pointer hover:border-gray-300 transition-colors">
+                        <input type="month" id="referenceMonth" onchange="updateConfig('referenceMonth', this.value); updateTitle();" class="bg-transparent border-none text-slate-700 text-sm font-medium py-1.5 pl-2 pr-3 focus:ring-0 outline-none cursor-pointer h-full">
+                    </div>
+                    
+                    <!-- FILTRO POR NOME (NA TABELA) (AJUSTADO ALTURA) -->
+                    <div class="relative group bg-white border border-gray-200 rounded-lg shadow-sm flex items-center h-10">
+                        <div class="pl-3 text-slate-400">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                        </div>
+                        <select id="filterEmployee" onchange="renderAll()" class="bg-transparent border-none text-slate-700 text-sm font-medium py-1.5 pl-2 pr-8 focus:ring-0 cursor-pointer outline-none w-40 h-full">
+                            <option value="">Todos</option>
+                            <!-- JS popula -->
+                        </select>
                     </div>
 
                     <div class="h-8 w-px bg-gray-300 mx-1 hidden sm:block"></div>
 
                     <!-- Botões Admin -->
                     <div class="admin-only flex gap-2">
-                        <button onclick="toggleSettings()" class="p-2 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Configurar Valor">
+                        <button onclick="toggleSettings()" class="p-2 h-10 w-10 flex items-center justify-center bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Configurar Valor">
                             <i data-lucide="settings" class="w-5 h-5"></i>
                         </button>
-                        <button onclick="viewTeamDatabase()" class="relative p-2 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group" title="Equipe">
+                        <button onclick="viewTeamDatabase()" class="relative p-2 h-10 w-10 flex items-center justify-center bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group" title="Equipe">
                             <i data-lucide="users-2" class="w-5 h-5"></i>
                             <span id="teamCountBadge" class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white border-2 border-white">0</span>
                         </button>
-                        <button onclick="resetData()" class="p-2 bg-white border border-gray-200 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm" title="Limpar Tudo">
+                        <button onclick="resetData()" class="p-2 h-10 w-10 flex items-center justify-center bg-white border border-gray-200 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm" title="Limpar Tudo">
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
                     </div>
@@ -141,27 +153,28 @@
                     <!-- Import/Export -->
                     <div class="admin-only flex gap-2">
                         <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileUpload(event)">
-                        <button onclick="document.getElementById('csvFileInput').click()" class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
+                        <button onclick="document.getElementById('csvFileInput').click()" class="flex items-center gap-2 px-3 h-10 bg-white border border-gray-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
                             <i data-lucide="upload" class="w-4 h-4"></i> <span class="hidden lg:inline">Importar</span>
                         </button>
-                        <button onclick="exportToCSV()" class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-gray-50 hover:text-green-600 transition-all shadow-sm">
+                        <button onclick="exportToCSV()" class="flex items-center gap-2 px-3 h-10 bg-white border border-gray-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-gray-50 hover:text-green-600 transition-all shadow-sm">
                             <i data-lucide="download" class="w-4 h-4"></i> <span class="hidden lg:inline">Exportar</span>
                         </button>
                     </div>
 
-                    <!-- Fichas -->
+                    <!-- Fichas & Operação -->
                     <div class="flex gap-2">
-                        <div class="flex bg-white border border-gray-200 rounded-lg shadow-sm p-0.5">
-                            <button onclick="downloadManualSheets()" class="px-3 py-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-md text-sm font-medium transition-all" title="Imprimir Manual">
+                        <!-- Admin Only para os botões pequenos (Já que o Líder tem os grandes) -->
+                        <div class="admin-only flex bg-white border border-gray-200 rounded-lg shadow-sm p-0.5 h-10 items-center">
+                            <button onclick="downloadManualSheets()" class="px-3 py-1.5 h-full flex items-center text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-md text-sm font-medium transition-all" title="Imprimir Manual">
                                 <i data-lucide="printer" class="w-4 h-4"></i>
                             </button>
-                            <div class="w-px bg-gray-200 my-1"></div>
-                            <button onclick="openDigitalSheet()" class="px-3 py-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-md text-sm font-medium transition-all" title="Preencher Digital">
+                            <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                            <button onclick="openDigitalSheet()" class="px-3 py-1.5 h-full flex items-center text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-md text-sm font-medium transition-all" title="Preencher Digital">
                                 <i data-lucide="monitor-check" class="w-4 h-4"></i>
                             </button>
                         </div>
                         
-                        <button onclick="downloadPDF()" class="admin-only flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold shadow-md shadow-emerald-200 hover:shadow-lg transition-all active:translate-y-0.5">
+                        <button onclick="downloadPDF()" class="admin-only flex items-center gap-2 px-4 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold shadow-md shadow-emerald-200 hover:shadow-lg transition-all active:translate-y-0.5">
                             <i data-lucide="file-down" class="w-4 h-4"></i> Relatório PDF
                         </button>
                     </div>
@@ -220,15 +233,15 @@
                     <p class="text-slate-500 mt-2">Escolha o método de avaliação da equipe.</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-                    <button onclick="downloadManualSheets()" class="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-2xl hover:border-blue-500 hover:shadow-xl hover:-translate-y-1 transition-all group h-48">
+                    <button onclick="downloadManualSheets()" class="flex flex-col items-center justify-center p-10 bg-white border border-gray-200 rounded-2xl hover:border-blue-500 hover:shadow-xl hover:-translate-y-1 transition-all group h-48">
                         <i data-lucide="printer" class="w-10 h-10 text-slate-400 group-hover:text-blue-600 mb-4 transition-colors"></i>
                         <h3 class="text-lg font-bold text-slate-800">Imprimir Fichas</h3>
-                        <p class="text-slate-500 text-sm">Para preenchimento manual</p>
+                        <p class="text-slate-500 text-center text-sm">Para preenchimento manual</p>
                     </button>
-                    <button onclick="openDigitalSheet()" class="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-2xl hover:border-emerald-500 hover:shadow-xl hover:-translate-y-1 transition-all group h-48">
+                    <button onclick="openDigitalSheet()" class="flex flex-col items-center justify-center p-10 bg-white border border-gray-200 rounded-2xl hover:border-emerald-500 hover:shadow-xl hover:-translate-y-1 transition-all group h-48">
                         <i data-lucide="laptop" class="w-10 h-10 text-slate-400 group-hover:text-emerald-600 mb-4 transition-colors"></i>
                         <h3 class="text-lg font-bold text-slate-800">Avaliação Digital</h3>
-                        <p class="text-slate-500 text-sm">Preencher no sistema</p>
+                        <p class="text-slate-500 text-center text-sm">Preencher no sistema</p>
                     </button>
                 </div>
             </div>
@@ -543,7 +556,6 @@
             lucide.createIcons();
             document.getElementById('referenceMonth').value = config.referenceMonth;
             document.getElementById('pointValue').value = config.pointValue;
-            checkAuth();
             updateTeamCountBadge();
             renderEmployeeSelect(); 
             renderCriteriaForm();
@@ -557,12 +569,23 @@
 
         function renderEmployeeSelect() {
             const select = document.getElementById('empName');
+            const filterSelect = document.getElementById('filterEmployee');
+
             select.innerHTML = '<option value="">Selecione um colaborador...</option>';
+            if(filterSelect) filterSelect.innerHTML = '<option value="">Todos</option>';
+            
             teamDatabase.forEach(member => { 
                 const opt = document.createElement('option'); 
                 opt.value = member.name; 
                 opt.text = member.name;
                 select.appendChild(opt); 
+
+                if(filterSelect) {
+                    const optFilter = document.createElement('option');
+                    optFilter.value = member.name;
+                    optFilter.text = member.name;
+                    filterSelect.appendChild(optFilter);
+                }
             });
             updateTeamCountBadge();
         }
@@ -580,6 +603,7 @@
         }
         function closeViewTeam() { document.getElementById('viewTeamModal').classList.add('hidden'); }
 
+        // --- AUTOCOMPLETE SALARY (Updated for Select) ---
         function autoFillSalary() {
             const select = document.getElementById('empName');
             const salaryInput = document.getElementById('empSalary');
@@ -648,7 +672,8 @@
         function toggleSettings() { 
             document.getElementById('settingsPanel').classList.toggle('hidden'); 
         }
-        
+        function updateTitle() { renderAll(); }
+
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -756,44 +781,74 @@
             const tbody = document.getElementById('employeesTableBody');
             tbody.innerHTML = '';
             let totalBonus = 0;
+            
+            // APPLY FILTER
+            const filterName = document.getElementById('filterEmployee').value;
+            
             if (config.referenceMonth) {
                 const [y, m] = config.referenceMonth.split('-');
                 const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
                 document.getElementById('headerTitle').innerText = `Relatório de Bônus - ${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
             }
-            if (employees.length === 0) tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-slate-400 italic">Nenhum registro. Importe um CSV ou adicione manualmente.</td></tr>';
-            employees.forEach(emp => {
-                const calc = calculateBonus(emp);
-                totalBonus += calc.bonusVal;
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-colors group";
-                tr.innerHTML = `
-                    <td class="p-4 font-medium text-slate-800">${emp.name}<div class="text-xs text-slate-400 font-normal">Base: ${formatCurrency(emp.salary)}</div></td>
-                    <td class="p-4 text-center text-slate-600">${emp.boxes}</td>
-                    <td class="p-4 text-center"><span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">${calc.prodPts}</span></td>
-                    <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.assiduity}</td>
-                    <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.organization}</td>
-                    <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.participation}</td>
-                    <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.agility}</td>
-                    <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.punctuality}</td>
-                    <td class="p-4 text-center font-bold text-slate-700">${calc.totalPts}</td>
-                    <td class="p-4 text-right font-bold text-emerald-600">+ ${formatCurrency(calc.bonusVal)}</td>
-                    <td class="p-4 text-right font-bold text-slate-900">${formatCurrency(calc.totalReceive)}</td>
-                    <!-- CELL COM BOTÕES DE AÇÃO -->
-                    <td class="p-4 text-right no-print flex justify-end gap-2" data-html2canvas-ignore="true">
-                        <button onclick="editEmployee(${emp.id})" class="text-slate-300 hover:text-blue-500 transition-colors" title="Editar">
-                            <i data-lucide="pencil" width="16"></i>
-                        </button>
-                        <button onclick="removeEmployee(${emp.id})" class="text-slate-300 hover:text-red-500 transition-colors" title="Excluir">
-                            <i data-lucide="trash-2" width="16"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            document.getElementById('totalBonusDisplay').innerText = formatCurrency(totalBonus);
-            document.getElementById('totalEmployeesDisplay').innerText = employees.length;
+
+            // Filtrar empregados
+            let displayedEmployees = employees;
+            if (filterName) {
+                displayedEmployees = employees.filter(e => e.name === filterName);
+            }
+
+            if (displayedEmployees.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-slate-400 italic">Nenhum registro encontrado.</td></tr>';
+            } else {
+                displayedEmployees.forEach(emp => {
+                    const calc = calculateBonus(emp);
+                    totalBonus += calc.bonusVal;
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors group";
+                    tr.innerHTML = `
+                        <td class="p-4 font-medium text-slate-800">${emp.name}<div class="text-xs text-slate-400 font-normal">Base: ${formatCurrency(emp.salary)}</div></td>
+                        <td class="p-4 text-center text-slate-600">${emp.boxes}</td>
+                        <td class="p-4 text-center"><span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">${calc.prodPts}</span></td>
+                        <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.assiduity}</td>
+                        <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.organization}</td>
+                        <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.participation}</td>
+                        <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.agility}</td>
+                        <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.punctuality}</td>
+                        <td class="p-4 text-center font-bold text-slate-700">${calc.totalPts}</td>
+                        <td class="p-4 text-right font-bold text-emerald-600">+ ${formatCurrency(calc.bonusVal)}</td>
+                        <td class="p-4 text-right font-bold text-slate-900">${formatCurrency(calc.totalReceive)}</td>
+                        <td class="p-4 text-right no-print flex justify-end gap-2" data-html2canvas-ignore="true">
+                            <button onclick="editEmployee(${emp.id})" class="text-slate-300 hover:text-blue-500 transition-colors" title="Editar">
+                                <i data-lucide="pencil" width="16"></i>
+                            </button>
+                            <button onclick="removeEmployee(${emp.id})" class="text-slate-300 hover:text-red-500 transition-colors" title="Excluir">
+                                <i data-lucide="trash-2" width="16"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            
+            // Update Totals (based on current view)
+            let viewTotalBonus = 0;
+            displayedEmployees.forEach(e => viewTotalBonus += calculateBonus(e).bonusVal);
+            
+            document.getElementById('totalBonusDisplay').innerText = formatCurrency(viewTotalBonus);
+            document.getElementById('totalEmployeesDisplay').innerText = displayedEmployees.length;
             lucide.createIcons();
+            
+            // Populate filter if empty
+            const filterSelect = document.getElementById('filterEmployee');
+            
+            if (filterSelect.options.length <= 1) {
+                teamDatabase.forEach(member => {
+                    const opt = document.createElement('option');
+                    opt.value = member.name;
+                    opt.text = member.name;
+                    filterSelect.appendChild(opt);
+                });
+            }
         }
 
         function renderCriteriaForm() {
@@ -823,45 +878,24 @@
             const emp = employees.find(e => e.id === id);
             if (!emp) return;
 
-            // Populate Form
             const select = document.getElementById('empName');
-            // Check if name is in dropdown, if not add it temp
-            let optionExists = false;
-            for (let i = 0; i < select.options.length; i++) {
-                if (select.options[i].value === emp.name) {
-                    optionExists = true;
-                    break;
-                }
-            }
-            if (!optionExists) {
-                const opt = document.createElement('option');
-                opt.value = emp.name;
-                opt.text = emp.name;
-                select.appendChild(opt);
-            }
             select.value = emp.name;
             
             document.getElementById('empSalary').value = formatCurrencyValue(emp.salary);
             document.getElementById('empBoxes').value = emp.boxes;
             
-            // Set criteria
             newCriteria = { ...emp.criteria };
             renderCriteriaForm();
             updatePreview();
             
-            // Set Editing State
             editingId = id;
             
-            // Change Button to Update
             const addBtn = document.getElementById('addBtn');
             addBtn.innerHTML = 'Atualizar';
             addBtn.classList.remove('bg-slate-900', 'hover:bg-black');
             addBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
             
-            // Show Cancel Button
             document.getElementById('cancelEditBtn').classList.remove('hidden');
-            
-            // Scroll to form (optional, good for UX on mobile)
             document.getElementById('empName').focus();
         }
 
@@ -891,7 +925,6 @@
             if(!name || isNaN(salary)) return alert("Por favor, preencha o nome e o salário corretamente.");
             
             if (editingId) {
-                // UPDATE EXISTING
                 const index = employees.findIndex(e => e.id === editingId);
                 if (index !== -1) {
                     employees[index] = { 
@@ -902,12 +935,10 @@
                         criteria: {...newCriteria} 
                     };
                 }
-                cancelEdit(); // Reset form state
+                cancelEdit(); 
             } else {
-                // ADD NEW
                 employees.push({ id: Date.now(), name, salary: salary, boxes: Number(boxes), criteria: {...newCriteria} });
                 
-                // Reset fields
                 document.getElementById('empName').value = ''; 
                 document.getElementById('empSalary').value = ''; 
                 document.getElementById('empBoxes').value = '';
@@ -1111,7 +1142,7 @@
             const originalMargin = el.style.margin;
             const originalPadding = el.style.padding;
             
-            // AJUSTE: Força largura 'fit-content' para não cortar e define mínimo
+            // Permite que o elemento cresça o quanto precisar horizontalmente
             el.style.width = 'fit-content'; 
             el.style.minWidth = '100%'; 
             el.style.margin = '0';
