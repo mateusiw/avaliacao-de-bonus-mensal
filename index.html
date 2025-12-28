@@ -719,12 +719,22 @@
                     if (dbMember) salary = dbMember.salary;
                 }
                 const boxes = parseInt(cols[boxesIdx]) || 0;
+                
+                // Helper to safely parse criteria allowing 0
+                const parseCrit = (val) => {
+                    // Se estiver vazio, indefinido ou apenas espaços, assume 10 (padrão)
+                    if (val === undefined || val === null || val.trim() === '') return 10;
+                    const n = parseInt(val);
+                    // Se não for um número válido, assume 10. Se for 0, retorna 0.
+                    return isNaN(n) ? 10 : n;
+                };
+
                 const crit = { 
-                    assiduity: parseInt(cols[critStartIdx])||10, 
-                    organization: parseInt(cols[critStartIdx+1])||10, 
-                    participation: parseInt(cols[critStartIdx+2])||10, 
-                    agility: parseInt(cols[critStartIdx+3])||10, 
-                    punctuality: parseInt(cols[critStartIdx+4])||10 
+                    assiduity: parseCrit(cols[critStartIdx]), 
+                    organization: parseCrit(cols[critStartIdx+1]), 
+                    participation: parseCrit(cols[critStartIdx+2]), 
+                    agility: parseCrit(cols[critStartIdx+3]), 
+                    punctuality: parseCrit(cols[critStartIdx+4]) 
                 };
                 if (name) { 
                     employees.push({ id: Date.now()+Math.random(), name: name, salary: salary, boxes: boxes, criteria: crit }); 
