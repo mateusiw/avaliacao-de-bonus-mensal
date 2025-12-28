@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Relatório de Bônus Mensal</title>
+    
+    <!-- Configurações PWA Embutidas -->
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Bônus Mensal","short_name":"Bônus","start_url":".","display":"standalone","background_color":"#f8fafc","theme_color":"#2563eb","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3135/3135715.png","sizes":"512x512","type":"image/png"}]}'>
+    
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        @media print {
+            @page { margin: 1cm; size: landscape; }
+            .no-print { display: none !important; }
+        }
+        
+        .hidden-force { display: none !important; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+    <!-- TELA DE LOGIN -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-100 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 w-full max-w-md animate-fade-in">
+            <div class="text-center mb-8">
+                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="lock" class="w-8 h-8 text-blue-600"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800">Acesso ao Sistema</h1>
+                <p class="text-slate-500 text-sm mt-2">Controle de Bônus Mensal</p>
+            </div>
+            
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Usuário</label>
+                    <input type="text" id="loginUser" class="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="Digite seu usuário" required>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Senha</label>
+                    <input type="password" id="loginPass" class="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="••••••••" required>
+                </div>
+
+                <div id="loginError" class="hidden p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center font-medium">
+                    Usuário ou senha incorretos.
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors shadow-lg shadow-blue-200">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL DO APP -->
+    <div id="app-content" class="hidden max-w-7xl mx-auto p-4 md:p-8 space-y-6 pb-10">
+        
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="calculator" class="text-blue-600"></i>
+                    <span id="headerTitle">Relatório de Bônus Mensal</span>
+                </h1>
+                <div class="flex items-center gap-3 mt-1">
+                    <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700" id="userRoleDisplay"></span>
+                    <button onclick="handleLogout()" class="text-xs text-red-500 hover:text-red-700 font-medium no-print flex items-center gap-1">
+                        <i data-lucide="log-out" class="w-3 h-3"></i> Sair
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Barra de Ferramentas -->
+            <div class="flex flex-wrap gap-2 items-center no-print" data-html2canvas-ignore="true">
+                
+                <div class="flex items-center gap-2 bg-white border border-slate-300 rounded-lg px-3 py-2 shadow-sm mr-2">
+                    <i data-lucide="calendar" class="w-4 h-4 text-slate-500"></i>
+                    <input type="month" id="referenceMonth" onchange="updateConfig('referenceMonth', this.value); updateTitle();" class="outline-none text-slate-700 font-medium bg-transparent text-sm">
+                </div>
+
+                <!-- Botões ADMIN -->
+                <button onclick="resetData()" class="admin-only flex items-center gap-2 px-4 py-2 bg-transparent hover:bg-slate-100 text-slate-600 border border-transparent rounded-lg font-medium transition-colors text-red-500 hover:bg-red-50 hover:text-red-600" title="Limpar Tudo">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+                
+                <button onclick="toggleSettings()" class="admin-only flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg font-medium transition-colors">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Valor
+                </button>
+
+                <button onclick="viewTeamDatabase()" class="admin-only flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg font-medium transition-colors" title="Visualizar Base">
+                    <i data-lucide="users-2" class="w-4 h-4"></i> Equipe 
+                    <span id="teamCountBadge" class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full text-xs font-bold border border-slate-200 ml-1">0</span>
+                </button>
+
+                <div class="admin-only flex bg-slate-200 rounded-lg p-1 gap-1">
+                    <div class="relative">
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileUpload(event)">
+                        <button onclick="document.getElementById('csvFileInput').click()" class="flex items-center gap-2 px-3 py-1.5 bg-white text-slate-700 rounded-md font-medium text-sm transition-colors hover:bg-slate-50 shadow-sm" title="Importar CSV">
+                            <i data-lucide="upload" class="w-4 h-4 text-blue-600"></i> Importar
+                        </button>
+                    </div>
+                    <button onclick="exportToCSV()" class="flex items-center gap-2 px-3 py-1.5 bg-white text-slate-700 rounded-md font-medium text-sm transition-colors hover:bg-slate-50 shadow-sm" title="Baixar Planilha">
+                        <i data-lucide="download" class="w-4 h-4 text-green-600"></i> Exportar
+                    </button>
+                </div>
+
+                <!-- GRUPO FICHAS: Agora é "admin-only" também, pois o Líder tem os botões grandes -->
+                <div class="admin-only flex bg-blue-50 rounded-lg border border-blue-200 p-1 gap-1">
+                    <button onclick="downloadManualSheets()" class="flex items-center gap-2 px-3 py-1.5 hover:bg-white text-blue-700 rounded-md font-medium text-sm transition-colors shadow-sm">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Manual
+                    </button>
+                    <div class="w-px bg-blue-200 my-1"></div>
+                    <button onclick="openDigitalSheet()" class="flex items-center gap-2 px-3 py-1.5 bg-white text-blue-700 shadow-sm rounded-md font-medium text-sm transition-colors border border-blue-100 hover:bg-blue-50" title="Marcar direto no site">
+                        <i data-lucide="monitor-check" class="w-4 h-4"></i> Digital
+                    </button>
+                </div>
+                
+                <button onclick="downloadPDF()" class="admin-only flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors shadow-sm ml-2" title="PDF Contínuo">
+                    <i data-lucide="file-down" class="w-4 h-4"></i> PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Painel de Configuração -->
+        <div id="settingsPanel" class="hidden no-print mb-4" data-html2canvas-ignore="true">
+            <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl shadow-sm animate-fade-in">
+                <div class="flex items-center gap-4">
+                    <div class="p-2 bg-blue-100 rounded-lg text-blue-600">
+                        <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-blue-800 mb-1">
+                            Valor pago por cada Ponto (R$)
+                        </label>
+                        <input type="number" id="pointValue" step="0.10" oninput="updateConfig('pointValue', this.value); renderAll();" class="w-32 p-2 rounded border border-blue-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel de Equipe -->
+        <div id="employeesPanel" class="hidden no-print mb-4" data-html2canvas-ignore="true">
+            <div class="bg-indigo-50 border border-indigo-100 p-6 rounded-xl shadow-sm animate-fade-in">
+                <h3 class="font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                    <i data-lucide="users-2" class="w-5 h-5"></i> Lista de Funcionários Cadastrados
+                </h3>
+                <p class="text-xs text-indigo-600 mb-3">Cole os nomes abaixo (um por linha) para facilitar o preenchimento.</p>
+                <textarea id="employeeListInput" rows="5" class="w-full p-3 rounded-lg border border-indigo-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ex:
+João Silva
+Maria Santos"></textarea>
+                <div class="mt-3 flex justify-end">
+                    <button onclick="saveEmployeeList()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm transition-colors">
+                        Salvar Lista
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD LÍDER (Visível apenas para Líder) -->
+        <div id="leader-dashboard" class="hidden mt-10 animate-fade-in">
+            <div class="text-center mb-10">
+                <h2 class="text-2xl font-bold text-slate-800">Área de Avaliação</h2>
+                <p class="text-slate-500">Selecione uma opção abaixo para realizar as avaliações mensais.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Opção 1: Ficha Manual -->
+                <button onclick="downloadManualSheets()" class="flex flex-col items-center justify-center p-8 bg-white border-2 border-slate-200 rounded-2xl hover:border-blue-500 hover:shadow-lg transition-all group">
+                    <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                        <i data-lucide="printer" class="w-10 h-10 text-blue-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Ficha Manual</h3>
+                    <p class="text-slate-500 text-center text-sm">Baixar PDF para imprimir e preencher à mão.</p>
+                </button>
+
+                <!-- Opção 2: Digital -->
+                <button onclick="openDigitalSheet()" class="flex flex-col items-center justify-center p-8 bg-white border-2 border-slate-200 rounded-2xl hover:border-emerald-500 hover:shadow-lg transition-all group">
+                    <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors">
+                        <i data-lucide="monitor-check" class="w-10 h-10 text-emerald-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Avaliação Digital</h3>
+                    <p class="text-slate-500 text-center text-sm">Preencher avaliações agora e gerar arquivos.</p>
+                </button>
+            </div>
+        </div>
+
+
+        <!-- DASHBOARD ADMIN -->
+        <div id="admin-dashboard-content" class="space-y-6">
+            
+            <!-- Cards de Resumo -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-emerald-500 flex items-center gap-4">
+                    <div class="p-3 rounded-full bg-emerald-100 text-emerald-600 no-print">
+                        <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium">Bônus Total a Pagar</p>
+                        <p class="text-2xl font-bold text-slate-800" id="totalBonusDisplay">R$ 0,00</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-amber-500 flex items-center gap-4">
+                    <div class="p-3 rounded-full bg-amber-100 text-amber-600 no-print">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium">Funcionários</p>
+                        <p class="text-2xl font-bold text-slate-800" id="totalEmployeesDisplay">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <!-- Tabela e Formulário Admin -->
+                <div class="xl:col-span-2 space-y-4">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                            <h2 class="font-semibold text-slate-700">Folha Detalhada</h2>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                                    <tr>
+                                        <th class="p-4 font-medium">Nome</th>
+                                        <th class="p-4 font-medium text-center">Caixas</th>
+                                        <th class="p-4 font-medium text-center" title="Pontos de Produção">Pts Prod.</th>
+                                        <th class="p-2 text-center text-xs font-medium text-slate-400" title="Assiduidade">Assid.</th>
+                                        <th class="p-2 text-center text-xs font-medium text-slate-400" title="Organização">Org.</th>
+                                        <th class="p-2 text-center text-xs font-medium text-slate-400" title="Participação">Part.</th>
+                                        <th class="p-2 text-center text-xs font-medium text-slate-400" title="Agilidade">Agil.</th>
+                                        <th class="p-2 text-center text-xs font-medium text-slate-400" title="Pontualidade">Pont.</th>
+                                        <th class="p-4 font-medium text-center">Total Pts</th>
+                                        <th class="p-4 font-medium text-right text-emerald-600">Bônus</th>
+                                        <th class="p-4 font-medium text-right">Total Receber</th>
+                                        <th class="p-4 w-10 no-print" data-html2canvas-ignore="true"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employeesTableBody" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Legenda -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-500">
+                        <div class="bg-white p-3 rounded border border-slate-200">
+                            <strong class="block mb-2 text-slate-700">Tabela de Produção:</strong>
+                            <ul class="space-y-1">
+                                <li>• 200 a 400 caixas = 20 pontos</li>
+                                <li>• 401 a 600 caixas = 30 pontos</li>
+                                <li>• 601 a 800 caixas = 50 pontos</li>
+                                <li>• 801 a 1500 caixas = 60 pontos</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-slate-200">
+                            <strong class="block mb-2 text-slate-700">Critérios de Desempenho (Max 50 pts):</strong>
+                            <p>Assiduidade, Organização, Participação, Agilidade e Pontualidade.</p>
+                            <p class="mt-1">Cada item vale 5 ou 10 pontos.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulário Manual (Direita) -->
+                <div class="xl:col-span-1 no-print" data-html2canvas-ignore="true">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 sticky top-6">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+                            <h2 class="font-semibold text-slate-700 flex items-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4 text-blue-600"></i>
+                                Adicionar Manualmente
+                            </h2>
+                        </div>
+                        <form onsubmit="addEmployee(event)" class="p-5 space-y-4">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Dados do Colaborador</label>
+                                    <input type="text" id="empName" list="employeeListOptions" onchange="autoFillSalary()" required placeholder="Nome completo" class="w-full p-2 rounded border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                                    <datalist id="employeeListOptions"></datalist>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <input type="number" id="empSalary" required placeholder="Salário (R$)" class="w-full p-2 rounded border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                                    <input type="number" id="empBoxes" required placeholder="Qtd. Caixas" oninput="updatePreview()" class="w-full p-2 rounded border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                                </div>
+                            </div>
+                            <hr class="border-slate-100">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Avaliação</label>
+                                <div class="space-y-3" id="criteriaList"></div>
+                            </div>
+                            <div class="bg-slate-100 p-3 rounded text-sm flex justify-between items-center text-slate-600">
+                                <span>Pontos estimados:</span>
+                                <span class="font-bold text-slate-800" id="previewPoints">0</span>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex justify-center items-center gap-2">
+                                <i data-lucide="save" class="w-4 h-4"></i> Adicionar à Folha
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- Fim Admin Dashboard -->
+    </div>
+
+    <!-- TELA DE PREENCHIMENTO DIGITAL (Modal Fullscreen) -->
+    <div id="digitalSheetModal" class="hidden fixed inset-0 bg-slate-50 z-50 overflow-y-auto no-print">
+        <div class="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+            <div class="flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-slate-200 sticky top-0 z-10 gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="monitor-check" class="text-blue-600"></i> Avaliação Digital em Lote
+                    </h2>
+                    <p class="text-sm text-slate-500 hidden md:block">Realize o lançamento das avaliações e gere os relatórios (CSV e PDF) para envio ao departamento responsável.</p>
+                </div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button onclick="closeDigitalSheet()" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-300 rounded-lg font-medium transition-colors flex-1 md:flex-none">
+                        Cancelar
+                    </button>
+                    <button onclick="exportDigitalSheetCSV()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 shadow-sm flex-1 md:flex-none">
+                        <i data-lucide="file-down" class="w-4 h-4"></i> Baixar CSV
+                    </button>
+                    <!-- BOTÃO VERMELHO PDF (Substituindo Salvar) -->
+                    <button onclick="exportDigitalSheetPDF()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 shadow-sm flex-1 md:flex-none">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Baixar PDF
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-4 items-center justify-between">
+                    <div class="text-xs text-slate-500 italic">* Pontuação Padrão: 0 pts (Clique para alternar para 5)</div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm" id="digitalSheetTable">
+                        <thead class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                            <tr>
+                                <th class="p-4 min-w-[200px] font-bold">Funcionário</th>
+                                <th class="p-4 text-center w-24">Assiduidade</th>
+                                <th class="p-4 text-center w-24">Organização</th>
+                                <th class="p-4 text-center w-24">Participação</th>
+                                <th class="p-4 text-center w-24">Agilidade</th>
+                                <th class="p-4 text-center w-24">Pontualidade</th>
+                                <th class="p-4 w-32">Caixas</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VER BASE DA EQUIPE -->
+    <div id="viewTeamModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="database" class="w-5 h-5 text-blue-600"></i> Base de Dados da Equipe
+                </h3>
+                <button onclick="closeViewTeam()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="p-0 overflow-y-auto flex-1">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-50 text-slate-600 sticky top-0">
+                        <tr>
+                            <th class="p-4 font-semibold border-b border-slate-100">Nome do Funcionário</th>
+                            <th class="p-4 font-semibold text-right border-b border-slate-100">Salário Base Cadastrado</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100" id="viewTeamTableBody"></tbody>
+                </table>
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-slate-50 text-right text-xs text-slate-400">
+                Somente visualização. Para alterar dados, contate o administrador.
+            </div>
+        </div>
+    </div>
+
+    <!-- ÁREA OCULTA PARA PDF -->
+    <div id="manual-sheets-content" class="hidden bg-white min-h-screen p-8"></div>
+
+    <script>
+        // --- LOGIN & AUTH ---
+        let currentUser = null;
+        const users = {
+            'alesandra': { pass: 'bkekt4co@', role: 'admin', name: 'Alesandra' },
+            'mateus': { pass: 'Paul4545', role: 'admin', name: 'Mateus' }, 
+            'fagner': { pass: 'Fag244@', role: 'lider', name: 'Fagner' }
+        };
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value.toLowerCase().trim();
+            const pass = document.getElementById('loginPass').value;
+            
+            if (users[user] && users[user].pass === pass) {
+                currentUser = users[user];
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+                document.getElementById('userRoleDisplay').innerText = currentUser.name;
+                
+                if (currentUser.role === 'lider') {
+                    document.getElementById('admin-dashboard-content').classList.add('hidden');
+                    document.getElementById('leader-dashboard').classList.remove('hidden');
+                    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden-force'));
+                } else {
+                    document.getElementById('admin-dashboard-content').classList.remove('hidden');
+                    document.getElementById('leader-dashboard').classList.add('hidden');
+                    document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden-force'));
+                }
+                lucide.createIcons();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() { location.reload(); }
+
+        // --- CORE ---
+        let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { pointValue: 2.00, referenceMonth: new Date().toISOString().slice(0, 7) };
+        let employees = JSON.parse(localStorage.getItem('bonusApp_employees')) || [];
+        
+        const teamDatabase = [
+            { name: "EMANUEL CARDOSO ARAUJO", salary: 1621 },
+            { name: "MARCOS FEITOSA DE OLIVEIRA", salary: 1621 },
+            { name: "GABRIEL CARDOSO ARAUJO", salary: 1621 },
+            { name: "FRANCISCO DA SILVA FERREIRA", salary: 1621 },
+            { name: "LUCAS RIBEIRO DA SILVA", salary: 1621 },
+            { name: "LEANDRO ALTINO FERREIRA", salary: 1621 },
+            { name: "FELIPE BARBOSA BANDEIRA", salary: 1621 },
+            { name: "ANTONIO PATRICK ARAUJO LEMOS", salary: 1621 },
+            { name: "FABIANA MARQUES BARBOSA", salary: 1621 },
+            { name: "BRUNA PEREIRA DA SILVA", salary: 1621 },
+            { name: "MONICA BATISTA FARIAS", salary: 1621 },
+            { name: "KARINE MARQUES DE ALMEIDA MARTINS", salary: 1621 },
+            { name: "PEDRO LUCAS DE SOUZA GONÇALVES", salary: 1621 },
+            { name: "GLAYLSON LIMA FERREIRA", salary: 1621 },
+            { name: "DIONISIO PEREIRA DE ALBUQUERQUE", salary: 1621 }
+        ];
+
+        let newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
+        const criteriaLabels = { assiduity: 'Assiduidade', organization: 'Organização', participation: 'Participação', agility: 'Agilidade', punctuality: 'Pontualidade' };
+
+        window.onload = function() {
+            lucide.createIcons();
+            document.getElementById('referenceMonth').value = config.referenceMonth;
+            document.getElementById('pointValue').value = config.pointValue;
+            
+            updateTeamCountBadge(); // Atualiza o contador na inicialização
+            renderEmployeeDatalist();
+            renderCriteriaForm();
+            renderAll();
+        };
+
+        function updateTeamCountBadge() {
+            const badge = document.getElementById('teamCountBadge');
+            if (badge) {
+                badge.innerText = teamDatabase.length;
+            }
+        }
+
+        function renderEmployeeDatalist() {
+            const dl = document.getElementById('employeeListOptions');
+            dl.innerHTML = '';
+            teamDatabase.forEach(member => { 
+                const opt = document.createElement('option'); 
+                opt.value = member.name; 
+                dl.appendChild(opt); 
+            });
+            updateTeamCountBadge();
+        }
+
+        // --- VER BASE ---
+        function viewTeamDatabase() {
+            const tbody = document.getElementById('viewTeamTableBody');
+            tbody.innerHTML = '';
+            teamDatabase.forEach(member => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="p-4 font-medium text-slate-700">${member.name}</td><td class="p-4 text-right font-mono text-slate-600">${formatCurrency(member.salary)}</td>`;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('viewTeamModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+        function closeViewTeam() { document.getElementById('viewTeamModal').classList.add('hidden'); }
+
+        // --- AUTOCOMPLETE SALARY ---
+        function autoFillSalary() {
+            const nameInput = document.getElementById('empName');
+            const salaryInput = document.getElementById('empSalary');
+            const member = teamDatabase.find(m => m.name === nameInput.value);
+            if (member) salaryInput.value = member.salary;
+        }
+
+        // --- LOGIC ---
+        function getProductionPoints(boxes) {
+            if (boxes < 200) return 0;
+            if (boxes <= 400) return 20;
+            if (boxes <= 600) return 30;
+            if (boxes <= 800) return 50;
+            return 60;
+        }
+
+        function calculateBonus(emp) {
+            const prodPts = getProductionPoints(emp.boxes);
+            const perfPts = Object.values(emp.criteria).reduce((a, b) => a + Number(b), 0);
+            const totalPts = prodPts + perfPts;
+            const bonusVal = totalPts * config.pointValue;
+            return { prodPts, perfPts, totalPts, bonusVal, totalReceive: Number(emp.salary) + bonusVal };
+        }
+
+        function formatCurrency(val) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val); }
+
+        function updateConfig(key, value) {
+            config[key] = value;
+            localStorage.setItem('bonusApp_config', JSON.stringify(config));
+            renderAll();
+        }
+
+        function saveData() { localStorage.setItem('bonusApp_employees', JSON.stringify(employees)); renderAll(); }
+
+        // FIXED RESET DATA FUNCTION
+        function resetData() { 
+            if(confirm("Apagar todos os dados da planilha atual?")) { 
+                localStorage.removeItem('bonusApp_employees'); 
+                employees = [];
+                renderAll();
+            } 
+        }
+
+        function toggleSettings() { 
+            document.getElementById('settingsPanel').classList.toggle('hidden'); 
+        }
+        function toggleEmployees() { 
+            alert("A gestão da equipe é feita via código. Contate o administrador.");
+        }
+        function updateTitle() { renderAll(); }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { processCSV(e.target.result); };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function processCSV(text) {
+            const lines = text.split('\n');
+            if (lines.length < 2) return alert("Arquivo vazio.");
+            const header = lines[0];
+            let sep = header.includes(';') ? ';' : ',';
+            const hasMonthCol = header.toLowerCase().includes('mês') || header.toLowerCase().includes('mes');
+            const nameIdx = hasMonthCol ? 1 : 0;
+            const salaryIdx = nameIdx + 1;
+            const boxesIdx = nameIdx + 2;
+            const critStartIdx = nameIdx + 3; 
+            let newCount = 0;
+            const rows = lines.slice(1);
+            rows.forEach(row => {
+                if(!row.trim()) return;
+                const cols = row.split(sep).map(c => c.replace(/^"|"$/g, '').trim());
+                if (cols.length < 3) return;
+                const name = cols[nameIdx];
+                let salary = 1621;
+                if (cols[salaryIdx]) {
+                    const sStr = cols[salaryIdx].replace('R$','').replace('.','').replace(',','.');
+                    if (!isNaN(parseFloat(sStr))) salary = parseFloat(sStr);
+                } else {
+                    const dbMember = teamDatabase.find(m => m.name === name);
+                    if (dbMember) salary = dbMember.salary;
+                }
+                const boxes = parseInt(cols[boxesIdx]) || 0;
+                const crit = { 
+                    assiduity: parseInt(cols[critStartIdx])||10, 
+                    organization: parseInt(cols[critStartIdx+1])||10, 
+                    participation: parseInt(cols[critStartIdx+2])||10, 
+                    agility: parseInt(cols[critStartIdx+3])||10, 
+                    punctuality: parseInt(cols[critStartIdx+4])||10 
+                };
+                if (name) { 
+                    employees.push({ id: Date.now()+Math.random(), name: name, salary: salary, boxes: boxes, criteria: crit }); 
+                    newCount++; 
+                }
+            });
+            saveData(); alert(`${newCount} registros importados!`);
+        }
+
+        function exportToCSV() {
+            if (employees.length === 0) return alert("Não há dados para exportar.");
+            generateAndDownloadCSV(employees, "Geral");
+        }
+
+        function generateAndDownloadCSV(dataList, suffix) {
+            let csvContent = "\uFEFF"; 
+            csvContent += "Mês Referência;Nome;Salário Base;Caixas;Assiduidade;Organização;Participação;Agilidade;Pontualidade;Total Pontos;Valor Bônus;Total a Receber\n";
+            let monthLabel = "Não definido";
+            if (config.referenceMonth) {
+                const [y, m] = config.referenceMonth.split('-');
+                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                monthLabel = `${mn.charAt(0).toUpperCase() + mn.slice(1)}/${y}`;
+            }
+            dataList.forEach(emp => {
+                const calc = calculateBonus(emp);
+                const c = emp.criteria;
+                const row = [
+                    monthLabel,
+                    emp.name,
+                    emp.salary.toFixed(2).replace('.', ','),
+                    emp.boxes,
+                    c.assiduity,
+                    c.organization,
+                    c.participation,
+                    c.agility,
+                    c.punctuality,
+                    calc.totalPts,
+                    calc.bonusVal.toFixed(2).replace('.', ','),
+                    calc.totalReceive.toFixed(2).replace('.', ',')
+                ];
+                csvContent += row.join(";") + "\n";
+            });
+            let filename = `Pagamento_Bonus_${suffix}.csv`;
+            if (config.referenceMonth) {
+                const [y, m] = config.referenceMonth.split('-');
+                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                const monthCap = mn.charAt(0).toUpperCase() + mn.slice(1);
+                filename = `Pagamento_Bonus_${monthCap}_${y}.csv`;
+            }
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function renderAll() {
+            const tbody = document.getElementById('employeesTableBody');
+            tbody.innerHTML = '';
+            let totalBonus = 0;
+            if (config.referenceMonth) {
+                const [y, m] = config.referenceMonth.split('-');
+                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                document.getElementById('headerTitle').innerText = `Relatório de Bônus - ${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
+            }
+            if (employees.length === 0) tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-slate-400 italic">Nenhum registro. Importe um CSV ou adicione manualmente.</td></tr>';
+            employees.forEach(emp => {
+                const calc = calculateBonus(emp);
+                totalBonus += calc.bonusVal;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors group";
+                tr.innerHTML = `
+                    <td class="p-4 font-medium text-slate-800">${emp.name}<div class="text-xs text-slate-400 font-normal">Base: ${formatCurrency(emp.salary)}</div></td>
+                    <td class="p-4 text-center text-slate-600">${emp.boxes}</td>
+                    <td class="p-4 text-center"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-semibold">${calc.prodPts}</span></td>
+                    <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.assiduity}</td>
+                    <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.organization}</td>
+                    <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.participation}</td>
+                    <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.agility}</td>
+                    <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.punctuality}</td>
+                    <td class="p-4 text-center font-bold text-slate-700">${calc.totalPts}</td>
+                    <td class="p-4 text-right font-bold text-emerald-600">+ ${formatCurrency(calc.bonusVal)}</td>
+                    <td class="p-4 text-right font-bold text-slate-800">${formatCurrency(calc.totalReceive)}</td>
+                    <td class="p-4 text-right no-print" data-html2canvas-ignore="true"><button onclick="removeEmployee(${emp.id})" class="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"><i data-lucide="trash-2" width="16"></i></button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('totalBonusDisplay').innerText = formatCurrency(totalBonus);
+            document.getElementById('totalEmployeesDisplay').innerText = employees.length;
+            lucide.createIcons();
+        }
+
+        function renderCriteriaForm() {
+            const c = document.getElementById('criteriaList'); c.innerHTML = '';
+            Object.keys(criteriaLabels).forEach(key => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200";
+                const v = newCriteria[key];
+                div.innerHTML = `<span class="text-sm font-medium text-slate-700">${criteriaLabels[key]}</span>
+                    <div class="flex gap-2 text-xs">
+                        <button type="button" onclick="setCriteria('${key}', 5)" class="px-3 py-1 rounded border transition-colors ${v===5?'bg-amber-100 text-amber-700 border-amber-300 font-bold':'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'}">5 pts</button>
+                        <button type="button" onclick="setCriteria('${key}', 10)" class="px-3 py-1 rounded border transition-colors ${v===10?'bg-blue-100 text-blue-700 border-blue-300 font-bold':'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'}">10 pts</button>
+                    </div>`;
+                c.appendChild(div);
+            });
+            updatePreview();
+        }
+
+        function setCriteria(key, val) { newCriteria[key] = val; renderCriteriaForm(); }
+        function updatePreview() {
+            const b = Number(document.getElementById('empBoxes').value) || 0;
+            document.getElementById('previewPoints').innerText = getProductionPoints(b) + Object.values(newCriteria).reduce((a,b)=>a+b,0);
+        }
+
+        function addEmployee(e) {
+            e.preventDefault();
+            const name = document.getElementById('empName').value;
+            const salary = document.getElementById('empSalary').value;
+            const boxes = document.getElementById('empBoxes').value;
+            if(!name || !salary) return;
+            employees.push({ id: Date.now(), name, salary: Number(salary), boxes: Number(boxes), criteria: {...newCriteria} });
+            document.getElementById('empName').value = ''; document.getElementById('empSalary').value = ''; document.getElementById('empBoxes').value = '';
+            newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
+            renderCriteriaForm(); saveData();
+        }
+
+        function removeEmployee(id) { if(confirm("Remover?")) { employees = employees.filter(e => e.id !== id); saveData(); } }
+
+        function openDigitalSheet() {
+            if (teamDatabase.length === 0) {
+                alert("Sua base de equipe está vazia. Adicione funcionários em 'Equipe' primeiro.");
+                return;
+            }
+            const modal = document.getElementById('digitalSheetModal');
+            const tbody = document.querySelector('#digitalSheetTable tbody');
+            tbody.innerHTML = '';
+            teamDatabase.forEach((member, index) => {
+                const existing = employees.find(e => e.name === member.name);
+                const boxes = existing ? existing.boxes : '';
+                const crit = existing ? existing.criteria : { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50/50 transition-colors";
+                let criteriaHtml = '';
+                Object.keys(criteriaLabels).forEach(key => {
+                    const val = crit[key];
+                    let btnClass = "bg-white text-slate-300 border-gray-200 hover:border-gray-300"; 
+                    if(val === 5) btnClass = "bg-amber-100 text-amber-700 border-amber-300 ring-2 ring-amber-100";
+                    if(val === 10) btnClass = "bg-blue-100 text-blue-700 border-blue-300 ring-2 ring-blue-100";
+
+                    criteriaHtml += `<td class="p-4 text-center"><button type="button" onclick="toggleDigitalCriteria(this)" data-value="${val}" class="w-9 h-9 rounded-full font-bold text-xs border transition-all ${btnClass}">${val}</button><input type="hidden" name="crit_${index}_${key}" value="${val}"></td>`;
+                });
+                tr.innerHTML = `<td class="p-4 font-medium text-slate-800">${member.name}<input type="hidden" name="name_${index}" value="${member.name}"></td>${criteriaHtml}<td class="p-4"><input type="number" name="boxes_${index}" value="${boxes}" placeholder="0" class="w-full p-2 border border-gray-200 rounded-lg text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"></td>`;
+                tbody.appendChild(tr);
+            });
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeDigitalSheet() { document.getElementById('digitalSheetModal').classList.add('hidden'); }
+
+        function toggleDigitalCriteria(btn) {
+            const current = parseInt(btn.getAttribute('data-value'));
+            const input = btn.nextElementSibling;
+            let nextVal = 0;
+            let nextClass = "bg-white text-slate-300 border-gray-200 hover:border-gray-300";
+
+            if (current === 0) {
+                nextVal = 5;
+                nextClass = "bg-amber-100 text-amber-700 border-amber-300 ring-2 ring-amber-100";
+            } else if (current === 5) {
+                nextVal = 10;
+                nextClass = "bg-blue-100 text-blue-700 border-blue-300 ring-2 ring-blue-100";
+            } else {
+                nextVal = 0;
+                nextClass = "bg-white text-slate-300 border-gray-200 hover:border-gray-300";
+            }
+            
+            btn.setAttribute('data-value', nextVal);
+            btn.innerText = nextVal;
+            btn.className = `w-9 h-9 rounded-full font-bold text-xs border transition-all ${nextClass}`;
+            input.value = nextVal;
+        }
+
+        function exportDigitalSheetCSV() {
+            const tempEmployees = [];
+            const tbody = document.querySelector('#digitalSheetTable tbody');
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((row, index) => {
+                const name = row.querySelector(`input[name="name_${index}"]`).value;
+                const boxes = row.querySelector(`input[name="boxes_${index}"]`).value;
+                const dbMember = teamDatabase.find(m => m.name === name);
+                const salary = dbMember ? dbMember.salary : 1621;
+                const criteria = {};
+                Object.keys(criteriaLabels).forEach(key => criteria[key] = parseInt(row.querySelector(`input[name="crit_${index}_${key}"]`).value));
+                tempEmployees.push({ id: Date.now(), name: name, salary: Number(salary), boxes: Number(boxes) || 0, criteria: criteria });
+            });
+            generateAndDownloadCSV(tempEmployees, "Preenchido");
+        }
+
+        function exportDigitalSheetPDF() {
+             const container = document.getElementById('manual-sheets-content');
+             const modal = document.getElementById('digitalSheetModal');
+             const appContent = document.getElementById('app-content');
+             
+             container.innerHTML = '';
+             let titleSuffix = config.referenceMonth ? ` - ${new Date(config.referenceMonth.split('-')[0], config.referenceMonth.split('-')[1] - 1).toLocaleString('pt-BR', { month: 'long' })}` : "";
+             
+             const tbody = document.querySelector('#digitalSheetTable tbody');
+             const rows = tbody.querySelectorAll('tr');
+             let rowsHtml = '';
+             
+             rows.forEach((row, index) => {
+                 const name = row.querySelector(`input[name="name_${index}"]`).value;
+                 const boxes = row.querySelector(`input[name="boxes_${index}"]`).value || '0';
+                 let criteriaCells = '';
+                 Object.keys(criteriaLabels).forEach(key => criteriaCells += `<td style="border: 1px solid #e2e8f0; padding: 8px; text-align: center;">${row.querySelector(`input[name="crit_${index}_${key}"]`).value}</td>`);
+                 rowsHtml += `<tr style="background-color: #fff;"><td style="border: 1px solid #e2e8f0; padding: 10px; font-weight: bold; color: #1e293b;">${name}</td>${criteriaCells}<td style="border: 1px solid #e2e8f0; padding: 10px; text-align: center;">${boxes}</td></tr>`;
+             });
+             
+             container.innerHTML = `
+                <div style="font-family: 'Inter', sans-serif; color: #333; width: 100%; padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
+                        <h1 style="font-size: 20px; font-weight: bold; color: #2563eb;">Relatório de Avaliação Digital${titleSuffix}</h1>
+                        <p style="color: #64748b; font-size: 12px;">${new Date().toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <thead><tr style="background-color: #f8fafc; color: #475569;"><th style="border: 1px solid #e2e8f0; padding: 12px; width: 25%;">FUNCIONÁRIO</th>${['ASSID','ORG','PART','AGIL','PONT'].map(l=>`<th style="border: 1px solid #e2e8f0; padding: 8px; text-align: center;">${l}</th>`).join('')}<th style="border: 1px solid #e2e8f0; padding: 12px; width: 10%;">CAIXAS</th></tr></thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                     <div style="margin-top: 20px; font-size: 10px; color: #94a3b8; text-align: right;">
+                        * Documento gerado digitalmente.
+                    </div>
+                </div>
+             `;
+             
+             const btn = document.querySelector('button[onclick="exportDigitalSheetPDF()"]');
+             const originalText = btn.innerHTML;
+             btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
+             lucide.createIcons();
+             
+             const scrollY = window.scrollY;
+             appContent.style.display = 'none';
+             modal.classList.add('hidden'); 
+             container.classList.remove('hidden');
+             container.style.width = '1100px'; container.style.margin = '0 auto';
+             window.scrollTo(0,0);
+
+             setTimeout(() => {
+                 const contentHeight = container.scrollHeight;
+                 const contentWidth = container.scrollWidth;
+                 const opt = { margin: 10, filename: 'Relatorio_Digital.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'px', format: [contentWidth + 20, contentHeight + 20], orientation: contentWidth > contentHeight ? 'landscape' : 'portrait' } };
+                 html2pdf().set(opt).from(container).save().then(() => {
+                     container.classList.add('hidden');
+                     appContent.style.display = 'block';
+                     modal.classList.remove('hidden');
+                     btn.innerHTML = originalText;
+                     window.scrollTo(0, scrollY);
+                 }).catch(err => {
+                     console.error(err);
+                     alert("Erro ao gerar PDF.");
+                     container.classList.add('hidden');
+                     appContent.style.display = 'block';
+                     modal.classList.remove('hidden');
+                     btn.innerHTML = originalText;
+                 });
+             }, 500);
+        }
+
+        // --- ORIGINAL PDF GENERATION ---
+        function downloadManualSheets() {
+            const container = document.getElementById('manual-sheets-content');
+            const btn = document.querySelector('button[onclick="downloadManualSheets()"]');
+            const originalText = btn.innerHTML;
+            container.innerHTML = '';
+            let titleSuffix = config.referenceMonth ? ` - ${new Date(config.referenceMonth.split('-')[0], config.referenceMonth.split('-')[1] - 1).toLocaleString('pt-BR', { month: 'long' })}` : "";
+            let rows = '';
+            let list = teamDatabase;
+            if (list.length === 0) for(let i=0; i<15; i++) rows += generateRowHTML({ name: "" });
+            else { list.forEach(emp => rows += generateRowHTML(emp)); for(let i=0; i<3; i++) rows += generateRowHTML({ name: "" }); }
+            container.innerHTML = `<div style="font-family: 'Inter', sans-serif; color: #333; width: 100%; padding: 20px;"><div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;"><h1 style="font-size: 20px; font-weight: bold; color: #2563eb;">Ficha de Avaliação Mensal${titleSuffix}</h1><p style="color: #64748b; font-size: 12px;">${new Date().toLocaleDateString('pt-BR')}</p></div><table style="width: 100%; border-collapse: collapse; font-size: 11px;"><thead><tr style="background-color: #f8fafc; color: #475569;"><th style="border: 1px solid #e2e8f0; padding: 12px; width: 25%;">FUNCIONÁRIO</th>${['ASSID','ORG','PART','AGIL','PONT'].map(l=>`<th style="border: 1px solid #e2e8f0; padding: 8px;">${l}</th>`).join('')}<th style="border: 1px solid #e2e8f0; padding: 12px; width: 10%;">CAIXAS</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+            btn.innerHTML = 'Gerando...';
+            const app = document.getElementById('app-content');
+            const scroll = window.scrollY;
+            app.style.display = 'none';
+            container.classList.remove('hidden');
+            container.style.width = '1122px'; // A4 LANDSCAPE WIDTH
+            container.style.margin = '0 auto';
+            window.scrollTo(0,0);
+            
+            setTimeout(() => {
+                const contentHeight = container.scrollHeight;
+                const contentWidth = container.scrollWidth;
+                const opt = { margin: [2, 2, 2, 2], filename: 'Ficha_Avaliacao.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'px', format: [contentWidth+20, contentHeight+20], orientation: contentWidth > contentHeight ? 'l' : 'p' } };
+                html2pdf().set(opt).from(container).save().then(() => {
+                    container.classList.add('hidden');
+                    app.style.display = 'block';
+                    btn.innerHTML = originalText;
+                    window.scrollTo(0, scroll);
+                });
+            }, 300);
+        }
+
+        function generateRowHTML(emp) {
+            if (!emp.name) return '';
+            const nameCell = `<span style="font-size: 13px; font-weight: 600; color: #1e293b;">${emp.name}</span>`;
+            const criteriaCells = Array(5).fill(0).map(() => `<td style="border: 1px solid #e2e8f0; padding: 8px; text-align: center;"><div style="display: flex; justify-content: center; gap: 15px;"><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 14px; height: 14px; border: 1px solid #94a3b8; border-radius: 3px;"></div><span style="color: #64748b; font-size: 10px;">5</span></div><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 14px; height: 14px; border: 1px solid #94a3b8; border-radius: 3px;"></div><span style="color: #64748b; font-size: 10px;">10</span></div></div></td>`).join('');
+            return `<tr style="border-bottom: 1px solid #e2e8f0;"><td style="border: 1px solid #e2e8f0; padding: 10px;">${nameCell}</td>${criteriaCells}<td style="border: 1px solid #e2e8f0; padding: 10px;"></td></tr>`;
+        }
+
+        function downloadPDF() {
+            const el = document.getElementById('app-content');
+            let fn = "Relatorio.pdf";
+            if(config.referenceMonth) { const [y,m]=config.referenceMonth.split('-'); const mn=new Date(y,m-1).toLocaleString('pt-BR',{month:'long'}); fn=`Relatório de Bônus - ${mn.charAt(0).toUpperCase()+mn.slice(1)} de ${y}.pdf`; }
+            const btn = document.querySelector('button[onclick="downloadPDF()"]'); const txt = btn.innerHTML; btn.innerHTML = "Gerando...";
+            
+            // Salva estilos originais
+            const originalWidth = el.style.width;
+            const originalMargin = el.style.margin;
+            const originalPadding = el.style.padding;
+            
+            // Permite que o elemento cresça o quanto precisar horizontalmente
+            el.style.width = 'fit-content'; 
+            el.style.minWidth = '100%'; 
+            el.style.margin = '0';
+            el.style.padding = '20px'; 
+            
+            setTimeout(() => {
+                // Captura as dimensões reais do conteúdo expandido
+                const contentWidth = el.scrollWidth; 
+                const contentHeight = el.scrollHeight;
+
+                const opt = { 
+                    margin: 10, 
+                    filename: fn, 
+                    image: { type: 'jpeg', quality: 0.98 }, 
+                    html2canvas: { 
+                        scale: 2, 
+                        useCORS: true
+                    }, 
+                    jsPDF: { 
+                        unit: 'px', 
+                        // Define o tamanho da folha PDF igual ao tamanho do conteúdo (+ margem)
+                        // Isso remove qualquer limite de largura A4
+                        format: [contentWidth + 40, contentHeight + 40], 
+                        orientation: contentWidth > contentHeight ? 'landscape' : 'portrait' 
+                    } 
+                };
+                
+                html2pdf().set(opt).from(el).save().then(() => {
+                    // Restaura
+                    el.style.width = originalWidth;
+                    el.style.margin = originalMargin;
+                    el.style.padding = originalPadding;
+                    btn.innerHTML = txt;
+                }).catch(err => {
+                    console.error(err);
+                    el.style.width = originalWidth;
+                    el.style.margin = originalMargin;
+                    el.style.padding = originalPadding;
+                    btn.innerHTML = txt;
+                });
+            }, 500);
+        }
+    </script>
+</body>
+</html>
