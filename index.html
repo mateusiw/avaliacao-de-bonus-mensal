@@ -139,7 +139,7 @@
 
                     <!-- Botões Admin -->
                     <div class="admin-only flex gap-2">
-                        <button onclick="toggleSettings()" class="p-2 h-10 w-10 flex items-center justify-center bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Configurar Valor" aria-label="Configurar Valor do Ponto">
+                        <button onclick="toggleSettings()" class="p-2 h-10 w-10 flex items-center justify-center bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Configurar Regra" aria-label="Configurar Porcentagem do Ponto">
                             <i data-lucide="settings" class="w-5 h-5"></i>
                         </button>
                         <button onclick="viewTeamDatabase()" class="relative p-2 h-10 w-10 flex items-center justify-center bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group" title="Equipe" aria-label="Ver Equipe">
@@ -177,13 +177,9 @@
                             </button>
                         </div>
                         
-                        <!-- BOTÃO RENOMEADO: Imprimir A4 -->
+                        <!-- BOTÃO RENOMEADO: Imprimir -->
                         <button onclick="printSimpleTable()" class="admin-only flex items-center gap-2 px-4 h-10 bg-white border border-gray-200 text-slate-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg text-sm font-bold shadow-sm transition-all">
-                            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir A4
-                        </button>
-
-                        <button onclick="downloadPDF()" class="admin-only flex items-center gap-2 px-4 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold shadow-md shadow-emerald-200 hover:shadow-lg transition-all active:translate-y-0.5">
-                            <i data-lucide="file-down" class="w-4 h-4"></i> Relatório PDF
+                            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir
                         </button>
                     </div>
                 </div>
@@ -193,16 +189,17 @@
             <section id="settingsPanel" class="hidden no-print" data-html2canvas-ignore="true" aria-label="Configurações">
                 <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl shadow-inner flex items-center gap-4 animate-in slide-in-from-top-2">
                     <div class="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
-                        <i data-lucide="dollar-sign" class="w-5 h-5"></i>
+                        <i data-lucide="percent" class="w-5 h-5"></i>
                     </div>
                     <div>
                         <label for="pointValue" class="block text-xs font-bold text-blue-800 uppercase tracking-wide mb-1">
-                            Valor do Ponto
+                            Fator de Conversão (%)
                         </label>
                         <div class="flex items-center gap-2">
-                            <span class="text-blue-600 font-bold">R$</span>
-                            <input type="number" id="pointValue" step="0.10" oninput="updateConfig('pointValue', this.value); renderAll();" class="w-24 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="number" id="pointValue" step="0.1" oninput="updateConfig('pointValue', this.value); renderAll();" class="w-24 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                            <span class="text-blue-600 font-bold">%</span>
                         </div>
+                        <p class="text-[10px] text-blue-400 mt-1">Padrão 0.1 para que 70 pts = 7%.</p>
                     </div>
                 </div>
             </section>
@@ -336,6 +333,12 @@
                                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Caixas</label>
                                         <input type="number" id="empBoxes" required placeholder="Qtd" oninput="updatePreview()" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
                                     </div>
+                                </div>
+                                <!-- NOVO CAMPO: Fator Individual -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Fator Individual (%) <span class="text-gray-300 font-normal normal-case">(Opcional)</span></label>
+                                    <input type="number" id="empFactor" step="0.01" placeholder="Padrão Global" oninput="updatePreview()" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
+                                    <p class="text-[10px] text-gray-400 mt-1">Preencha apenas se quiser uma % diferente para este funcionário.</p>
                                 </div>
                             </div>
 
@@ -544,7 +547,8 @@
         }
 
         // --- CORE ---
-        let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { pointValue: 2.00, referenceMonth: new Date().toISOString().slice(0, 7) };
+        // Padrão 0.1 para que 1 ponto = 0.1% do salário. Logo, 10 pontos = 1% e 70 pontos = 7%.
+        let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { pointValue: 0.1, referenceMonth: new Date().toISOString().slice(0, 7) };
         let employees = JSON.parse(localStorage.getItem('bonusApp_employees')) || [];
         
         const teamDatabase = [
@@ -660,11 +664,23 @@
         }
 
         function calculateBonus(emp) {
-            const prodPts = getProductionPoints(emp.boxes || 0); // Proteção contra NaN/null
+            const prodPts = getProductionPoints(emp.boxes || 0);
             const perfPts = Object.values(emp.criteria).reduce((a, b) => a + Number(b), 0);
             const totalPts = prodPts + perfPts;
-            const bonusVal = totalPts * config.pointValue;
-            return { prodPts, perfPts, totalPts, bonusVal, totalReceive: Number(emp.salary || 0) + bonusVal };
+            
+            // LÓGICA ATUALIZADA: Prioriza fator individual se existir
+            let factor = config.pointValue;
+            if (emp.customFactor !== undefined && emp.customFactor !== null && emp.customFactor !== "") {
+                factor = parseFloat(emp.customFactor);
+            }
+            
+            // Ex: 70 pontos * 0.1 (fator) = 7%
+            const bonusPercentage = totalPts * factor; 
+            
+            const salary = Number(emp.salary) || 0;
+            const bonusVal = salary * (bonusPercentage / 100);
+            
+            return { prodPts, perfPts, totalPts, bonusPercentage, bonusVal, totalReceive: salary + bonusVal };
         }
 
         function formatCurrency(val) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0); }
@@ -710,11 +726,19 @@
             const boxesIdx = nameIdx + 2;
             const critStartIdx = nameIdx + 3; 
             let newCount = 0;
+            let detectedDate = null; // Variável para armazenar a data detectada
+
             const rows = lines.slice(1);
             rows.forEach(row => {
                 if(!row.trim()) return;
                 const cols = row.split(sep).map(c => c.replace(/^"|"$/g, '').trim());
                 if (cols.length < 3) return;
+                
+                // Tenta detectar a data da primeira linha válida se houver coluna de mês
+                if (hasMonthCol && !detectedDate && cols[0].includes('/')) {
+                    detectedDate = cols[0]; 
+                }
+
                 const name = cols[nameIdx];
                 let salary = 1621;
                 if (cols[salaryIdx]) {
@@ -728,10 +752,8 @@
                 
                 // Helper to safely parse criteria allowing 0
                 const parseCrit = (val) => {
-                    // Se estiver vazio, indefinido ou apenas espaços, assume 10 (padrão)
                     if (val === undefined || val === null || val.trim() === '') return 10;
                     const n = parseInt(val);
-                    // Se não for um número válido, assume 10. Se for 0, retorna 0.
                     return isNaN(n) ? 10 : n;
                 };
 
@@ -747,7 +769,29 @@
                     newCount++; 
                 }
             });
-            saveData(); alert(`${newCount} registros importados!`);
+
+            // Lógica para atualizar o mês de referência automaticamente
+            if (detectedDate) {
+                try {
+                    const [monthName, year] = detectedDate.split('/');
+                    const monthsMap = {
+                        'janeiro': '01', 'fevereiro': '02', 'março': '03', 'marco': '03', 'abril': '04',
+                        'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08',
+                        'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
+                    };
+                    const mKey = monthName.toLowerCase().trim();
+                    if (monthsMap[mKey] && year) {
+                        const newRef = `${year.trim()}-${monthsMap[mKey]}`;
+                        // Atualiza a config e o input visualmente
+                        updateConfig('referenceMonth', newRef);
+                        document.getElementById('referenceMonth').value = newRef;
+                    }
+                } catch (e) {
+                    console.error("Erro ao detectar data do CSV", e);
+                }
+            }
+
+            saveData(); alert(`${newCount} registros importados! Mês ajustado.`);
         }
 
         function exportToCSV() {
@@ -848,7 +892,10 @@
                         <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.participation}</td>
                         <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.agility}</td>
                         <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.punctuality}</td>
-                        <td class="p-4 text-center font-bold text-slate-700">${calc.totalPts}</td>
+                        <td class="p-4 text-center font-bold text-slate-700">
+                            ${calc.totalPts}
+                            <div class="text-[10px] text-blue-600 bg-blue-50 rounded px-1 mt-1 font-bold inline-block">${calc.bonusPercentage.toFixed(1)}%</div>
+                        </td>
                         <td class="p-4 text-right font-bold text-emerald-600">+ ${formatCurrency(calc.bonusVal)}</td>
                         <td class="p-4 text-right font-bold text-slate-900">${formatCurrency(calc.totalReceive)}</td>
                         <td class="p-4 text-right no-print flex justify-end gap-2" data-html2canvas-ignore="true">
@@ -905,7 +952,14 @@
         function setCriteria(key, val) { newCriteria[key] = val; renderCriteriaForm(); }
         function updatePreview() {
             const b = Number(document.getElementById('empBoxes').value) || 0;
-            document.getElementById('previewPoints').innerText = getProductionPoints(b) + Object.values(newCriteria).reduce((a,b)=>a+b,0);
+            const points = getProductionPoints(b) + Object.values(newCriteria).reduce((a,b)=>a+b,0);
+            
+            // Preview considera o campo individual se preenchido
+            const customInput = document.getElementById('empFactor').value;
+            const factor = (customInput && !isNaN(parseFloat(customInput))) ? parseFloat(customInput) : config.pointValue;
+            
+            const percent = points * factor;
+            document.getElementById('previewPoints').innerText = `${points} pts (${percent.toFixed(1)}%)`;
         }
 
         // --- EDIT FUNCTIONALITY ---
@@ -918,6 +972,9 @@
             
             document.getElementById('empSalary').value = formatCurrencyValue(emp.salary);
             document.getElementById('empBoxes').value = emp.boxes;
+            
+            // Carrega o fator individual se existir
+            document.getElementById('empFactor').value = emp.customFactor !== undefined ? emp.customFactor : "";
             
             newCriteria = { ...emp.criteria };
             renderCriteriaForm();
@@ -939,6 +996,7 @@
             document.getElementById('empName').value = "";
             document.getElementById('empSalary').value = "";
             document.getElementById('empBoxes').value = "";
+            document.getElementById('empFactor').value = ""; // Limpa o campo
             newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
             renderCriteriaForm();
             updatePreview();
@@ -956,6 +1014,7 @@
             const name = document.getElementById('empName').value;
             const salary = parseCurrency(document.getElementById('empSalary').value);
             const boxes = document.getElementById('empBoxes').value;
+            const customFactor = document.getElementById('empFactor').value; // Captura o valor
             
             if(!name || isNaN(salary)) return alert("Por favor, preencha o nome e o salário corretamente.");
             
@@ -967,16 +1026,25 @@
                         name, 
                         salary: salary, 
                         boxes: Number(boxes), 
+                        customFactor: customFactor, // Salva no objeto
                         criteria: {...newCriteria} 
                     };
                 }
                 cancelEdit(); 
             } else {
-                employees.push({ id: Date.now(), name, salary: salary, boxes: Number(boxes), criteria: {...newCriteria} });
+                employees.push({ 
+                    id: Date.now(), 
+                    name, 
+                    salary: salary, 
+                    boxes: Number(boxes), 
+                    customFactor: customFactor, // Salva no objeto
+                    criteria: {...newCriteria} 
+                });
                 
                 document.getElementById('empName').value = ''; 
                 document.getElementById('empSalary').value = ''; 
                 document.getElementById('empBoxes').value = '';
+                document.getElementById('empFactor').value = '';
                 newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
                 renderCriteriaForm(); 
             }
@@ -986,6 +1054,29 @@
         function removeEmployee(id) { if(confirm("Remover?")) { employees = employees.filter(e => e.id !== id); saveData(); } }
 
         function openDigitalSheet() {
+            // --- VALIDAÇÃO DE SEGURANÇA (NOVA) ---
+            const refMonthInput = document.getElementById('referenceMonth');
+            const refMonthValue = refMonthInput.value;
+
+            if (!refMonthValue) {
+                alert("⚠️ ATENÇÃO: Selecione o Mês e Ano da avaliação antes de continuar!");
+                // Efeito visual para destacar o erro
+                refMonthInput.parentElement.classList.add('ring-4', 'ring-red-500', 'bg-red-50');
+                refMonthInput.focus();
+                setTimeout(() => refMonthInput.parentElement.classList.remove('ring-4', 'ring-red-500', 'bg-red-50'), 2000);
+                return;
+            }
+
+            // Confirmação explícita da data
+            const [year, month] = refMonthValue.split('-');
+            const monthName = new Date(year, month - 1).toLocaleString('pt-BR', { month: 'long' });
+            const formattedDate = `${monthName.toUpperCase()} DE ${year}`;
+
+            if (!confirm(`CONFIRMAÇÃO DE PERÍODO:\n\nVocê está prestes a iniciar a avaliação referente a:\n📅 ${formattedDate}\n\nEstá correto?`)) {
+                return; // Cancela se o usuário clicar em "Cancelar"
+            }
+            // --------------------------------------
+
             if (teamDatabase.length === 0) {
                 alert("Sua base de equipe está vazia. Adicione funcionários em 'Equipe' primeiro.");
                 return;
@@ -1054,8 +1145,7 @@
                 Object.keys(criteriaLabels).forEach(key => criteria[key] = parseInt(row.querySelector(`input[name="crit_${index}_${key}"]`).value));
                 tempEmployees.push({ id: Date.now(), name: name, salary: Number(salary), boxes: Number(boxes) || 0, criteria: criteria });
             });
-            // Líder: Exporta COM o sufixo _CSV (passando true)
-            generateAndDownloadCSV(tempEmployees, "Preenchido", true);
+            generateAndDownloadCSV(tempEmployees, "Preenchido");
         }
 
         function exportDigitalSheetPDF() {
@@ -1247,7 +1337,9 @@
                         <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.participation}</td>
                         <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.agility}</td>
                         <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.punctuality}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold;">${calc.totalPts}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold;">
+                            ${calc.totalPts} <span style="font-size: 9px; color: #666;">(${calc.bonusPercentage.toFixed(1)}%)</span>
+                        </td>
                         <!-- Formatado em Moeda -->
                         <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatCurrency(calc.bonusVal)}</td>
                         <td style="border: 1px solid #000; padding: 5px; text-align: right; font-weight: bold;">${formatCurrency(calc.totalReceive)}</td>
