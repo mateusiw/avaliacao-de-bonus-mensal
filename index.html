@@ -573,6 +573,9 @@
         const criteriaLabels = { assiduity: 'Assiduidade', organization: 'Organização', participation: 'Participação', agility: 'Agilidade', punctuality: 'Pontualidade' };
 
         window.onload = function() {
+            // CORREÇÃO DO BUG: Verifica autenticação ao carregar a página
+            checkAuth();
+            
             lucide.createIcons();
             document.getElementById('referenceMonth').value = config.referenceMonth;
             document.getElementById('pointValue').value = config.pointValue;
