@@ -177,6 +177,11 @@
                             </button>
                         </div>
                         
+                        <!-- BOTÃO RENOMEADO: Imprimir A4 -->
+                        <button onclick="printSimpleTable()" class="admin-only flex items-center gap-2 px-4 h-10 bg-white border border-gray-200 text-slate-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg text-sm font-bold shadow-sm transition-all">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir A4
+                        </button>
+
                         <button onclick="downloadPDF()" class="admin-only flex items-center gap-2 px-4 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold shadow-md shadow-emerald-200 hover:shadow-lg transition-all active:translate-y-0.5">
                             <i data-lucide="file-down" class="w-4 h-4"></i> Relatório PDF
                         </button>
@@ -1171,6 +1176,144 @@
             const nameCell = `<span style="font-size: 13px; font-weight: 600; color: #1e293b;">${emp.name}</span>`;
             const criteriaCells = Array(5).fill(0).map(() => `<td style="border: 1px solid #e2e8f0; padding: 8px; text-align: center;"><div style="display: flex; justify-content: center; gap: 15px;"><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 14px; height: 14px; border: 1px solid #94a3b8; border-radius: 3px;"></div><span style="color: #64748b; font-size: 10px;">5</span></div><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 14px; height: 14px; border: 1px solid #94a3b8; border-radius: 3px;"></div><span style="color: #64748b; font-size: 10px;">10</span></div></div></td>`).join('');
             return `<tr style="border-bottom: 1px solid #e2e8f0;"><td style="border: 1px solid #e2e8f0; padding: 10px;">${nameCell}</td>${criteriaCells}<td style="border: 1px solid #e2e8f0; padding: 10px;"></td></tr>`;
+        }
+
+        // --- NOVA FUNÇÃO: Tabela Simples Estilo Excel ---
+        function printSimpleTable() {
+            const container = document.getElementById('manual-sheets-content');
+            const btn = document.querySelector('button[onclick="printSimpleTable()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
+            lucide.createIcons();
+
+            container.innerHTML = '';
+            
+            // Título e Data
+            let titleSuffix = config.referenceMonth ? ` - ${new Date(config.referenceMonth.split('-')[0], config.referenceMonth.split('-')[1] - 1).toLocaleString('pt-BR', { month: 'long' })}` : "";
+            if(config.referenceMonth) {
+                const [y, m] = config.referenceMonth.split('-');
+                titleSuffix = ` - ${m}/${y}`;
+            }
+
+            // Cabeçalho da Tabela
+            let tableHtml = `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #000;">
+                    <div style="margin-bottom: 15px;">
+                        <h2 style="margin: 0; font-size: 18px; text-transform: uppercase;">Relatório de Bônus${titleSuffix}</h2>
+                        <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Gerado em ${new Date().toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <thead>
+                            <tr style="background-color: #e0e0e0;">
+                                <th style="border: 1px solid #000; padding: 6px; text-align: left;">FUNCIONÁRIO</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">CAIXAS</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">PROD.</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">ASSID</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">ORG</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">PART</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">AGIL</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">PONT</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">TOTAL PTS</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: right;">BÔNUS</th>
+                                <th style="border: 1px solid #000; padding: 6px; text-align: right;">A RECEBER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // Linhas da Tabela
+            let totalBonusSum = 0;
+            let totalReceiveSum = 0; // Variável para somar o Total a Receber
+            
+            // Aplicar filtro se houver
+            const filterName = document.getElementById('filterEmployee').value;
+            let listToPrint = employees;
+            if (filterName) {
+                listToPrint = employees.filter(e => e.name === filterName);
+            }
+
+            listToPrint.forEach(emp => {
+                const calc = calculateBonus(emp);
+                totalBonusSum += calc.bonusVal;
+                totalReceiveSum += calc.totalReceive; // Somando valor a receber
+                
+                tableHtml += `
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 5px;">${emp.name}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.boxes}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${calc.prodPts}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.assiduity}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.organization}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.participation}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.agility}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.punctuality}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold;">${calc.totalPts}</td>
+                        <!-- Formatado em Moeda -->
+                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatCurrency(calc.bonusVal)}</td>
+                        <td style="border: 1px solid #000; padding: 5px; text-align: right; font-weight: bold;">${formatCurrency(calc.totalReceive)}</td>
+                    </tr>
+                `;
+            });
+
+            // Rodapé com totais
+            tableHtml += `
+                        </tbody>
+                        <tfoot>
+                            <tr style="background-color: #f0f0f0; font-weight: bold;">
+                                <td colspan="9" style="border: 1px solid #000; padding: 6px; text-align: right;">TOTAL GERAL:</td>
+                                <!-- Formatado em Moeda -->
+                                <td style="border: 1px solid #000; padding: 6px; text-align: right;">${formatCurrency(totalBonusSum)}</td>
+                                <td style="border: 1px solid #000; padding: 6px; text-align: right;">${formatCurrency(totalReceiveSum)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = tableHtml;
+
+            const app = document.getElementById('app-content');
+            const scroll = window.scrollY;
+            app.style.display = 'none';
+            container.classList.remove('hidden');
+            container.style.width = '1100px'; 
+            container.style.margin = '0 auto';
+            window.scrollTo(0,0);
+
+            setTimeout(() => {
+                // Nome do arquivo
+                let filename = 'Relatorio_Simples.pdf';
+                if (config.referenceMonth) {
+                    const [y, m] = config.referenceMonth.split('-');
+                    const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                    const monthCap = mn.charAt(0).toUpperCase() + mn.slice(1);
+                    filename = `Bonus_${monthCap}_${y}_Tabela.pdf`;
+                }
+
+                const contentHeight = container.scrollHeight;
+                const contentWidth = container.scrollWidth;
+                
+                const opt = { 
+                    margin: 10, 
+                    filename: filename, 
+                    image: { type: 'jpeg', quality: 0.98 }, 
+                    html2canvas: { scale: 2, useCORS: true }, 
+                    jsPDF: { unit: 'px', format: [contentWidth + 20, contentHeight + 20], orientation: 'landscape' } 
+                };
+                
+                html2pdf().set(opt).from(container).save().then(() => {
+                    container.classList.add('hidden');
+                    app.style.display = 'block';
+                    btn.innerHTML = originalText;
+                    window.scrollTo(0, scroll);
+                }).catch(err => {
+                    console.error(err);
+                    alert("Erro ao gerar PDF.");
+                    container.classList.add('hidden');
+                    app.style.display = 'block';
+                    btn.innerHTML = originalText;
+                });
+            }, 500);
         }
 
         function downloadPDF() {
