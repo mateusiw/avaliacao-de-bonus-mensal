@@ -116,12 +116,12 @@
                 <!-- Botões de Ação -->
                 <div class="flex flex-wrap gap-2 w-full xl:w-auto items-center">
                     
-                    <!-- Seletor de Mês -->
-                    <div class="relative group bg-white border border-gray-200 rounded-lg shadow-sm flex items-center h-10">
-                        <div class="pl-3 text-slate-400">
-                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <!-- Seletor de Mês DESTACADO (Melhor visualização) -->
+                    <div class="relative group bg-white border-2 border-blue-500 rounded-xl shadow-md flex items-center h-12 transition-all hover:shadow-lg hover:scale-[1.01]">
+                        <div class="pl-4 text-blue-600">
+                            <i data-lucide="calendar" class="w-5 h-5"></i>
                         </div>
-                        <input type="month" id="referenceMonth" onchange="updateConfig('referenceMonth', this.value); updateTitle();" class="bg-transparent border-none text-slate-700 text-sm font-medium py-1.5 pl-2 pr-3 focus:ring-0 outline-none cursor-pointer h-full" aria-label="Seletor de Mês de Referência">
+                        <input type="month" id="referenceMonth" onchange="updateConfig('referenceMonth', this.value); updateTitle();" class="bg-transparent border-none text-slate-800 text-base font-bold py-1.5 pl-3 pr-4 focus:ring-0 outline-none cursor-pointer h-full" aria-label="Seletor de Mês de Referência">
                     </div>
                     
                     <!-- FILTRO POR NOME (NA TABELA) - Classe admin-only adicionada -->
@@ -834,16 +834,19 @@
             });
             
             // Lógica de nome do arquivo dinâmica
-            let filename = `Bonus_${suffix}${includeSuffix ? '_CSV' : ''}.csv`;
-            
+            let namePart = `Bonus_${suffix}`;
             if (config.referenceMonth) {
                 const [y, m] = config.referenceMonth.split('-');
                 const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
                 const monthCap = mn.charAt(0).toUpperCase() + mn.slice(1);
-                
-                // Se includeSuffix for true (Líder), adiciona _CSV. Se false (Admin), não adiciona.
-                filename = `Bonus_${monthCap}_${y}${includeSuffix ? '_CSV' : ''}.csv`;
+                namePart = `Bonus_${monthCap}_${y}`;
             }
+
+            if (includeSuffix) {
+                namePart += "_CSV";
+            }
+
+            const filename = `${namePart}.csv`;
             
             const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
             const link = document.createElement("a");
@@ -1148,7 +1151,8 @@
                 Object.keys(criteriaLabels).forEach(key => criteria[key] = parseInt(row.querySelector(`input[name="crit_${index}_${key}"]`).value));
                 tempEmployees.push({ id: Date.now(), name: name, salary: Number(salary), boxes: Number(boxes) || 0, criteria: criteria });
             });
-            generateAndDownloadCSV(tempEmployees, "Preenchido");
+            // Líder: Exporta COM o sufixo _CSV (passando true)
+            generateAndDownloadCSV(tempEmployees, "Preenchido", true);
         }
 
         function exportDigitalSheetPDF() {
@@ -1412,58 +1416,7 @@
         }
 
         function downloadPDF() {
-            const el = document.getElementById('app-content');
-            let fn = "Relatorio.pdf";
-            if(config.referenceMonth) { const [y,m]=config.referenceMonth.split('-'); const mn=new Date(y,m-1).toLocaleString('pt-BR',{month:'long'}); fn=`Relatório de Bônus - ${mn.charAt(0).toUpperCase()+mn.slice(1)} de ${y}.pdf`; }
-            const btn = document.querySelector('button[onclick="downloadPDF()"]'); const txt = btn.innerHTML; btn.innerHTML = "Gerando...";
-            
-            // Salva estilos originais
-            const originalWidth = el.style.width;
-            const originalMargin = el.style.margin;
-            const originalPadding = el.style.padding;
-            
-            // Permite que o elemento cresça o quanto precisar horizontalmente
-            el.style.width = 'fit-content'; 
-            el.style.minWidth = '100%'; 
-            el.style.margin = '0';
-            el.style.padding = '20px'; 
-            
-            setTimeout(() => {
-                // Captura as dimensões reais do conteúdo expandido
-                const contentWidth = el.scrollWidth; 
-                const contentHeight = el.scrollHeight;
-
-                const opt = { 
-                    margin: 10, 
-                    filename: fn, 
-                    image: { type: 'jpeg', quality: 0.98 }, 
-                    html2canvas: { 
-                        scale: 2, 
-                        useCORS: true
-                    }, 
-                    jsPDF: { 
-                        unit: 'px', 
-                        // Define o tamanho da folha PDF igual ao tamanho do conteúdo (+ margem)
-                        // Isso remove qualquer limite de largura A4
-                        format: [contentWidth + 40, contentHeight + 40], 
-                        orientation: contentWidth > contentHeight ? 'landscape' : 'portrait' 
-                    } 
-                };
-                
-                html2pdf().set(opt).from(el).save().then(() => {
-                    // Restaura
-                    el.style.width = originalWidth;
-                    el.style.margin = originalMargin;
-                    el.style.padding = originalPadding;
-                    btn.innerHTML = txt;
-                }).catch(err => {
-                    console.error(err);
-                    el.style.width = originalWidth;
-                    el.style.margin = originalMargin;
-                    el.style.padding = originalPadding;
-                    btn.innerHTML = txt;
-                });
-            }, 500);
+            // REMOVED (or merged into Print A4 logic per previous request, kept empty here if referenced by old button but actually button was removed)
         }
     </script>
 </body>
