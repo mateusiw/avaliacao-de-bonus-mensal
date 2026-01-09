@@ -193,13 +193,14 @@
                     </div>
                     <div>
                         <label for="pointValue" class="block text-xs font-bold text-blue-800 uppercase tracking-wide mb-1">
-                            Fator de Conversão (%)
+                            Fator de Conversão (% por Ponto)
                         </label>
                         <div class="flex items-center gap-2">
-                            <input type="number" id="pointValue" step="0.1" oninput="updateConfig('pointValue', this.value); renderAll();" class="w-24 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- Step aumentado para permitir a precisão de 0.092857 -->
+                            <input type="number" id="pointValue" step="0.000001" oninput="updateConfig('pointValue', this.value); renderAll();" class="w-28 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
                             <span class="text-blue-600 font-bold">%</span>
                         </div>
-                        <p class="text-[10px] text-blue-400 mt-1">Padrão 0.1 para que 70 pts = 7%.</p>
+                        <p class="text-[10px] text-blue-400 mt-1">Padrão: ~0.0929 (Para que 70 pts = 6.5% do salário).</p>
                     </div>
                 </div>
             </section>
@@ -547,8 +548,15 @@
         }
 
         // --- CORE ---
-        // Padrão 0.1 para que 1 ponto = 0.1% do salário. Logo, 10 pontos = 1% e 70 pontos = 7%.
-        let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { pointValue: 0.1, referenceMonth: new Date().toISOString().slice(0, 7) };
+        // Padrão 0.092857 para que 70 pts = 6.5% do salário.
+        let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { pointValue: 0.092857, referenceMonth: new Date().toISOString().slice(0, 7) };
+        
+        // Migração automática para corrigir valores anteriores (0.1 ou 6.5)
+        if (config.pointValue === 0.1 || config.pointValue === 6.5) {
+            config.pointValue = 0.092857;
+            localStorage.setItem('bonusApp_config', JSON.stringify(config));
+        }
+
         let employees = JSON.parse(localStorage.getItem('bonusApp_employees')) || [];
         
         const teamDatabase = [
@@ -677,7 +685,7 @@
                 factor = parseFloat(emp.customFactor);
             }
             
-            // Ex: 70 pontos * 0.1 (fator) = 7%
+            // Ex: Se pontos=70 e fator=0.092857, então bônus ≈ 6.5%
             const bonusPercentage = totalPts * factor; 
             
             const salary = Number(emp.salary) || 0;
