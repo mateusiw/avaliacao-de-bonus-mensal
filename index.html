@@ -198,10 +198,11 @@
                                 % Máxima Critérios (50 pts)
                             </label>
                             <div class="flex items-center gap-2">
-                                <input type="number" id="criteriaPercent" step="0.01" oninput="updateConfig('criteriaPercent', this.value); renderAll();" class="w-24 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                                <!-- Step ajustado para alta precisão -->
+                                <input type="number" id="criteriaPercent" step="0.0001" oninput="updateConfig('criteriaPercent', this.value); renderAll();" class="w-24 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
                                 <span class="text-blue-600 font-bold">%</span>
                             </div>
-                            <p class="text-[10px] text-blue-400 mt-1">Padrão: 6.2%</p>
+                            <p class="text-[10px] text-blue-400 mt-1">Padrão: 3.0845%</p>
                         </div>
                     </div>
 
@@ -215,10 +216,11 @@
                                 % Produção (>=600 cx)
                             </label>
                             <div class="flex items-center gap-2">
-                                <input type="number" id="productionPercent" step="0.01" oninput="updateConfig('productionPercent', this.value); renderAll();" class="w-24 p-1 rounded border border-emerald-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500">
+                                <!-- Step ajustado para alta precisão -->
+                                <input type="number" id="productionPercent" step="0.0001" oninput="updateConfig('productionPercent', this.value); renderAll();" class="w-24 p-1 rounded border border-emerald-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500">
                                 <span class="text-emerald-600 font-bold">%</span>
                             </div>
-                            <p class="text-[10px] text-emerald-600 mt-1">Padrão: 5.6%</p>
+                            <p class="text-[10px] text-emerald-600 mt-1">Padrão: 3.0845%</p>
                         </div>
                     </div>
                 </div>
@@ -313,16 +315,16 @@
                          <div>
                             <strong class="block mb-1 text-slate-700 uppercase tracking-wide text-[10px]">Tabela de Produção</strong>
                             <ul class="space-y-0.5 list-disc list-inside marker:text-blue-300">
-                                <!-- ATUALIZADO: Agora vale 50 pts -->
-                                <li>>= 600 cx: 50 pts (5.6%)</li>
+                                <!-- ATUALIZADO: Mostra % precisa na legenda -->
+                                <li>>= 600 cx: 50 pts (3.08%)</li>
                                 <li>(Abaixo de 600: 0 pts)</li>
                             </ul>
                          </div>
                          <div>
                             <strong class="block mb-1 text-slate-700 uppercase tracking-wide text-[10px]">Critérios (Max 50)</strong>
-                            <p>Max 50 pts (6.2%)</p>
-                            <!-- ATUALIZADO: Total fecha em 100 -->
-                            <p class="mt-1 text-slate-400">Total Possível: 100 pts (11.8%)</p>
+                            <p>Max 50 pts (3.08%)</p>
+                            <!-- ATUALIZADO: Total fecha em 6.169% -->
+                            <p class="mt-1 text-slate-400">Total Possível: 100 pts (6.169%)</p>
                          </div>
                     </div>
                 </section>
@@ -567,20 +569,23 @@
         }
 
         // --- CORE ---
-        // Configuração inicial com a nova lógica separada
-        // criteriaPercent: 6.2% para 50 pontos
-        // productionPercent: 5.6% para meta de produção
+        // Configuração inicial atualizada: 3.0845% para cada parte (Total 6.169%)
         let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { 
-            criteriaPercent: 6.2, 
-            productionPercent: 5.6,
+            criteriaPercent: 3.0845, 
+            productionPercent: 3.0845,
             referenceMonth: new Date().toISOString().slice(0, 7) 
         };
         
-        // Migração para novo modelo de config (caso tenha pointValue antigo)
+        // Migração para atualizar quem estava com os valores antigos (5.0, 6.2, etc.)
         if (config.pointValue !== undefined) {
             delete config.pointValue;
-            config.criteriaPercent = 6.2;
-            config.productionPercent = 5.6;
+            config.criteriaPercent = 3.0845;
+            config.productionPercent = 3.0845;
+            localStorage.setItem('bonusApp_config', JSON.stringify(config));
+        } else if (config.criteriaPercent === 5.0 || config.criteriaPercent === 6.2) {
+            // Se já estava no modelo novo mas com valores antigos
+            config.criteriaPercent = 3.0845;
+            config.productionPercent = 3.0845;
             localStorage.setItem('bonusApp_config', JSON.stringify(config));
         }
 
