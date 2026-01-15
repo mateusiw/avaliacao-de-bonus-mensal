@@ -187,20 +187,39 @@
 
             <!-- Painel de Configuração (SECTION/TOGGLE) -->
             <section id="settingsPanel" class="hidden no-print" data-html2canvas-ignore="true" aria-label="Configurações">
-                <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl shadow-inner flex items-center gap-4 animate-in slide-in-from-top-2">
-                    <div class="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
-                        <i data-lucide="percent" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <label for="pointValue" class="block text-xs font-bold text-blue-800 uppercase tracking-wide mb-1">
-                            Fator de Conversão (% por Ponto)
-                        </label>
-                        <div class="flex items-center gap-2">
-                            <!-- Step ajustado para máxima precisão -->
-                            <input type="number" id="pointValue" step="0.000000001" oninput="updateConfig('pointValue', this.value); renderAll();" class="w-32 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
-                            <span class="text-blue-600 font-bold">%</span>
+                <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl shadow-inner grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2">
+                    <!-- Config: Critérios -->
+                    <div class="flex items-center gap-4">
+                        <div class="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
+                            <i data-lucide="list-checks" class="w-5 h-5"></i>
                         </div>
-                        <p class="text-[10px] text-blue-400 mt-1">Padrão: ~0.08813 (Para que 70 pts = R$ 100,00 no salário de 1621).</p>
+                        <div>
+                            <label for="criteriaPercent" class="block text-xs font-bold text-blue-800 uppercase tracking-wide mb-1">
+                                % Máxima Critérios (50 pts)
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="criteriaPercent" step="0.01" oninput="updateConfig('criteriaPercent', this.value); renderAll();" class="w-24 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                                <span class="text-blue-600 font-bold">%</span>
+                            </div>
+                            <p class="text-[10px] text-blue-400 mt-1">Padrão: 6.2%</p>
+                        </div>
+                    </div>
+
+                    <!-- Config: Produção -->
+                    <div class="flex items-center gap-4">
+                        <div class="p-2 bg-white rounded-lg text-emerald-600 shadow-sm">
+                            <i data-lucide="package-check" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <label for="productionPercent" class="block text-xs font-bold text-emerald-800 uppercase tracking-wide mb-1">
+                                % Produção (>=600 cx)
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="productionPercent" step="0.01" oninput="updateConfig('productionPercent', this.value); renderAll();" class="w-24 p-1 rounded border border-emerald-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500">
+                                <span class="text-emerald-600 font-bold">%</span>
+                            </div>
+                            <p class="text-[10px] text-emerald-600 mt-1">Padrão: 5.6%</p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -294,16 +313,16 @@
                          <div>
                             <strong class="block mb-1 text-slate-700 uppercase tracking-wide text-[10px]">Tabela de Produção</strong>
                             <ul class="space-y-0.5 list-disc list-inside marker:text-blue-300">
-                                <li>200 a 400 cx: 20 pts</li>
-                                <li>401 a 600 cx: 30 pts</li>
-                                <li>601 a 800 cx: 50 pts</li>
-                                <li>801 a 1500 cx: 60 pts</li>
+                                <!-- ATUALIZADO: Agora vale 50 pts -->
+                                <li>>= 600 cx: 50 pts (5.6%)</li>
+                                <li>(Abaixo de 600: 0 pts)</li>
                             </ul>
                          </div>
                          <div>
                             <strong class="block mb-1 text-slate-700 uppercase tracking-wide text-[10px]">Critérios (Max 50)</strong>
-                            <p>Assiduidade, Organização, Participação,<br>Agilidade e Pontualidade.</p>
-                            <p class="mt-1 text-slate-400">(Cada item vale 0, 5 ou 10 pts)</p>
+                            <p>Max 50 pts (6.2%)</p>
+                            <!-- ATUALIZADO: Total fecha em 100 -->
+                            <p class="mt-1 text-slate-400">Total Possível: 100 pts (11.8%)</p>
                          </div>
                     </div>
                 </section>
@@ -462,7 +481,7 @@
         // ATENÇÃO: Em produção, nunca armazene senhas no front-end.
         const users = {
             'alesandra': { pass: 'Spg1234@', role: 'admin', name: 'Alesandra' },
-            'masterigl': { pass: 'Ghost2025', role: 'admin', name: 'MasterIGL' }, // Senha atualizada
+            'masterigl': { pass: 'Ghost2025', role: 'admin', name: 'MasterIGL' }, 
             'fagner': { pass: 'brocolis2026', role: 'lider', name: 'Fagner' }
         };
 
@@ -548,16 +567,20 @@
         }
 
         // --- CORE ---
-        // Padrão de Alta Precisão para R$ 100,00 exatos em salário de 1621 com 70 pontos.
-        // Conta: (100 / 1621 * 100) / 70 = 0.088129020886578
-        let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { pointValue: 0.088129021, referenceMonth: new Date().toISOString().slice(0, 7) };
+        // Configuração inicial com a nova lógica separada
+        // criteriaPercent: 6.2% para 50 pontos
+        // productionPercent: 5.6% para meta de produção
+        let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { 
+            criteriaPercent: 6.2, 
+            productionPercent: 5.6,
+            referenceMonth: new Date().toISOString().slice(0, 7) 
+        };
         
-        // Migração automática para o novo valor exato
-        // Verifica se é um dos valores antigos e atualiza
-        const oldValues = [0.1, 6.5, 0.092857, 0.088143];
-        // Verifica também por aproximação para garantir
-        if (oldValues.includes(config.pointValue) || (config.pointValue > 0.08814 && config.pointValue < 0.08815)) {
-            config.pointValue = 0.088129021;
+        // Migração para novo modelo de config (caso tenha pointValue antigo)
+        if (config.pointValue !== undefined) {
+            delete config.pointValue;
+            config.criteriaPercent = 6.2;
+            config.productionPercent = 5.6;
             localStorage.setItem('bonusApp_config', JSON.stringify(config));
         }
 
@@ -585,12 +608,16 @@
         const criteriaLabels = { assiduity: 'Assiduidade', organization: 'Organização', participation: 'Participação', agility: 'Agilidade', punctuality: 'Pontualidade' };
 
         window.onload = function() {
-            // CORREÇÃO DO BUG: Verifica autenticação ao carregar a página
             checkAuth();
-            
             lucide.createIcons();
             document.getElementById('referenceMonth').value = config.referenceMonth;
-            document.getElementById('pointValue').value = config.pointValue;
+            
+            // Popula configs
+            const cInput = document.getElementById('criteriaPercent');
+            const pInput = document.getElementById('productionPercent');
+            if(cInput) cInput.value = config.criteriaPercent;
+            if(pInput) pInput.value = config.productionPercent;
+
             updateTeamCountBadge();
             renderEmployeeSelect(); 
             renderCriteriaForm();
@@ -671,58 +698,94 @@
         }
 
         function getProductionPoints(boxes) {
-            if (boxes < 200) return 0;
-            if (boxes <= 400) return 20;
-            if (boxes <= 600) return 30;
-            if (boxes <= 800) return 50;
-            return 60;
+            // ATUALIZADO: Retorna 50 pontos se atingir 600 caixas
+            if (boxes >= 600) return 50;
+            return 0;
         }
 
         function calculateBonus(emp) {
-            // Calcula pontos originais de produção
-            let originalProdPts = getProductionPoints(emp.boxes || 0);
-            let prodPts = originalProdPts;
+            const boxes = emp.boxes || 0;
+            const salary = Number(emp.salary) || 0;
             
+            // 1. Cálculo dos Critérios (Comportamental)
             const perfPts = Object.values(emp.criteria).reduce((a, b) => a + Number(b), 0);
             
-            // NOVA REGRA DE PENALIDADE:
-            // Se tiver qualquer nota menor que 10 (ou seja, 5 ou 0) nos critérios, cancela o bônus de caixa.
-            const hasPenalty = Object.values(emp.criteria).some(val => Number(val) < 10);
+            // Definição da porcentagem de critérios:
+            // Se houver Fator Individual, ele substitui a lógica padrão?
+            // O pedido de "Fator Individual" era genérico. Vou assumir que ele substitui o TOTAL percentual se preenchido.
+            // Caso contrário, usa a lógica dividida.
             
+            let totalBonusVal = 0;
+            let finalPercent = 0;
+            let prodPts = getProductionPoints(boxes);
+            let originalProdPts = prodPts;
+            
+            // Verifica penalidade (nota < 10 anula produção)
+            const hasPenalty = Object.values(emp.criteria).some(val => Number(val) < 10);
             if (hasPenalty) {
                 prodPts = 0;
             }
 
-            const totalPts = prodPts + perfPts;
-            
-            // LÓGICA ATUALIZADA: Prioriza fator individual se existir
-            let factor = config.pointValue;
             if (emp.customFactor !== undefined && emp.customFactor !== null && emp.customFactor !== "") {
-                factor = parseFloat(emp.customFactor);
+                // Lógica de Fator Individual (simplificada: % sobre tudo)
+                // Se customFactor = 10, e ele fez 70 pontos, ganha 10%? 
+                // Ou o customFactor é o valor de 1 ponto?
+                // Dado o contexto anterior, customFactor era "Total %".
+                // Vamos manter simples: CustomFactor é a % total se gabaritar.
+                // Mas com a nova lógica dividida, custom factor fica complexo.
+                // Vou aplicar o customFactor como um multiplicador global sobre o valor padrão de 11.8%? 
+                // Melhor: CustomFactor define o valor do PONTO DE CRITÉRIO (como antes era o pointValue).
+                // Mas agora temos dois valores.
+                // Vou assumir que se tiver CustomFactor, ele ignora a regra de produção separada e usa a regra antiga (pontos totais * fator).
+                // Isso mantém retrocompatibilidade para quem você definiu exceção.
+                
+                const factor = parseFloat(emp.customFactor); // ex: 0.1
+                const totalPts = prodPts + perfPts; // 70 max
+                finalPercent = totalPts * factor;
+                totalBonusVal = salary * (finalPercent / 100);
+
+            } else {
+                // NOVA LÓGICA PADRÃO (DIVIDIDA)
+                
+                // A) Bônus Critérios
+                // 50 pts = config.criteriaPercent (6.2%)
+                // logo: (pontos / 50) * 6.2
+                const criteriaBonusPercent = (perfPts / 50) * config.criteriaPercent;
+                const criteriaBonusVal = salary * (criteriaBonusPercent / 100);
+
+                // B) Bônus Produção
+                // >= 600 cx = config.productionPercent (5.6%)
+                let productionBonusPercent = 0;
+                // Se prodPts > 0 (ou seja, é 30), aplica a porcentagem configurada
+                if (prodPts > 0) { 
+                     productionBonusPercent = config.productionPercent;
+                }
+                const productionBonusVal = salary * (productionBonusPercent / 100);
+
+                totalBonusVal = criteriaBonusVal + productionBonusVal;
+                finalPercent = criteriaBonusPercent + productionBonusPercent;
             }
             
-            // Ex: Se pontos=70 e fator=0.088143, então bônus ≈ 6.17%
-            const bonusPercentage = totalPts * factor; 
-            
-            const salary = Number(emp.salary) || 0;
-            const bonusVal = salary * (bonusPercentage / 100);
-            
+            const totalPts = prodPts + perfPts; // Agora soma até 80
+
             return { 
                 prodPts, 
                 originalProdPts, 
                 perfPts, 
                 totalPts, 
-                bonusPercentage, 
-                bonusVal, 
-                totalReceive: salary + bonusVal,
-                hasPenalty // Flag para indicar se houve penalidade
+                bonusPercentage: finalPercent, 
+                bonusVal: totalBonusVal, 
+                totalReceive: salary + totalBonusVal,
+                hasPenalty 
             };
         }
 
         function formatCurrency(val) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0); }
 
         function updateConfig(key, value) {
-            config[key] = value;
+            config[key] = parseFloat(value); // Garante número
+            if(key === 'referenceMonth') config[key] = value; // String para data
+            
             localStorage.setItem('bonusApp_config', JSON.stringify(config));
             renderAll();
         }
@@ -762,7 +825,7 @@
             const boxesIdx = nameIdx + 2;
             const critStartIdx = nameIdx + 3; 
             let newCount = 0;
-            let detectedDate = null; // Variável para armazenar a data detectada
+            let detectedDate = null; 
 
             const rows = lines.slice(1);
             rows.forEach(row => {
@@ -770,7 +833,6 @@
                 const cols = row.split(sep).map(c => c.replace(/^"|"$/g, '').trim());
                 if (cols.length < 3) return;
                 
-                // Tenta detectar a data da primeira linha válida se houver coluna de mês
                 if (hasMonthCol && !detectedDate && cols[0].includes('/')) {
                     detectedDate = cols[0]; 
                 }
@@ -786,7 +848,6 @@
                 }
                 const boxes = parseInt(cols[boxesIdx]) || 0;
                 
-                // Helper to safely parse criteria allowing 0
                 const parseCrit = (val) => {
                     if (val === undefined || val === null || val.trim() === '') return 10;
                     const n = parseInt(val);
@@ -806,7 +867,6 @@
                 }
             });
 
-            // Lógica para atualizar o mês de referência automaticamente
             if (detectedDate) {
                 try {
                     const [monthName, year] = detectedDate.split('/');
@@ -818,7 +878,6 @@
                     const mKey = monthName.toLowerCase().trim();
                     if (monthsMap[mKey] && year) {
                         const newRef = `${year.trim()}-${monthsMap[mKey]}`;
-                        // Atualiza a config e o input visualmente
                         updateConfig('referenceMonth', newRef);
                         document.getElementById('referenceMonth').value = newRef;
                     }
@@ -832,11 +891,9 @@
 
         function exportToCSV() {
             if (employees.length === 0) return alert("Não há dados para exportar.");
-            // Admin: Exporta SEM o sufixo _CSV
             generateAndDownloadCSV(employees, "Geral", false);
         }
 
-        // Função atualizada para aceitar o parâmetro 'includeSuffix'
         function generateAndDownloadCSV(dataList, suffix, includeSuffix = false) {
             let csvContent = "\uFEFF"; 
             csvContent += "Mês Referência;Nome;Salário Base;Caixas;Assiduidade;Organização;Participação;Agilidade;Pontualidade;Total Pontos;Valor Bônus;Total a Receber\n";
@@ -866,7 +923,6 @@
                 csvContent += row.join(";") + "\n";
             });
             
-            // Lógica de nome do arquivo dinâmica
             let namePart = `Bonus_${suffix}`;
             if (config.referenceMonth) {
                 const [y, m] = config.referenceMonth.split('-');
@@ -899,7 +955,6 @@
             tbody.innerHTML = '';
             let totalBonus = 0;
             
-            // APPLY FILTER
             const filterName = document.getElementById('filterEmployee').value;
             
             if (config.referenceMonth) {
@@ -908,7 +963,6 @@
                 document.getElementById('headerTitle').innerText = `Relatório de Bônus - ${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
             }
 
-            // Filtrar empregados
             let displayedEmployees = employees;
             if (filterName) {
                 displayedEmployees = employees.filter(e => e.name === filterName);
@@ -921,7 +975,6 @@
                     const calc = calculateBonus(emp);
                     totalBonus += calc.bonusVal;
                     
-                    // Lógica de exibição da coluna PROD com penalidade
                     let prodDisplay = `<span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">${calc.prodPts}</span>`;
                     if (calc.hasPenalty && calc.originalProdPts > 0) {
                         prodDisplay = `
@@ -962,7 +1015,6 @@
                 });
             }
             
-            // Update Totals (based on current view)
             let viewTotalBonus = 0;
             displayedEmployees.forEach(e => viewTotalBonus += calculateBonus(e).bonusVal);
             
@@ -970,7 +1022,6 @@
             document.getElementById('totalEmployeesDisplay').innerText = displayedEmployees.length;
             lucide.createIcons();
             
-            // Populate filter if empty
             const filterSelect = document.getElementById('filterEmployee');
             
             if (filterSelect.options.length <= 1) {
@@ -1005,11 +1056,29 @@
             const b = Number(document.getElementById('empBoxes').value) || 0;
             const points = getProductionPoints(b) + Object.values(newCriteria).reduce((a,b)=>a+b,0);
             
-            // Preview considera o campo individual se preenchido
             const customInput = document.getElementById('empFactor').value;
-            const factor = (customInput && !isNaN(parseFloat(customInput))) ? parseFloat(customInput) : config.pointValue;
+            let percent = 0;
             
-            const percent = points * factor;
+            if (customInput && !isNaN(parseFloat(customInput))) {
+                const factor = parseFloat(customInput);
+                percent = points * factor; // Rough estimation for custom
+            } else {
+                const prodPts = getProductionPoints(b);
+                const perfPts = Object.values(newCriteria).reduce((a,b)=>a+b,0);
+                
+                const cPercent = (perfPts / 50) * config.criteriaPercent;
+                let pPercent = 0;
+                // Preview não sabe se tem penalidade nos critérios anteriores se estiver criando, 
+                // mas aqui temos newCriteria.
+                const hasPenalty = Object.values(newCriteria).some(val => val < 10);
+                
+                if (!hasPenalty && prodPts > 0) {
+                    pPercent = config.productionPercent;
+                }
+                
+                percent = cPercent + pPercent;
+            }
+            
             document.getElementById('previewPoints').innerText = `${points} pts (${percent.toFixed(1)}%)`;
         }
 
@@ -1023,8 +1092,6 @@
             
             document.getElementById('empSalary').value = formatCurrencyValue(emp.salary);
             document.getElementById('empBoxes').value = emp.boxes;
-            
-            // Carrega o fator individual se existir
             document.getElementById('empFactor').value = emp.customFactor !== undefined ? emp.customFactor : "";
             
             newCriteria = { ...emp.criteria };
@@ -1047,7 +1114,7 @@
             document.getElementById('empName').value = "";
             document.getElementById('empSalary').value = "";
             document.getElementById('empBoxes').value = "";
-            document.getElementById('empFactor').value = ""; // Limpa o campo
+            document.getElementById('empFactor').value = ""; 
             newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
             renderCriteriaForm();
             updatePreview();
@@ -1065,7 +1132,7 @@
             const name = document.getElementById('empName').value;
             const salary = parseCurrency(document.getElementById('empSalary').value);
             const boxes = document.getElementById('empBoxes').value;
-            const customFactor = document.getElementById('empFactor').value; // Captura o valor
+            const customFactor = document.getElementById('empFactor').value; 
             
             if(!name || isNaN(salary)) return alert("Por favor, preencha o nome e o salário corretamente.");
             
@@ -1077,7 +1144,7 @@
                         name, 
                         salary: salary, 
                         boxes: Number(boxes), 
-                        customFactor: customFactor, // Salva no objeto
+                        customFactor: customFactor, 
                         criteria: {...newCriteria} 
                     };
                 }
@@ -1088,7 +1155,7 @@
                     name, 
                     salary: salary, 
                     boxes: Number(boxes), 
-                    customFactor: customFactor, // Salva no objeto
+                    customFactor: customFactor, 
                     criteria: {...newCriteria} 
                 });
                 
@@ -1105,28 +1172,24 @@
         function removeEmployee(id) { if(confirm("Remover?")) { employees = employees.filter(e => e.id !== id); saveData(); } }
 
         function openDigitalSheet() {
-            // --- VALIDAÇÃO DE SEGURANÇA (NOVA) ---
             const refMonthInput = document.getElementById('referenceMonth');
             const refMonthValue = refMonthInput.value;
 
             if (!refMonthValue) {
                 alert("⚠️ ATENÇÃO: Selecione o Mês e Ano da avaliação antes de continuar!");
-                // Efeito visual para destacar o erro
                 refMonthInput.parentElement.classList.add('ring-4', 'ring-red-500', 'bg-red-50');
                 refMonthInput.focus();
                 setTimeout(() => refMonthInput.parentElement.classList.remove('ring-4', 'ring-red-500', 'bg-red-50'), 2000);
                 return;
             }
 
-            // Confirmação explícita da data
             const [year, month] = refMonthValue.split('-');
             const monthName = new Date(year, month - 1).toLocaleString('pt-BR', { month: 'long' });
             const formattedDate = `${monthName.toUpperCase()} DE ${year}`;
 
             if (!confirm(`CONFIRMAÇÃO DE PERÍODO:\n\nVocê está prestes a iniciar a avaliação referente a:\n📅 ${formattedDate}\n\nEstá correto?`)) {
-                return; // Cancela se o usuário clicar em "Cancelar"
+                return; 
             }
-            // --------------------------------------
 
             if (teamDatabase.length === 0) {
                 alert("Sua base de equipe está vazia. Adicione funcionários em 'Equipe' primeiro.");
@@ -1196,7 +1259,6 @@
                 Object.keys(criteriaLabels).forEach(key => criteria[key] = parseInt(row.querySelector(`input[name="crit_${index}_${key}"]`).value));
                 tempEmployees.push({ id: Date.now(), name: name, salary: Number(salary), boxes: Number(boxes) || 0, criteria: criteria });
             });
-            // Líder: Exporta COM o sufixo _CSV (passando true)
             generateAndDownloadCSV(tempEmployees, "Preenchido", true);
         }
 
@@ -1249,13 +1311,11 @@
              window.scrollTo(0,0);
 
              setTimeout(() => {
-                 // Define o nome do arquivo dinamicamente
                  let filename = 'Relatorio_Digital.pdf';
                  if (config.referenceMonth) {
                     const [y, m] = config.referenceMonth.split('-');
                     const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
                     const monthCap = mn.charAt(0).toUpperCase() + mn.slice(1);
-                    // Formato: Bonus_Mes_Ano_PDF.pdf
                     filename = `Bonus_${monthCap}_${y}_PDF.pdf`;
                  }
 
@@ -1279,7 +1339,6 @@
              }, 500);
         }
 
-        // --- ORIGINAL PDF GENERATION ---
         function downloadManualSheets() {
             const container = document.getElementById('manual-sheets-content');
             const btn = document.querySelector('button[onclick="downloadManualSheets()"]');
@@ -1330,14 +1389,12 @@
 
             container.innerHTML = '';
             
-            // Título e Data
             let titleSuffix = config.referenceMonth ? ` - ${new Date(config.referenceMonth.split('-')[0], config.referenceMonth.split('-')[1] - 1).toLocaleString('pt-BR', { month: 'long' })}` : "";
             if(config.referenceMonth) {
                 const [y, m] = config.referenceMonth.split('-');
                 titleSuffix = ` - ${m}/${y}`;
             }
 
-            // Cabeçalho da Tabela
             let tableHtml = `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #000;">
                     <div style="margin-bottom: 15px;">
@@ -1363,11 +1420,9 @@
                         <tbody>
             `;
 
-            // Linhas da Tabela
             let totalBonusSum = 0;
-            let totalReceiveSum = 0; // Variável para somar o Total a Receber
+            let totalReceiveSum = 0; 
             
-            // Aplicar filtro se houver
             const filterName = document.getElementById('filterEmployee').value;
             let listToPrint = employees;
             if (filterName) {
@@ -1377,7 +1432,7 @@
             listToPrint.forEach(emp => {
                 const calc = calculateBonus(emp);
                 totalBonusSum += calc.bonusVal;
-                totalReceiveSum += calc.totalReceive; // Somando valor a receber
+                totalReceiveSum += calc.totalReceive; 
                 
                 tableHtml += `
                     <tr>
@@ -1392,20 +1447,17 @@
                         <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold;">
                             ${calc.totalPts} <span style="font-size: 9px; color: #666;">(${calc.bonusPercentage.toFixed(1)}%)</span>
                         </td>
-                        <!-- Formatado em Moeda -->
                         <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatCurrency(calc.bonusVal)}</td>
                         <td style="border: 1px solid #000; padding: 5px; text-align: right; font-weight: bold;">${formatCurrency(calc.totalReceive)}</td>
                     </tr>
                 `;
             });
 
-            // Rodapé com totais
             tableHtml += `
                         </tbody>
                         <tfoot>
                             <tr style="background-color: #f0f0f0; font-weight: bold;">
                                 <td colspan="9" style="border: 1px solid #000; padding: 6px; text-align: right;">TOTAL GERAL:</td>
-                                <!-- Formatado em Moeda -->
                                 <td style="border: 1px solid #000; padding: 6px; text-align: right;">${formatCurrency(totalBonusSum)}</td>
                                 <td style="border: 1px solid #000; padding: 6px; text-align: right;">${formatCurrency(totalReceiveSum)}</td>
                             </tr>
@@ -1425,7 +1477,6 @@
             window.scrollTo(0,0);
 
             setTimeout(() => {
-                // Nome do arquivo
                 let filename = 'Relatorio_Simples.pdf';
                 if (config.referenceMonth) {
                     const [y, m] = config.referenceMonth.split('-');
@@ -1461,7 +1512,6 @@
         }
 
         function downloadPDF() {
-            // REMOVED (or merged into Print A4 logic per previous request, kept empty here if referenced by old button but actually button was removed)
         }
     </script>
 </body>
