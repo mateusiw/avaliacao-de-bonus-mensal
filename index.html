@@ -196,11 +196,11 @@
                             Fator de Conversão (% por Ponto)
                         </label>
                         <div class="flex items-center gap-2">
-                            <!-- Step aumentado para permitir a precisão de 0.092857 -->
-                            <input type="number" id="pointValue" step="0.000001" oninput="updateConfig('pointValue', this.value); renderAll();" class="w-28 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- Step ajustado para máxima precisão -->
+                            <input type="number" id="pointValue" step="0.000000001" oninput="updateConfig('pointValue', this.value); renderAll();" class="w-32 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
                             <span class="text-blue-600 font-bold">%</span>
                         </div>
-                        <p class="text-[10px] text-blue-400 mt-1">Padrão: ~0.0929 (Para que 70 pts = 6.5% do salário).</p>
+                        <p class="text-[10px] text-blue-400 mt-1">Padrão: ~0.08813 (Para que 70 pts = R$ 100,00 no salário de 1621).</p>
                     </div>
                 </div>
             </section>
@@ -548,12 +548,16 @@
         }
 
         // --- CORE ---
-        // Padrão 0.092857 para que 70 pts = 6.5% do salário.
-        let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { pointValue: 0.092857, referenceMonth: new Date().toISOString().slice(0, 7) };
+        // Padrão de Alta Precisão para R$ 100,00 exatos em salário de 1621 com 70 pontos.
+        // Conta: (100 / 1621 * 100) / 70 = 0.088129020886578
+        let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { pointValue: 0.088129021, referenceMonth: new Date().toISOString().slice(0, 7) };
         
-        // Migração automática para corrigir valores anteriores (0.1 ou 6.5)
-        if (config.pointValue === 0.1 || config.pointValue === 6.5) {
-            config.pointValue = 0.092857;
+        // Migração automática para o novo valor exato
+        // Verifica se é um dos valores antigos e atualiza
+        const oldValues = [0.1, 6.5, 0.092857, 0.088143];
+        // Verifica também por aproximação para garantir
+        if (oldValues.includes(config.pointValue) || (config.pointValue > 0.08814 && config.pointValue < 0.08815)) {
+            config.pointValue = 0.088129021;
             localStorage.setItem('bonusApp_config', JSON.stringify(config));
         }
 
@@ -675,8 +679,20 @@
         }
 
         function calculateBonus(emp) {
-            const prodPts = getProductionPoints(emp.boxes || 0);
+            // Calcula pontos originais de produção
+            let originalProdPts = getProductionPoints(emp.boxes || 0);
+            let prodPts = originalProdPts;
+            
             const perfPts = Object.values(emp.criteria).reduce((a, b) => a + Number(b), 0);
+            
+            // NOVA REGRA DE PENALIDADE:
+            // Se tiver qualquer nota menor que 10 (ou seja, 5 ou 0) nos critérios, cancela o bônus de caixa.
+            const hasPenalty = Object.values(emp.criteria).some(val => Number(val) < 10);
+            
+            if (hasPenalty) {
+                prodPts = 0;
+            }
+
             const totalPts = prodPts + perfPts;
             
             // LÓGICA ATUALIZADA: Prioriza fator individual se existir
@@ -685,13 +701,22 @@
                 factor = parseFloat(emp.customFactor);
             }
             
-            // Ex: Se pontos=70 e fator=0.092857, então bônus ≈ 6.5%
+            // Ex: Se pontos=70 e fator=0.088143, então bônus ≈ 6.17%
             const bonusPercentage = totalPts * factor; 
             
             const salary = Number(emp.salary) || 0;
             const bonusVal = salary * (bonusPercentage / 100);
             
-            return { prodPts, perfPts, totalPts, bonusPercentage, bonusVal, totalReceive: salary + bonusVal };
+            return { 
+                prodPts, 
+                originalProdPts, 
+                perfPts, 
+                totalPts, 
+                bonusPercentage, 
+                bonusVal, 
+                totalReceive: salary + bonusVal,
+                hasPenalty // Flag para indicar se houve penalidade
+            };
         }
 
         function formatCurrency(val) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0); }
@@ -895,17 +920,29 @@
                 displayedEmployees.forEach(emp => {
                     const calc = calculateBonus(emp);
                     totalBonus += calc.bonusVal;
+                    
+                    // Lógica de exibição da coluna PROD com penalidade
+                    let prodDisplay = `<span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">${calc.prodPts}</span>`;
+                    if (calc.hasPenalty && calc.originalProdPts > 0) {
+                        prodDisplay = `
+                            <div class="flex flex-col items-center">
+                                <span class="text-red-500 font-bold text-xs" title="Cancelado por critérios abaixo de 10">0</span>
+                                <span class="text-[9px] text-gray-400 line-through" title="Pontuação original de caixas">${calc.originalProdPts}</span>
+                            </div>
+                        `;
+                    }
+
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition-colors group";
                     tr.innerHTML = `
                         <td class="p-4 font-medium text-slate-800">${emp.name}<div class="text-xs text-slate-400 font-normal">Base: ${formatCurrency(emp.salary)}</div></td>
                         <td class="p-4 text-center text-slate-600">${emp.boxes}</td>
-                        <td class="p-4 text-center"><span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">${calc.prodPts}</span></td>
-                        <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.assiduity}</td>
-                        <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.organization}</td>
-                        <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.participation}</td>
-                        <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.agility}</td>
-                        <td class="p-2 text-center text-xs text-slate-500">${emp.criteria.punctuality}</td>
+                        <td class="p-4 text-center">${prodDisplay}</td>
+                        <td class="p-2 text-center text-xs ${emp.criteria.assiduity < 10 ? 'text-red-500 font-bold' : 'text-slate-500'}">${emp.criteria.assiduity}</td>
+                        <td class="p-2 text-center text-xs ${emp.criteria.organization < 10 ? 'text-red-500 font-bold' : 'text-slate-500'}">${emp.criteria.organization}</td>
+                        <td class="p-2 text-center text-xs ${emp.criteria.participation < 10 ? 'text-red-500 font-bold' : 'text-slate-500'}">${emp.criteria.participation}</td>
+                        <td class="p-2 text-center text-xs ${emp.criteria.agility < 10 ? 'text-red-500 font-bold' : 'text-slate-500'}">${emp.criteria.agility}</td>
+                        <td class="p-2 text-center text-xs ${emp.criteria.punctuality < 10 ? 'text-red-500 font-bold' : 'text-slate-500'}">${emp.criteria.punctuality}</td>
                         <td class="p-4 text-center font-bold text-slate-700">
                             ${calc.totalPts}
                             <div class="text-[10px] text-blue-600 bg-blue-50 rounded px-1 mt-1 font-bold inline-block">${calc.bonusPercentage.toFixed(1)}%</div>
