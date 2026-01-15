@@ -715,53 +715,47 @@
             // 1. Cálculo dos Critérios (Comportamental)
             const perfPts = Object.values(emp.criteria).reduce((a, b) => a + Number(b), 0);
             
-            // Definição da porcentagem de critérios:
-            // Se houver Fator Individual, ele substitui a lógica padrão?
-            // O pedido de "Fator Individual" era genérico. Vou assumir que ele substitui o TOTAL percentual se preenchido.
-            // Caso contrário, usa a lógica dividida.
-            
             let totalBonusVal = 0;
             let finalPercent = 0;
             let prodPts = getProductionPoints(boxes);
             let originalProdPts = prodPts;
             
-            // Verifica penalidade (nota < 10 anula produção)
-            const hasPenalty = Object.values(emp.criteria).some(val => Number(val) < 10);
+            // NOVA REGRA DE PENALIDADE (TOLERÂNCIA ZERO):
+            // Se tiver qualquer nota IGUAL A 0 nos critérios, cancela TUDO (Produção + Critérios).
+            const hasPenalty = Object.values(emp.criteria).some(val => Number(val) === 0);
+            
+            // Se tiver penalidade, zera tudo imediatamente
             if (hasPenalty) {
-                prodPts = 0;
+                return { 
+                    prodPts: 0, 
+                    originalProdPts: originalProdPts, 
+                    perfPts: perfPts, // Mantém para registro interno, mas não soma no total
+                    totalPts: 0, // Pontos totais zerados
+                    bonusPercentage: 0, // % Zerada
+                    bonusVal: 0, // Valor R$ Zerado
+                    totalReceive: salary, // Recebe apenas o salário base
+                    hasPenalty: true 
+                };
             }
 
+            // --- SE NÃO TIVER PENALIDADE, SEGUE O CÁLCULO NORMAL ---
+
             if (emp.customFactor !== undefined && emp.customFactor !== null && emp.customFactor !== "") {
-                // Lógica de Fator Individual (simplificada: % sobre tudo)
-                // Se customFactor = 10, e ele fez 70 pontos, ganha 10%? 
-                // Ou o customFactor é o valor de 1 ponto?
-                // Dado o contexto anterior, customFactor era "Total %".
-                // Vamos manter simples: CustomFactor é a % total se gabaritar.
-                // Mas com a nova lógica dividida, custom factor fica complexo.
-                // Vou aplicar o customFactor como um multiplicador global sobre o valor padrão de 11.8%? 
-                // Melhor: CustomFactor define o valor do PONTO DE CRITÉRIO (como antes era o pointValue).
-                // Mas agora temos dois valores.
-                // Vou assumir que se tiver CustomFactor, ele ignora a regra de produção separada e usa a regra antiga (pontos totais * fator).
-                // Isso mantém retrocompatibilidade para quem você definiu exceção.
-                
-                const factor = parseFloat(emp.customFactor); // ex: 0.1
-                const totalPts = prodPts + perfPts; // 70 max
+                // Lógica de Fator Individual
+                const factor = parseFloat(emp.customFactor); 
+                const totalPts = prodPts + perfPts; 
                 finalPercent = totalPts * factor;
                 totalBonusVal = salary * (finalPercent / 100);
 
             } else {
-                // NOVA LÓGICA PADRÃO (DIVIDIDA)
+                // Lógica Padrão (Dividida)
                 
                 // A) Bônus Critérios
-                // 50 pts = config.criteriaPercent (6.2%)
-                // logo: (pontos / 50) * 6.2
                 const criteriaBonusPercent = (perfPts / 50) * config.criteriaPercent;
                 const criteriaBonusVal = salary * (criteriaBonusPercent / 100);
 
                 // B) Bônus Produção
-                // >= 600 cx = config.productionPercent (5.6%)
                 let productionBonusPercent = 0;
-                // Se prodPts > 0 (ou seja, é 30), aplica a porcentagem configurada
                 if (prodPts > 0) { 
                      productionBonusPercent = config.productionPercent;
                 }
@@ -771,7 +765,7 @@
                 finalPercent = criteriaBonusPercent + productionBonusPercent;
             }
             
-            const totalPts = prodPts + perfPts; // Agora soma até 80
+            const totalPts = prodPts + perfPts;
 
             return { 
                 prodPts, 
@@ -781,7 +775,7 @@
                 bonusPercentage: finalPercent, 
                 bonusVal: totalBonusVal, 
                 totalReceive: salary + totalBonusVal,
-                hasPenalty 
+                hasPenalty: false 
             };
         }
 
@@ -981,31 +975,37 @@
                     totalBonus += calc.bonusVal;
                     
                     let prodDisplay = `<span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">${calc.prodPts}</span>`;
-                    if (calc.hasPenalty && calc.originalProdPts > 0) {
+                    
+                    // Se teve penalidade, mostra que foi zerado explicitamente
+                    if (calc.hasPenalty) {
                         prodDisplay = `
                             <div class="flex flex-col items-center">
-                                <span class="text-red-500 font-bold text-xs" title="Cancelado por critérios abaixo de 10">0</span>
-                                <span class="text-[9px] text-gray-400 line-through" title="Pontuação original de caixas">${calc.originalProdPts}</span>
+                                <span class="text-red-500 font-bold text-xs" title="Cancelado por nota 0">0</span>
+                                ${calc.originalProdPts > 0 ? `<span class="text-[9px] text-gray-400 line-through">${calc.originalProdPts}</span>` : ''}
                             </div>
                         `;
                     }
 
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition-colors group";
+                    
+                    // Se tiver penalidade, destaca a linha levemente em vermelho no hover ou deixa normal
+                    // Vamos focar em destacar os zeros na tabela
+                    
                     tr.innerHTML = `
                         <td class="p-4 font-medium text-slate-800">${emp.name}<div class="text-xs text-slate-400 font-normal">Base: ${formatCurrency(emp.salary)}</div></td>
                         <td class="p-4 text-center text-slate-600">${emp.boxes}</td>
                         <td class="p-4 text-center">${prodDisplay}</td>
-                        <td class="p-2 text-center text-xs ${emp.criteria.assiduity < 10 ? 'text-red-500 font-bold' : 'text-slate-500'}">${emp.criteria.assiduity}</td>
-                        <td class="p-2 text-center text-xs ${emp.criteria.organization < 10 ? 'text-red-500 font-bold' : 'text-slate-500'}">${emp.criteria.organization}</td>
-                        <td class="p-2 text-center text-xs ${emp.criteria.participation < 10 ? 'text-red-500 font-bold' : 'text-slate-500'}">${emp.criteria.participation}</td>
-                        <td class="p-2 text-center text-xs ${emp.criteria.agility < 10 ? 'text-red-500 font-bold' : 'text-slate-500'}">${emp.criteria.agility}</td>
-                        <td class="p-2 text-center text-xs ${emp.criteria.punctuality < 10 ? 'text-red-500 font-bold' : 'text-slate-500'}">${emp.criteria.punctuality}</td>
-                        <td class="p-4 text-center font-bold text-slate-700">
+                        <td class="p-2 text-center text-xs ${emp.criteria.assiduity === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.assiduity < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.assiduity}</td>
+                        <td class="p-2 text-center text-xs ${emp.criteria.organization === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.organization < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.organization}</td>
+                        <td class="p-2 text-center text-xs ${emp.criteria.participation === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.participation < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.participation}</td>
+                        <td class="p-2 text-center text-xs ${emp.criteria.agility === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.agility < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.agility}</td>
+                        <td class="p-2 text-center text-xs ${emp.criteria.punctuality === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.punctuality < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.punctuality}</td>
+                        <td class="p-4 text-center font-bold ${calc.hasPenalty ? 'text-red-500' : 'text-slate-700'}">
                             ${calc.totalPts}
-                            <div class="text-[10px] text-blue-600 bg-blue-50 rounded px-1 mt-1 font-bold inline-block">${calc.bonusPercentage.toFixed(1)}%</div>
+                            ${!calc.hasPenalty ? `<div class="text-[10px] text-blue-600 bg-blue-50 rounded px-1 mt-1 font-bold inline-block">${calc.bonusPercentage.toFixed(1)}%</div>` : '<div class="text-[9px] text-red-400 mt-1 font-medium">Cancelado</div>'}
                         </td>
-                        <td class="p-4 text-right font-bold text-emerald-600">+ ${formatCurrency(calc.bonusVal)}</td>
+                        <td class="p-4 text-right font-bold ${calc.hasPenalty ? 'text-red-500' : 'text-emerald-600'}">+ ${formatCurrency(calc.bonusVal)}</td>
                         <td class="p-4 text-right font-bold text-slate-900">${formatCurrency(calc.totalReceive)}</td>
                         <td class="p-4 text-right no-print flex justify-end gap-2" data-html2canvas-ignore="true">
                             <button onclick="editEmployee(${emp.id})" class="text-slate-300 hover:text-blue-500 transition-colors" title="Editar">
@@ -1344,6 +1344,7 @@
              }, 500);
         }
 
+        // --- ORIGINAL PDF GENERATION ---
         function downloadManualSheets() {
             const container = document.getElementById('manual-sheets-content');
             const btn = document.querySelector('button[onclick="downloadManualSheets()"]');
