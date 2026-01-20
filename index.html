@@ -9,41 +9,73 @@
     <link rel="icon" type="image/png" href="https://i.imgur.com/ezKp9uo.png">
     <link rel="apple-touch-icon" href="https://i.imgur.com/ezKp9uo.png">
     
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Bônus Mensal","short_name":"Bônus","start_url":".","display":"standalone","background_color":"#f8fafc","theme_color":"#2563eb","icons":[{"src":"https://i.imgur.com/ezKp9uo.png","sizes":"512x512","type":"image/png"}]}'>
-    
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Pré-carregamento da Logo para Impressão Instantânea -->
+    <link rel="preload" as="image" href="https://i.imgur.com/CNJpqbX.png">
     
     <!-- CSS Crítico -->
     <style>
         body { font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
         
+        /* Regras para esconder financeiro e tabela do Líder */
+        body[data-role="lider"] .financial-col { display: none !important; }
+        body[data-role="lider"] #launch-form-aside { display: none !important; }
+        body[data-role="lider"] #admin-dashboard-content { display: none !important; } /* Oculta toda a área da tabela para líder */
+        body[data-role="lider"] #table-section { display: none !important; }
+        
         @media print {
-            @page { margin: 1cm; size: landscape; }
+            @page { margin: 0.5cm; size: landscape; }
             .no-print { display: none !important; }
+            
+            body.printing-report * {
+                visibility: hidden;
+            }
+            body.printing-report #manual-sheets-content, 
+            body.printing-report #manual-sheets-content * {
+                visibility: visible;
+            }
+            body.printing-report #manual-sheets-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                display: block !important;
+            }
+            body.printing-report #app-content,
+            body.printing-report #login-screen,
+            body.printing-report #digitalSheetModal,
+            body.printing-report #confirmModal {
+                display: none !important;
+            }
         }
         
         .hidden-force { display: none !important; }
+        .ignore-export { opacity: 0.4; background-color: #f3f4f6; filter: grayscale(100%); }
         
-        /* Scrollbar personalizada sutil */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Animações simples para feedback visual */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS (CDN - Idealmente seria compilado, mas mantido para single-file) -->
+    <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-slate-800 min-h-screen font-sans">
 
-    <!-- TELA DE LOGIN (SECTION) -->
+    <!-- Imagem escondida para garantir cache -->
+    <img src="https://i.imgur.com/CNJpqbX.png" style="display:none;" id="preloadLogo" alt="preload">
+
+    <!-- TELA DE LOGIN -->
     <section id="login-screen" class="fixed inset-0 z-50 bg-gray-50 flex items-center justify-center p-4" aria-label="Tela de Login">
         <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 w-full max-w-md animate-fade-in">
             <header class="text-center mb-8">
@@ -62,7 +94,6 @@
                 
                 <div>
                     <label for="loginPass" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Senha</label>
-                    <!-- Readicionado o atributo 'required' pois agora todos têm senha -->
                     <input type="password" id="loginPass" autocomplete="current-password" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" placeholder="••••••••" required>
                 </div>
 
@@ -80,7 +111,7 @@
     <!-- CONTEÚDO PRINCIPAL DO APP -->
     <div id="app-content" class="hidden flex flex-col min-h-screen">
         
-        <!-- Navbar Superior (HEADER) -->
+        <!-- Navbar Superior -->
         <header class="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm no-print">
             <div class="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -104,19 +135,17 @@
 
         <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 space-y-8">
             
-            <!-- Barra de Controles (SECTION) -->
-            <section class="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between no-print" data-html2canvas-ignore="true" aria-label="Barra de Ferramentas">
+            <!-- Barra de Controles -->
+            <section class="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between no-print" aria-label="Barra de Ferramentas">
                 
-                <!-- Título Dinâmico -->
                 <header>
                     <h2 class="text-2xl font-bold text-slate-800" id="headerTitle">Relatório Geral</h2>
                     <p class="text-slate-500 text-sm mt-1">Gerencie a produção e o desempenho da equipe.</p>
                 </header>
 
-                <!-- Botões de Ação -->
                 <div class="flex flex-wrap gap-2 w-full xl:w-auto items-center">
                     
-                    <!-- Seletor de Mês DESTACADO (Melhor visualização) -->
+                    <!-- Seletor de Mês -->
                     <div class="relative group bg-white border-2 border-blue-500 rounded-xl shadow-md flex items-center h-12 transition-all hover:shadow-lg hover:scale-[1.01]">
                         <div class="pl-4 text-blue-600">
                             <i data-lucide="calendar" class="w-5 h-5"></i>
@@ -124,71 +153,82 @@
                         <input type="month" id="referenceMonth" onchange="updateConfig('referenceMonth', this.value); updateTitle();" class="bg-transparent border-none text-slate-800 text-base font-bold py-1.5 pl-3 pr-4 focus:ring-0 outline-none cursor-pointer h-full" aria-label="Seletor de Mês de Referência">
                     </div>
                     
-                    <!-- FILTRO POR NOME (NA TABELA) - Classe admin-only adicionada -->
+                    <!-- Filtro por Nome -->
                     <div class="relative group bg-white border border-gray-200 rounded-lg shadow-sm flex items-center h-10 admin-only">
                         <div class="pl-3 text-slate-400">
                             <i data-lucide="search" class="w-4 h-4"></i>
                         </div>
                         <select id="filterEmployee" onchange="renderAll()" class="bg-transparent border-none text-slate-700 text-sm font-medium py-1.5 pl-2 pr-8 focus:ring-0 cursor-pointer outline-none w-40 h-full" aria-label="Filtrar por Funcionário">
                             <option value="">Todos</option>
-                            <!-- JS popula -->
                         </select>
                     </div>
 
-                    <div class="h-8 w-px bg-gray-300 mx-1 hidden sm:block"></div>
+                    <div class="h-10 w-px bg-gray-300 mx-2 hidden sm:block"></div>
 
                     <!-- Botões Admin -->
                     <div class="admin-only flex gap-2">
-                        <button onclick="toggleSettings()" class="p-2 h-10 w-10 flex items-center justify-center bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Configurar Regra" aria-label="Configurar Porcentagem do Ponto">
-                            <i data-lucide="settings" class="w-5 h-5"></i>
+                        <button onclick="toggleSettings()" class="flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Configurar Regras">
+                            <i data-lucide="settings" class="w-5 h-5 mb-0.5"></i>
+                            <span class="text-[10px] font-bold">Config</span>
                         </button>
-                        <button onclick="viewTeamDatabase()" class="relative p-2 h-10 w-10 flex items-center justify-center bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group" title="Equipe" aria-label="Ver Equipe">
-                            <i data-lucide="users-2" class="w-5 h-5"></i>
-                            <span id="teamCountBadge" class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white border-2 border-white">0</span>
+                        
+                        <button onclick="viewTeamDatabase()" class="relative flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Gerenciar Equipe">
+                            <i data-lucide="users-2" class="w-5 h-5 mb-0.5"></i>
+                            <span class="text-[10px] font-bold">Equipe</span>
+                            <span id="teamCountBadge" class="absolute top-1 right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white border-2 border-white shadow-sm">0</span>
                         </button>
-                        <button onclick="resetData()" class="p-2 h-10 w-10 flex items-center justify-center bg-white border border-gray-200 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm" title="Limpar Tudo" aria-label="Limpar Dados">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        
+                        <button onclick="resetData()" class="flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm" title="Limpar Tudo">
+                            <i data-lucide="trash-2" class="w-5 h-5 mb-0.5"></i>
+                            <span class="text-[10px] font-bold">Limpar</span>
                         </button>
                     </div>
 
-                    <div class="h-8 w-px bg-gray-300 mx-1 hidden sm:block admin-only"></div>
+                    <div class="h-10 w-px bg-gray-300 mx-2 hidden sm:block admin-only"></div>
 
                     <!-- Import/Export -->
                     <div class="admin-only flex gap-2">
                         <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileUpload(event)">
-                        <button onclick="document.getElementById('csvFileInput').click()" class="flex items-center gap-2 px-3 h-10 bg-white border border-gray-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm">
-                            <i data-lucide="upload" class="w-4 h-4"></i> <span class="hidden lg:inline">Importar</span>
+                        
+                        <button onclick="document.getElementById('csvFileInput').click()" class="flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-700 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Importar CSV">
+                            <i data-lucide="upload" class="w-5 h-5 mb-0.5"></i>
+                            <span class="text-[10px] font-bold">Importar</span>
                         </button>
-                        <button onclick="exportToCSV()" class="flex items-center gap-2 px-3 h-10 bg-white border border-gray-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-gray-50 hover:text-green-600 transition-all shadow-sm">
-                            <i data-lucide="download" class="w-4 h-4"></i> <span class="hidden lg:inline">Exportar</span>
+
+                        <button onclick="exportToCSV()" class="flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-700 rounded-lg hover:bg-gray-50 hover:text-green-600 transition-all shadow-sm" title="Exportar CSV">
+                            <i data-lucide="download" class="w-5 h-5 mb-0.5"></i>
+                            <span class="text-[10px] font-bold">Exportar</span>
                         </button>
                     </div>
 
                     <!-- Fichas & Operação -->
-                    <div class="flex gap-2">
-                        <!-- Admin Only para os botões pequenos (Já que o Líder tem os grandes) -->
-                        <div class="admin-only flex bg-white border border-gray-200 rounded-lg shadow-sm p-0.5 h-10 items-center">
-                            <button onclick="downloadManualSheets()" class="px-3 py-1.5 h-full flex items-center text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-md text-sm font-medium transition-all" title="Imprimir Manual">
-                                <i data-lucide="printer" class="w-4 h-4"></i>
-                            </button>
-                            <div class="w-px h-6 bg-gray-200 mx-1"></div>
-                            <button onclick="openDigitalSheet()" class="px-3 py-1.5 h-full flex items-center text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-md text-sm font-medium transition-all" title="Preencher Digital">
-                                <i data-lucide="monitor-check" class="w-4 h-4"></i>
-                            </button>
-                        </div>
+                    <div class="flex gap-2 ml-2">
                         
-                        <!-- BOTÃO RENOMEADO: Imprimir -->
-                        <button onclick="printSimpleTable()" class="admin-only flex items-center gap-2 px-4 h-10 bg-white border border-gray-200 text-slate-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg text-sm font-bold shadow-sm transition-all">
-                            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir
+                         <!-- Fichas (Admin pode ver) -->
+                        <button onclick="downloadManualSheets()" class="admin-only flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-600 rounded-lg hover:text-blue-600 hover:bg-blue-50 transition-all shadow-sm" title="Imprimir Fichas Manuais">
+                            <i data-lucide="printer" class="w-5 h-5 mb-0.5"></i>
+                            <span class="text-[10px] font-bold">Fichas</span>
                         </button>
+                        
+                        <!-- Digital (Admin pode ver) -->
+                        <button onclick="openDigitalSheet()" class="admin-only flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-600 rounded-lg hover:text-blue-600 hover:bg-blue-50 transition-all shadow-sm" title="Avaliação Digital">
+                            <i data-lucide="monitor-check" class="w-5 h-5 mb-0.5"></i>
+                            <span class="text-[10px] font-bold">Digital</span>
+                        </button>
+
+                        <!-- Imprimir (Admin apenas) -->
+                        <button onclick="printSimpleTable()" class="admin-only flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg shadow-sm transition-all" title="Imprimir Relatório A4">
+                            <i data-lucide="printer" class="w-5 h-5 mb-0.5"></i>
+                            <span class="text-[10px] font-bold">Imprimir</span>
+                        </button>
+
                     </div>
                 </div>
             </section>
 
-            <!-- Painel de Configuração (SECTION/TOGGLE) -->
-            <section id="settingsPanel" class="hidden no-print" data-html2canvas-ignore="true" aria-label="Configurações">
+            <!-- Painel de Configuração -->
+            <section id="settingsPanel" class="hidden no-print" aria-label="Configurações">
                 <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl shadow-inner grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2">
-                    <!-- Config: Critérios -->
                     <div class="flex items-center gap-4">
                         <div class="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
                             <i data-lucide="list-checks" class="w-5 h-5"></i>
@@ -198,7 +238,6 @@
                                 % Máxima Critérios (50 pts)
                             </label>
                             <div class="flex items-center gap-2">
-                                <!-- Step ajustado para alta precisão -->
                                 <input type="number" id="criteriaPercent" step="0.0001" oninput="updateConfig('criteriaPercent', this.value); renderAll();" class="w-24 p-1 rounded border border-blue-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
                                 <span class="text-blue-600 font-bold">%</span>
                             </div>
@@ -206,7 +245,6 @@
                         </div>
                     </div>
 
-                    <!-- Config: Produção -->
                     <div class="flex items-center gap-4">
                         <div class="p-2 bg-white rounded-lg text-emerald-600 shadow-sm">
                             <i data-lucide="package-check" class="w-5 h-5"></i>
@@ -216,7 +254,6 @@
                                 % Produção (>=600 cx)
                             </label>
                             <div class="flex items-center gap-2">
-                                <!-- Step ajustado para alta precisão -->
                                 <input type="number" id="productionPercent" step="0.0001" oninput="updateConfig('productionPercent', this.value); renderAll();" class="w-24 p-1 rounded border border-emerald-200 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500">
                                 <span class="text-emerald-600 font-bold">%</span>
                             </div>
@@ -226,13 +263,11 @@
                 </div>
             </section>
 
-            <!-- Cards de Resumo (SECTION) -->
+            <!-- Cards de Resumo -->
             <section class="admin-only grid grid-cols-1 md:grid-cols-2 gap-6" aria-label="Estatísticas">
-                <!-- Card Bônus -->
                 <article class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-emerald-200 transition-colors">
                     <div>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total em Bônus</p>
-                        <!-- HTML5 OUTPUT -->
                         <output class="block text-3xl font-extrabold text-slate-800 tracking-tight" id="totalBonusDisplay">R$ 0,00</output>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -240,11 +275,9 @@
                     </div>
                 </article>
 
-                <!-- Card Funcionários -->
                 <article class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-200 transition-colors">
                     <div>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Equipe Avaliada</p>
-                        <!-- HTML5 OUTPUT -->
                         <output class="block text-3xl font-extrabold text-slate-800 tracking-tight" id="totalEmployeesDisplay">0</output>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -253,9 +286,7 @@
                 </article>
             </section>
 
-            <!-- Conteúdo Principal -->
-            
-            <!-- Dashboard Lider (SECTION) -->
+            <!-- Dashboard Lider -->
             <section id="leader-dashboard" class="hidden mt-10 animate-fade-in" aria-label="Painel do Líder">
                  <div class="text-center mb-12">
                     <h2 class="text-2xl font-bold text-slate-800">Painel do Avaliador</h2>
@@ -278,8 +309,7 @@
             <!-- Dashboard Admin (Tabela e Form) -->
             <div id="admin-dashboard-content" class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 
-                <!-- Tabela Principal (SECTION) -->
-                <section class="xl:col-span-2 flex flex-col gap-4" aria-label="Tabela de Dados">
+                <section id="table-section" class="xl:col-span-2 flex flex-col gap-4" aria-label="Tabela de Dados">
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex-1">
                         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                             <h3 class="font-bold text-slate-700">Detalhamento da Folha</h3>
@@ -292,16 +322,14 @@
                                         <th class="p-4 font-semibold text-slate-700">Nome</th>
                                         <th class="p-4 font-medium text-center text-xs uppercase tracking-wider">Caixas</th>
                                         <th class="p-4 font-medium text-center text-xs uppercase tracking-wider bg-blue-50/50">Prod.</th>
-                                        <!-- Critérios compactos -->
                                         <th class="p-2 text-center text-[10px] uppercase text-slate-400">Assid</th>
                                         <th class="p-2 text-center text-[10px] uppercase text-slate-400">Org</th>
                                         <th class="p-2 text-center text-[10px] uppercase text-slate-400">Part</th>
                                         <th class="p-2 text-center text-[10px] uppercase text-slate-400">Agil</th>
                                         <th class="p-2 text-center text-[10px] uppercase text-slate-400">Pont</th>
-                                        
                                         <th class="p-4 font-medium text-center text-xs uppercase tracking-wider bg-emerald-50/50">Pts Totais</th>
-                                        <th class="p-4 font-bold text-right text-emerald-600">Bônus</th>
-                                        <th class="p-4 font-bold text-right text-slate-800">Total</th>
+                                        <th class="p-4 font-bold text-right text-emerald-600 financial-col">Bônus</th>
+                                        <th class="p-4 font-bold text-right text-slate-800 financial-col">Total</th>
                                         <th class="p-4 w-16 no-print"></th>
                                     </tr>
                                 </thead>
@@ -310,12 +338,10 @@
                         </div>
                     </div>
                     
-                    <!-- Legenda -->
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-xs text-slate-500 flex flex-col md:flex-row gap-8 justify-between">
                          <div>
                             <strong class="block mb-1 text-slate-700 uppercase tracking-wide text-[10px]">Tabela de Produção</strong>
                             <ul class="space-y-0.5 list-disc list-inside marker:text-blue-300">
-                                <!-- ATUALIZADO: Mostra % precisa na legenda -->
                                 <li>>= 600 cx: 50 pts (3.08%)</li>
                                 <li>(Abaixo de 600: 0 pts)</li>
                             </ul>
@@ -323,14 +349,13 @@
                          <div>
                             <strong class="block mb-1 text-slate-700 uppercase tracking-wide text-[10px]">Critérios (Max 50)</strong>
                             <p>Max 50 pts (3.08%)</p>
-                            <!-- ATUALIZADO: Total fecha em 6.169% -->
                             <p class="mt-1 text-slate-400">Total Possível: 100 pts (6.169%)</p>
                          </div>
                     </div>
                 </section>
 
-                <!-- Formulário Lateral (ASIDE) -->
-                <aside class="xl:col-span-1 no-print" data-html2canvas-ignore="true" aria-label="Formulário de Lançamento">
+                <!-- Formulário Lateral -->
+                <aside id="launch-form-aside" class="xl:col-span-1 no-print" aria-label="Formulário de Lançamento">
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm sticky top-24 overflow-hidden">
                         <div class="p-5 border-b border-gray-100 bg-gray-50">
                             <h3 class="font-bold text-slate-700 flex items-center gap-2">
@@ -356,7 +381,6 @@
                                         <input type="number" id="empBoxes" required placeholder="Qtd" oninput="updatePreview()" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
                                     </div>
                                 </div>
-                                <!-- NOVO CAMPO: Fator Individual -->
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Fator Individual (%) <span class="text-gray-300 font-normal normal-case">(Opcional)</span></label>
                                     <input type="number" id="empFactor" step="0.01" placeholder="Padrão Global" oninput="updatePreview()" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
@@ -367,20 +391,18 @@
                             <div class="pt-4 border-t border-gray-100">
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">Avaliação Rápida</label>
                                 <div class="space-y-2" id="criteriaList">
-                                    <!-- Critérios aqui -->
+                                    <!-- Injected via JS -->
                                 </div>
                             </div>
 
                             <div class="bg-blue-50 p-3 rounded-lg flex justify-between items-center text-blue-800 text-sm font-medium">
                                 <span>Pontuação Prevista:</span>
-                                <!-- HTML5 OUTPUT -->
                                 <output class="font-bold text-lg" id="previewPoints">0</output>
                             </div>
 
                             <button type="submit" id="addBtn" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-[0.98]">
                                 Adicionar
                             </button>
-                            <!-- Botão cancelar edição (escondido por padrão) -->
                             <button type="button" id="cancelEditBtn" onclick="cancelEdit()" class="w-full bg-gray-200 hover:bg-gray-300 text-slate-700 font-bold py-3.5 rounded-xl transition-all hidden">
                                 Cancelar Edição
                             </button>
@@ -392,7 +414,7 @@
         </main>
     </div>
 
-    <!-- TELA DE PREENCHIMENTO DIGITAL (Modal Fullscreen) -->
+    <!-- TELA DE PREENCHIMENTO DIGITAL -->
     <div id="digitalSheetModal" class="hidden fixed inset-0 bg-slate-100 z-50 overflow-y-auto no-print">
         <div class="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
             <div class="flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-lg border border-slate-200 sticky top-4 z-20 gap-4">
@@ -404,6 +426,11 @@
                     <p class="text-xs text-slate-500 mt-0.5">Realize o lançamento das avaliações e gere os relatórios (CSV e PDF) para envio ao departamento responsável.</p>
                 </div>
                 <div class="flex gap-2 w-full md:w-auto">
+                    <!-- NOVO BOTÃO: Limpar Tudo -->
+                    <button onclick="resetDigitalSheet()" class="px-4 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-medium text-sm transition-colors flex items-center gap-2" title="Zerar todas as avaliações ativas">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">Limpar Tudo</span>
+                    </button>
+                    
                     <button onclick="closeDigitalSheet()" class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-slate-600 border border-gray-200 rounded-lg font-medium text-sm transition-colors">
                         Cancelar
                     </button>
@@ -433,11 +460,35 @@
                                 <th class="p-4 text-center w-20">Agil</th>
                                 <th class="p-4 text-center w-20">Pont</th>
                                 <th class="p-4 w-32">Caixas</th>
+                                <th class="p-4 w-16 text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50 bg-slate-50/30"></tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CUSTOMIZADO (SUBSTITUI O CONFIRM) -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in no-print">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center space-y-4">
+            <div class="mx-auto bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center text-blue-600 mb-2">
+                <i data-lucide="calendar-check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">Confirmar Mês de Referência</h3>
+            <p class="text-sm text-slate-600">Você está prestes a iniciar a avaliação para o mês de:</p>
+            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                <strong class="text-blue-800 text-lg block" id="modalMonthName">Janeiro de 2025</strong>
+            </div>
+            <p class="text-xs text-slate-500">O mês selecionado está correto?</p>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeConfirmModal()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-slate-700 rounded-xl font-medium transition-colors">
+                    Cancelar
+                </button>
+                <button onclick="confirmDigitalEntry()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-200 transition-all active:scale-95">
+                    Confirmar
+                </button>
             </div>
         </div>
     </div>
@@ -457,37 +508,35 @@
                         <tr>
                             <th class="p-4 border-b border-gray-100">Nome</th>
                             <th class="p-4 text-right border-b border-gray-100">Salário Base</th>
+                            <th class="p-4 text-center border-b border-gray-100">Ação</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50" id="viewTeamTableBody"></tbody>
                 </table>
             </div>
             <div class="p-3 bg-gray-50 text-center text-[10px] text-slate-400 border-t border-gray-100">
-                Visualização somente leitura. Contate o administrador para alterações.
+                Visualização e controle de status.
             </div>
         </div>
     </div>
 
-    <!-- ÁREA OCULTA PARA PDF -->
+    <!-- ÁREA OCULTA PARA PDF E IMPRESSÃO -->
     <div id="manual-sheets-content" class="hidden bg-white min-h-screen p-8"></div>
 
-    <!-- Scripts externos no final do body para não bloquear renderização -->
+    <!-- Scripts externos -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
-        // --- JAVASCRIPT LOGIC ---
         let currentUser = null;
-        let editingId = null; // Track which employee is being edited
+        let editingId = null;
 
-        // ATENÇÃO: Em produção, nunca armazene senhas no front-end.
         const users = {
             'alesandra': { pass: 'Spg1234@', role: 'admin', name: 'Alesandra' },
             'masterigl': { pass: 'Ghost2025', role: 'admin', name: 'MasterIGL' }, 
             'fagner': { pass: 'brocolis2026', role: 'lider', name: 'Fagner' }
         };
 
-        const INACTIVITY_LIMIT = 3600000; // 1 Hora em ms
+        const INACTIVITY_LIMIT = 3600000;
 
         function handleLogin(e) {
             e.preventDefault();
@@ -547,13 +596,20 @@
         }
 
         function applyUserRole(role) {
+            // Seta o data-role no body para o CSS atuar
+            document.body.setAttribute('data-role', role);
+
             if (role === 'lider') {
-                document.getElementById('admin-dashboard-content').classList.add('hidden');
+                // Líder vê APENAS o dashboard de botões
+                document.getElementById('admin-dashboard-content').classList.add('hidden'); // Hide table/form
                 document.getElementById('leader-dashboard').classList.remove('hidden');
+                
+                // Esconde botões de admin (Config, Equipe, Limpar, Importar/Exportar)
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden-force'));
             } else {
+                // Admin vê tudo
                 document.getElementById('admin-dashboard-content').classList.remove('hidden');
-                document.getElementById('leader-dashboard').classList.add('hidden');
+                document.getElementById('leader-dashboard').classList.add('hidden'); 
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden-force'));
             }
         }
@@ -568,22 +624,14 @@
             localStorage.setItem('bonusApp_lastActive', Date.now());
         }
 
-        // --- CORE ---
-        // Configuração inicial atualizada: 3.0845% para cada parte (Total 6.169%)
         let config = JSON.parse(localStorage.getItem('bonusApp_config')) || { 
             criteriaPercent: 3.0845, 
             productionPercent: 3.0845,
             referenceMonth: new Date().toISOString().slice(0, 7) 
         };
         
-        // Migração para atualizar quem estava com os valores antigos (5.0, 6.2, etc.)
         if (config.pointValue !== undefined) {
             delete config.pointValue;
-            config.criteriaPercent = 3.0845;
-            config.productionPercent = 3.0845;
-            localStorage.setItem('bonusApp_config', JSON.stringify(config));
-        } else if (config.criteriaPercent === 5.0 || config.criteriaPercent === 6.2) {
-            // Se já estava no modelo novo mas com valores antigos
             config.criteriaPercent = 3.0845;
             config.productionPercent = 3.0845;
             localStorage.setItem('bonusApp_config', JSON.stringify(config));
@@ -591,14 +639,14 @@
 
         let employees = JSON.parse(localStorage.getItem('bonusApp_employees')) || [];
         
-        const teamDatabase = [
+        const defaultTeam = [
             { name: "EMANUEL CARDOSO ARAUJO", salary: 1621 },
             { name: "MARCOS FEITOSA DE OLIVEIRA", salary: 1621 },
             { name: "GABRIEL CARDOSO ARAUJO", salary: 1621 },
             { name: "FRANCISCO DA SILVA FERREIRA", salary: 1621 },
             { name: "LUCAS RIBEIRO DA SILVA", salary: 1621 },
             { name: "LEANDRO ALTINO FERREIRA", salary: 1621 },
-            { name: "FELIPE BARBOSA BANDEIRA", salary: 1621 },
+            { name: "FELIPE BARBOSA BANDEIRA", salary: 1621, active: false }, // Definido como inativo (férias)
             { name: "ANTONIO PATRICK ARAUJO LEMOS", salary: 1621 },
             { name: "FABIANA MARQUES BARBOSA", salary: 1621 },
             { name: "BRUNA PEREIRA DA SILVA", salary: 1621 },
@@ -609,6 +657,15 @@
             { name: "DIONISIO PEREIRA DE ALBUQUERQUE", salary: 1621 }
         ];
 
+        let teamDatabase = JSON.parse(localStorage.getItem('bonusApp_team')) || defaultTeam;
+
+        teamDatabase.forEach(m => {
+            // Se active não estiver definido (undefined), define como true.
+            // Se já estiver definido como false (caso do Felipe acima), mantém false.
+            if (m.active === undefined) m.active = true;
+        });
+        localStorage.setItem('bonusApp_team', JSON.stringify(teamDatabase));
+
         let newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
         const criteriaLabels = { assiduity: 'Assiduidade', organization: 'Organização', participation: 'Participação', agility: 'Agilidade', punctuality: 'Pontualidade' };
 
@@ -617,7 +674,6 @@
             lucide.createIcons();
             document.getElementById('referenceMonth').value = config.referenceMonth;
             
-            // Popula configs
             const cInput = document.getElementById('criteriaPercent');
             const pInput = document.getElementById('productionPercent');
             if(cInput) cInput.value = config.criteriaPercent;
@@ -631,21 +687,21 @@
 
         function updateTeamCountBadge() {
             const badge = document.getElementById('teamCountBadge');
-            if (badge) badge.innerText = teamDatabase.length;
+            if (badge) badge.innerText = teamDatabase.filter(m => m.active).length;
         }
 
         function renderEmployeeSelect() {
             const select = document.getElementById('empName');
             const filterSelect = document.getElementById('filterEmployee');
 
-            select.innerHTML = '<option value="">Selecione um colaborador...</option>';
+            if(select) select.innerHTML = '<option value="">Selecione um colaborador...</option>';
             if(filterSelect) filterSelect.innerHTML = '<option value="">Todos</option>';
             
-            teamDatabase.forEach(member => { 
+            teamDatabase.filter(m => m.active).forEach(member => { 
                 const opt = document.createElement('option'); 
                 opt.value = member.name; 
                 opt.text = member.name;
-                select.appendChild(opt); 
+                if(select) select.appendChild(opt); 
 
                 if(filterSelect) {
                     const optFilter = document.createElement('option');
@@ -660,9 +716,21 @@
         function viewTeamDatabase() {
             const tbody = document.getElementById('viewTeamTableBody');
             tbody.innerHTML = '';
-            teamDatabase.forEach(member => {
+            teamDatabase.forEach((member, index) => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="p-4 font-medium text-slate-700">${member.name}</td><td class="p-4 text-right font-mono text-slate-600">${formatCurrency(member.salary)}</td>`;
+                const rowClass = member.active ? '' : 'opacity-50 bg-gray-50';
+                
+                tr.className = rowClass;
+                tr.innerHTML = `
+                    <td class="p-4 font-medium text-slate-700">${member.name}</td>
+                    <td class="p-4 text-right font-mono text-slate-600">${formatCurrency(member.salary)}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="toggleMemberStatus(${index}, this)" class="px-2 py-1 rounded text-xs font-bold border transition-colors flex items-center gap-1 mx-auto ${member.active ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-red-500 bg-red-50 border-red-200'}">
+                             <i data-lucide="${member.active ? 'check-circle-2' : 'x-circle'}" class="w-3 h-3"></i>
+                             <span>${member.active ? 'Ativo' : 'Inativo'}</span>
+                        </button>
+                    </td>
+                `;
                 tbody.appendChild(tr);
             });
             document.getElementById('viewTeamModal').classList.remove('hidden');
@@ -670,7 +738,14 @@
         }
         function closeViewTeam() { document.getElementById('viewTeamModal').classList.add('hidden'); }
 
-        // --- AUTOCOMPLETE SALARY ---
+        function toggleMemberStatus(index, btn) {
+            teamDatabase[index].active = !teamDatabase[index].active;
+            localStorage.setItem('bonusApp_team', JSON.stringify(teamDatabase));
+            viewTeamDatabase(); // Re-render to update UI
+            renderEmployeeSelect(); // Update selects
+            renderAll(); // Update list
+        }
+
         function autoFillSalary() {
             const select = document.getElementById('empName');
             const salaryInput = document.getElementById('empSalary');
@@ -699,11 +774,11 @@
         
         function parseCurrency(str) {
             if (!str) return 0;
+            if (typeof str === 'number') return str;
             return parseFloat(str.replace(/\./g, '').replace(',', '.'));
         }
 
         function getProductionPoints(boxes) {
-            // ATUALIZADO: Retorna 50 pontos se atingir 600 caixas
             if (boxes >= 600) return 50;
             return 0;
         }
@@ -712,7 +787,6 @@
             const boxes = emp.boxes || 0;
             const salary = Number(emp.salary) || 0;
             
-            // 1. Cálculo dos Critérios (Comportamental)
             const perfPts = Object.values(emp.criteria).reduce((a, b) => a + Number(b), 0);
             
             let totalBonusVal = 0;
@@ -720,41 +794,31 @@
             let prodPts = getProductionPoints(boxes);
             let originalProdPts = prodPts;
             
-            // NOVA REGRA DE PENALIDADE (TOLERÂNCIA ZERO):
-            // Se tiver qualquer nota IGUAL A 0 nos critérios, cancela TUDO (Produção + Critérios).
             const hasPenalty = Object.values(emp.criteria).some(val => Number(val) === 0);
             
-            // Se tiver penalidade, zera tudo imediatamente
             if (hasPenalty) {
                 return { 
                     prodPts: 0, 
                     originalProdPts: originalProdPts, 
-                    perfPts: perfPts, // Mantém para registro interno, mas não soma no total
-                    totalPts: 0, // Pontos totais zerados
-                    bonusPercentage: 0, // % Zerada
-                    bonusVal: 0, // Valor R$ Zerado
-                    totalReceive: salary, // Recebe apenas o salário base
+                    perfPts: perfPts, 
+                    totalPts: 0, 
+                    bonusPercentage: 0, 
+                    bonusVal: 0, 
+                    totalReceive: salary, 
                     hasPenalty: true 
                 };
             }
 
-            // --- SE NÃO TIVER PENALIDADE, SEGUE O CÁLCULO NORMAL ---
-
             if (emp.customFactor !== undefined && emp.customFactor !== null && emp.customFactor !== "") {
-                // Lógica de Fator Individual
                 const factor = parseFloat(emp.customFactor); 
                 const totalPts = prodPts + perfPts; 
                 finalPercent = totalPts * factor;
                 totalBonusVal = salary * (finalPercent / 100);
 
             } else {
-                // Lógica Padrão (Dividida)
-                
-                // A) Bônus Critérios
                 const criteriaBonusPercent = (perfPts / 50) * config.criteriaPercent;
                 const criteriaBonusVal = salary * (criteriaBonusPercent / 100);
 
-                // B) Bônus Produção
                 let productionBonusPercent = 0;
                 if (prodPts > 0) { 
                      productionBonusPercent = config.productionPercent;
@@ -782,8 +846,8 @@
         function formatCurrency(val) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0); }
 
         function updateConfig(key, value) {
-            config[key] = parseFloat(value); // Garante número
-            if(key === 'referenceMonth') config[key] = value; // String para data
+            config[key] = parseFloat(value);
+            if(key === 'referenceMonth') config[key] = value; 
             
             localStorage.setItem('bonusApp_config', JSON.stringify(config));
             renderAll();
@@ -818,24 +882,30 @@
             if (lines.length < 2) return alert("Arquivo vazio.");
             const header = lines[0];
             let sep = header.includes(';') ? ';' : ',';
-            const hasMonthCol = header.toLowerCase().includes('mês') || header.toLowerCase().includes('mes');
+            
+            const isHeader = header.toLowerCase().includes('nome') && (header.toLowerCase().includes('salário') || header.toLowerCase().includes('caixas'));
+            
+            let hasMonthCol = false;
+            let startRow = 0;
+            
+            if (isHeader) {
+                hasMonthCol = header.toLowerCase().includes('mês') || header.toLowerCase().includes('mes');
+                startRow = 1;
+            }
+            
             const nameIdx = hasMonthCol ? 1 : 0;
             const salaryIdx = nameIdx + 1;
             const boxesIdx = nameIdx + 2;
             const critStartIdx = nameIdx + 3; 
-            let newCount = 0;
-            let detectedDate = null; 
 
-            const rows = lines.slice(1);
+            let newCount = 0;
+            
+            const rows = lines.slice(startRow);
             rows.forEach(row => {
                 if(!row.trim()) return;
                 const cols = row.split(sep).map(c => c.replace(/^"|"$/g, '').trim());
                 if (cols.length < 3) return;
                 
-                if (hasMonthCol && !detectedDate && cols[0].includes('/')) {
-                    detectedDate = cols[0]; 
-                }
-
                 const name = cols[nameIdx];
                 let salary = 1621;
                 if (cols[salaryIdx]) {
@@ -866,88 +936,10 @@
                 }
             });
 
-            if (detectedDate) {
-                try {
-                    const [monthName, year] = detectedDate.split('/');
-                    const monthsMap = {
-                        'janeiro': '01', 'fevereiro': '02', 'março': '03', 'marco': '03', 'abril': '04',
-                        'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08',
-                        'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
-                    };
-                    const mKey = monthName.toLowerCase().trim();
-                    if (monthsMap[mKey] && year) {
-                        const newRef = `${year.trim()}-${monthsMap[mKey]}`;
-                        updateConfig('referenceMonth', newRef);
-                        document.getElementById('referenceMonth').value = newRef;
-                    }
-                } catch (e) {
-                    console.error("Erro ao detectar data do CSV", e);
-                }
-            }
-
-            saveData(); alert(`${newCount} registros importados! Mês ajustado.`);
+            saveData(); alert(`${newCount} registros importados!`);
         }
 
-        function exportToCSV() {
-            if (employees.length === 0) return alert("Não há dados para exportar.");
-            generateAndDownloadCSV(employees, "Geral", false);
-        }
-
-        function generateAndDownloadCSV(dataList, suffix, includeSuffix = false) {
-            let csvContent = "\uFEFF"; 
-            csvContent += "Mês Referência;Nome;Salário Base;Caixas;Assiduidade;Organização;Participação;Agilidade;Pontualidade;Total Pontos;Valor Bônus;Total a Receber\n";
-            let monthLabel = "Não definido";
-            if (config.referenceMonth) {
-                const [y, m] = config.referenceMonth.split('-');
-                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
-                monthLabel = `${mn.charAt(0).toUpperCase() + mn.slice(1)}/${y}`;
-            }
-            dataList.forEach(emp => {
-                const calc = calculateBonus(emp);
-                const c = emp.criteria;
-                const row = [
-                    monthLabel,
-                    emp.name,
-                    emp.salary.toFixed(2).replace('.', ','),
-                    emp.boxes,
-                    c.assiduity,
-                    c.organization,
-                    c.participation,
-                    c.agility,
-                    c.punctuality,
-                    calc.totalPts,
-                    calc.bonusVal.toFixed(2).replace('.', ','),
-                    calc.totalReceive.toFixed(2).replace('.', ',')
-                ];
-                csvContent += row.join(";") + "\n";
-            });
-            
-            let namePart = `Bonus_${suffix}`;
-            if (config.referenceMonth) {
-                const [y, m] = config.referenceMonth.split('-');
-                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
-                const monthCap = mn.charAt(0).toUpperCase() + mn.slice(1);
-                namePart = `Bonus_${monthCap}_${y}`;
-            }
-
-            if (includeSuffix) {
-                namePart += "_CSV";
-            }
-
-            const filename = `${namePart}.csv`;
-            
-            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const link = document.createElement("a");
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute("href", url);
-                link.setAttribute("download", filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        }
+        function removeEmployee(id) { if(confirm("Remover?")) { employees = employees.filter(e => e.id !== id); saveData(); } }
 
         function renderAll() {
             const tbody = document.getElementById('employeesTableBody');
@@ -966,7 +958,11 @@
             if (filterName) {
                 displayedEmployees = employees.filter(e => e.name === filterName);
             }
-
+            
+            // Only show employees that are still in teamDatabase or keep historical?
+            // Better to show all but mark inactive if needed.
+            // For now, simpler approach:
+            
             if (displayedEmployees.length === 0) {
                  tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-slate-400 italic">Nenhum registro encontrado.</td></tr>';
             } else {
@@ -976,7 +972,6 @@
                     
                     let prodDisplay = `<span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">${calc.prodPts}</span>`;
                     
-                    // Se teve penalidade, mostra que foi zerado explicitamente
                     if (calc.hasPenalty) {
                         prodDisplay = `
                             <div class="flex flex-col items-center">
@@ -989,11 +984,8 @@
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition-colors group";
                     
-                    // Se tiver penalidade, destaca a linha levemente em vermelho no hover ou deixa normal
-                    // Vamos focar em destacar os zeros na tabela
-                    
                     tr.innerHTML = `
-                        <td class="p-4 font-medium text-slate-800">${emp.name}<div class="text-xs text-slate-400 font-normal">Base: ${formatCurrency(emp.salary)}</div></td>
+                        <td class="p-4 font-medium text-slate-800">${emp.name}<div class="text-xs text-slate-400 font-normal financial-col">Base: ${formatCurrency(emp.salary)}</div></td>
                         <td class="p-4 text-center text-slate-600">${emp.boxes}</td>
                         <td class="p-4 text-center">${prodDisplay}</td>
                         <td class="p-2 text-center text-xs ${emp.criteria.assiduity === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.assiduity < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.assiduity}</td>
@@ -1003,11 +995,11 @@
                         <td class="p-2 text-center text-xs ${emp.criteria.punctuality === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.punctuality < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.punctuality}</td>
                         <td class="p-4 text-center font-bold ${calc.hasPenalty ? 'text-red-500' : 'text-slate-700'}">
                             ${calc.totalPts}
-                            ${!calc.hasPenalty ? `<div class="text-[10px] text-blue-600 bg-blue-50 rounded px-1 mt-1 font-bold inline-block">${calc.bonusPercentage.toFixed(1)}%</div>` : '<div class="text-[9px] text-red-400 mt-1 font-medium">Cancelado</div>'}
+                            ${calc.hasPenalty ? '<div style="color: red; font-size: 8px; line-height: 1;">CANCELADO</div>' : ''}
                         </td>
-                        <td class="p-4 text-right font-bold ${calc.hasPenalty ? 'text-red-500' : 'text-emerald-600'}">+ ${formatCurrency(calc.bonusVal)}</td>
-                        <td class="p-4 text-right font-bold text-slate-900">${formatCurrency(calc.totalReceive)}</td>
-                        <td class="p-4 text-right no-print flex justify-end gap-2" data-html2canvas-ignore="true">
+                        <td class="p-4 text-right font-bold ${calc.hasPenalty ? 'text-red-500' : 'text-emerald-600'} financial-col">+ ${formatCurrency(calc.bonusVal)}</td>
+                        <td class="p-4 text-right font-bold text-slate-900 financial-col">${formatCurrency(calc.totalReceive)}</td>
+                        <td class="p-4 text-right no-print flex justify-end gap-2 admin-only" data-html2canvas-ignore="true">
                             <button onclick="editEmployee(${emp.id})" class="text-slate-300 hover:text-blue-500 transition-colors" title="Editar">
                                 <i data-lucide="pencil" width="16"></i>
                             </button>
@@ -1026,17 +1018,6 @@
             document.getElementById('totalBonusDisplay').innerText = formatCurrency(viewTotalBonus);
             document.getElementById('totalEmployeesDisplay').innerText = displayedEmployees.length;
             lucide.createIcons();
-            
-            const filterSelect = document.getElementById('filterEmployee');
-            
-            if (filterSelect.options.length <= 1) {
-                teamDatabase.forEach(member => {
-                    const opt = document.createElement('option');
-                    opt.value = member.name;
-                    opt.text = member.name;
-                    filterSelect.appendChild(opt);
-                });
-            }
         }
 
         function renderCriteriaForm() {
@@ -1057,6 +1038,7 @@
         }
 
         function setCriteria(key, val) { newCriteria[key] = val; renderCriteriaForm(); }
+
         function updatePreview() {
             const b = Number(document.getElementById('empBoxes').value) || 0;
             const points = getProductionPoints(b) + Object.values(newCriteria).reduce((a,b)=>a+b,0);
@@ -1064,18 +1046,17 @@
             const customInput = document.getElementById('empFactor').value;
             let percent = 0;
             
-            if (customInput && !isNaN(parseFloat(customInput))) {
+            if (customInput && !isNaN(parseFloat(customInput)) && customInput !== "") {
                 const factor = parseFloat(customInput);
-                percent = points * factor; // Rough estimation for custom
+                percent = points * factor;
             } else {
                 const prodPts = getProductionPoints(b);
                 const perfPts = Object.values(newCriteria).reduce((a,b)=>a+b,0);
                 
                 const cPercent = (perfPts / 50) * config.criteriaPercent;
                 let pPercent = 0;
-                // Preview não sabe se tem penalidade nos critérios anteriores se estiver criando, 
-                // mas aqui temos newCriteria.
-                const hasPenalty = Object.values(newCriteria).some(val => val < 10);
+                
+                const hasPenalty = Object.values(newCriteria).some(val => val === 0);
                 
                 if (!hasPenalty && prodPts > 0) {
                     pPercent = config.productionPercent;
@@ -1087,7 +1068,6 @@
             document.getElementById('previewPoints').innerText = `${points} pts (${percent.toFixed(1)}%)`;
         }
 
-        // --- EDIT FUNCTIONALITY ---
         function editEmployee(id) {
             const emp = employees.find(e => e.id === id);
             if (!emp) return;
@@ -1097,6 +1077,7 @@
             
             document.getElementById('empSalary').value = formatCurrencyValue(emp.salary);
             document.getElementById('empBoxes').value = emp.boxes;
+            
             document.getElementById('empFactor').value = emp.customFactor !== undefined ? emp.customFactor : "";
             
             newCriteria = { ...emp.criteria };
@@ -1174,350 +1155,518 @@
             saveData();
         }
 
-        function removeEmployee(id) { if(confirm("Remover?")) { employees = employees.filter(e => e.id !== id); saveData(); } }
+        // ==============================================================
+        // IMPLEMENTAÇÕES NOVAS E CORRIGIDAS ABAIXO
+        // ==============================================================
 
+        // 1. DIGITAL SHEET FUNCTIONS
         function openDigitalSheet() {
-            const refMonthInput = document.getElementById('referenceMonth');
-            const refMonthValue = refMonthInput.value;
-
-            if (!refMonthValue) {
-                alert("⚠️ ATENÇÃO: Selecione o Mês e Ano da avaliação antes de continuar!");
-                refMonthInput.parentElement.classList.add('ring-4', 'ring-red-500', 'bg-red-50');
-                refMonthInput.focus();
-                setTimeout(() => refMonthInput.parentElement.classList.remove('ring-4', 'ring-red-500', 'bg-red-50'), 2000);
-                return;
+            // Verifica o mês atual para exibir no alerta
+            let currentMonth = "Mês não selecionado";
+            if (config.referenceMonth) {
+                const [y, m] = config.referenceMonth.split('-');
+                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                currentMonth = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
             }
 
-            const [year, month] = refMonthValue.split('-');
-            const monthName = new Date(year, month - 1).toLocaleString('pt-BR', { month: 'long' });
-            const formattedDate = `${monthName.toUpperCase()} DE ${year}`;
+            // Usa requestAnimationFrame para garantir que o clique seja processado visualmente na hora
+            requestAnimationFrame(() => {
+                document.getElementById('modalMonthName').textContent = currentMonth;
+                document.getElementById('confirmModal').classList.remove('hidden');
+            });
+        }
 
-            if (!confirm(`CONFIRMAÇÃO DE PERÍODO:\n\nVocê está prestes a iniciar a avaliação referente a:\n📅 ${formattedDate}\n\nEstá correto?`)) {
-                return; 
-            }
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.add('hidden');
+        }
 
-            if (teamDatabase.length === 0) {
-                alert("Sua base de equipe está vazia. Adicione funcionários em 'Equipe' primeiro.");
-                return;
-            }
-            const modal = document.getElementById('digitalSheetModal');
+        function confirmDigitalEntry() {
+            // 1. Fecha o modal de confirmação primeiro
+            closeConfirmModal();
+            
+            // 2. Pequeno delay para a UI atualizar o fechamento do modal antes de pesar a CPU com a tabela
+            setTimeout(() => {
+                try {
+                    renderDigitalSheet();
+                    document.getElementById('digitalSheetModal').classList.remove('hidden');
+                } catch (error) {
+                    console.error("Erro ao abrir digital:", error);
+                    alert("Houve um erro ao carregar a tabela. Por favor, tente novamente.");
+                }
+            }, 50); // Reduzido para 50ms para ser mais rápido
+        }
+
+        function closeDigitalSheet() {
+            document.getElementById('digitalSheetModal').classList.add('hidden');
+            renderAll(); // Refresh main view to show updates
+        }
+
+        function renderDigitalSheet() {
             const tbody = document.querySelector('#digitalSheetTable tbody');
             tbody.innerHTML = '';
-            teamDatabase.forEach((member, index) => {
-                const existing = employees.find(e => e.name === member.name);
-                const boxes = existing ? existing.boxes : '';
-                const crit = existing ? existing.criteria : { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50/50 transition-colors";
-                let criteriaHtml = '';
-                Object.keys(criteriaLabels).forEach(key => {
-                    const val = crit[key];
-                    let btnClass = "bg-white text-slate-300 border-gray-200 hover:border-gray-300"; 
-                    if(val === 0) btnClass = "bg-rose-100 text-rose-700 border-rose-300 ring-2 ring-rose-100";
-                    if(val === 5) btnClass = "bg-amber-100 text-amber-700 border-amber-300 ring-2 ring-amber-100";
-                    if(val === 10) btnClass = "bg-blue-100 text-blue-700 border-blue-300 ring-2 ring-blue-100";
 
-                    criteriaHtml += `<td class="p-4 text-center"><button type="button" onclick="toggleDigitalCriteria(this)" data-value="${val}" class="w-9 h-9 rounded-full font-bold text-xs border transition-all ${btnClass}">${val}</button><input type="hidden" name="crit_${index}_${key}" value="${val}"></td>`;
-                });
-                tr.innerHTML = `<td class="p-4 font-medium text-slate-800">${member.name}<input type="hidden" name="name_${index}" value="${member.name}"></td>${criteriaHtml}<td class="p-4"><input type="number" name="boxes_${index}" value="${boxes}" placeholder="0" class="w-full p-2 border border-gray-200 rounded-lg text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"></td>`;
+            const activeMembers = teamDatabase.filter(m => m.active);
+
+            activeMembers.forEach((member, index) => {
+                // Find existing entry for this month
+                const existing = employees.find(e => e.name === member.name);
+                
+                // Defaults - AGORA INICIA COM 0
+                let c = { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
+                let boxes = 0;
+                
+                if (existing) {
+                    c = existing.criteria;
+                    boxes = existing.boxes;
+                }
+
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-name', member.name);
+                tr.className = "hover:bg-blue-50/50 transition-colors";
+                
+                // Criteria Buttons Helper
+                const btnHtml = (key, val) => `
+                    <button onclick="cycleDigitalValue(this, '${member.name}', '${key}')" 
+                        data-value="${val}"
+                        class="criteria-btn w-9 h-9 rounded-full font-bold text-xs border transition-all ${
+                            val === 10 ? 'bg-blue-100 text-blue-700 border-blue-300 ring-2 ring-blue-100' :
+                            val === 5 ? 'bg-amber-100 text-amber-700 border-amber-300 ring-2 ring-amber-100' :
+                            'bg-rose-100 text-rose-700 border-rose-300 ring-2 ring-rose-100'
+                        }">
+                        ${val}
+                    </button>
+                `;
+
+                tr.innerHTML = `
+                    <td class="p-4 font-medium text-slate-800">${member.name}</td>
+                    <td class="p-4 text-center">${btnHtml('assiduity', c.assiduity)}</td>
+                    <td class="p-4 text-center">${btnHtml('organization', c.organization)}</td>
+                    <td class="p-4 text-center">${btnHtml('participation', c.participation)}</td>
+                    <td class="p-4 text-center">${btnHtml('agility', c.agility)}</td>
+                    <td class="p-4 text-center">${btnHtml('punctuality', c.punctuality)}</td>
+                    <td class="p-4">
+                        <input type="number" value="${boxes}" 
+                               onchange="updateDigitalEmployee('${member.name}', 'boxes', this.value)"
+                               class="w-full p-2 border border-slate-200 rounded-lg text-center font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="resetDigitalRow(this, '${member.name}')" class="text-slate-300 hover:text-red-500 p-2" title="Zerar">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
                 tbody.appendChild(tr);
             });
-            modal.classList.remove('hidden');
             lucide.createIcons();
         }
 
-        function closeDigitalSheet() { document.getElementById('digitalSheetModal').classList.add('hidden'); }
-
-        function toggleDigitalCriteria(btn) {
-            const current = parseInt(btn.getAttribute('data-value'));
-            const input = btn.nextElementSibling;
-            let nextVal = 0;
-            let nextClass = "bg-white text-slate-300 border-gray-200 hover:border-gray-300";
-
-            if (current === 0) {
-                nextVal = 5;
-                nextClass = "bg-amber-100 text-amber-700 border-amber-300 ring-2 ring-amber-100";
-            } else if (current === 5) {
-                nextVal = 10;
-                nextClass = "bg-blue-100 text-blue-700 border-blue-300 ring-2 ring-blue-100";
-            } else {
-                nextVal = 0;
-                nextClass = "bg-rose-100 text-rose-700 border-rose-300 ring-2 ring-rose-100";
-            }
+        function cycleDigitalValue(btn, name, criteriaKey) {
+            let current = parseInt(btn.getAttribute('data-value'));
+            let next = 10;
+            if (current === 10) next = 5;
+            else if (current === 5) next = 0;
             
-            btn.setAttribute('data-value', nextVal);
-            btn.innerText = nextVal;
-            btn.className = `w-9 h-9 rounded-full font-bold text-xs border transition-all ${nextClass}`;
-            input.value = nextVal;
+            // Update UI
+            btn.setAttribute('data-value', next);
+            btn.innerText = next;
+            btn.className = `criteria-btn w-9 h-9 rounded-full font-bold text-xs border transition-all ${
+                next === 10 ? 'bg-blue-100 text-blue-700 border-blue-300 ring-2 ring-blue-100' :
+                next === 5 ? 'bg-amber-100 text-amber-700 border-amber-300 ring-2 ring-amber-100' :
+                'bg-rose-100 text-rose-700 border-rose-300 ring-2 ring-rose-100'
+            }`;
+
+            updateDigitalEmployee(name, criteriaKey, next);
+        }
+
+        function updateDigitalEmployee(name, key, value) {
+            let empIndex = employees.findIndex(e => e.name === name);
+            let emp;
+
+            if (empIndex === -1) {
+                // Create new
+                const member = teamDatabase.find(m => m.name === name);
+                emp = {
+                    id: Date.now() + Math.random(),
+                    name: name,
+                    salary: member ? member.salary : 1621,
+                    boxes: 0,
+                    // Defaults - AGORA INICIA COM 0
+                    criteria: { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 }
+                };
+                employees.push(emp);
+                empIndex = employees.length - 1;
+            } else {
+                emp = employees[empIndex];
+            }
+
+            // Update Value
+            if (key === 'boxes') {
+                emp.boxes = parseInt(value) || 0;
+            } else {
+                emp.criteria[key] = parseInt(value);
+            }
+
+            employees[empIndex] = emp;
+            saveData();
+        }
+
+        function resetDigitalRow(btn, name) {
+            if(!confirm(`Zerar notas de ${name}?`)) return;
+            
+            // Reset in data
+            const emp = employees.find(e => e.name === name);
+            if(emp) {
+                emp.boxes = 0;
+                emp.criteria = { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
+                saveData();
+            }
+
+            // Update UI
+            const tr = btn.closest('tr');
+            tr.querySelectorAll('.criteria-btn').forEach(b => {
+                b.setAttribute('data-value', 0);
+                b.innerText = '0';
+                b.className = 'criteria-btn w-9 h-9 rounded-full font-bold text-xs border transition-all bg-rose-100 text-rose-700 border-rose-300 ring-2 ring-rose-100';
+            });
+            tr.querySelector('input[type="number"]').value = 0;
+        }
+
+        function resetDigitalSheet() {
+            if(!confirm("Tem certeza que deseja ZERAR TODOS os registros da tela?")) return;
+            
+            // Filter only displayed
+            const activeNames = teamDatabase.filter(m=>m.active).map(m=>m.name);
+            
+            employees.forEach(emp => {
+                if(activeNames.includes(emp.name)) {
+                    emp.boxes = 0;
+                    emp.criteria = { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
+                }
+            });
+            saveData();
+            renderDigitalSheet();
         }
 
         function exportDigitalSheetCSV() {
-            const tempEmployees = [];
-            const tbody = document.querySelector('#digitalSheetTable tbody');
-            const rows = tbody.querySelectorAll('tr');
-            rows.forEach((row, index) => {
-                const name = row.querySelector(`input[name="name_${index}"]`).value;
-                const boxes = row.querySelector(`input[name="boxes_${index}"]`).value;
-                const dbMember = teamDatabase.find(m => m.name === name);
-                const salary = dbMember ? dbMember.salary : 1621;
-                const criteria = {};
-                Object.keys(criteriaLabels).forEach(key => criteria[key] = parseInt(row.querySelector(`input[name="crit_${index}_${key}"]`).value));
-                tempEmployees.push({ id: Date.now(), name: name, salary: Number(salary), boxes: Number(boxes) || 0, criteria: criteria });
-            });
-            generateAndDownloadCSV(tempEmployees, "Preenchido", true);
+            exportToCSV(); // Reuses existing logic which dumps 'employees'
         }
 
         function exportDigitalSheetPDF() {
-             const container = document.getElementById('manual-sheets-content');
-             const modal = document.getElementById('digitalSheetModal');
-             const appContent = document.getElementById('app-content');
-             
-             container.innerHTML = '';
-             let titleSuffix = config.referenceMonth ? ` - ${new Date(config.referenceMonth.split('-')[0], config.referenceMonth.split('-')[1] - 1).toLocaleString('pt-BR', { month: 'long' })}` : "";
-             
-             const tbody = document.querySelector('#digitalSheetTable tbody');
-             const rows = tbody.querySelectorAll('tr');
-             let rowsHtml = '';
-             
-             rows.forEach((row, index) => {
-                 const name = row.querySelector(`input[name="name_${index}"]`).value;
-                 const boxes = row.querySelector(`input[name="boxes_${index}"]`).value || '0';
-                 let criteriaCells = '';
-                 Object.keys(criteriaLabels).forEach(key => criteriaCells += `<td style="border: 1px solid #e2e8f0; padding: 8px; text-align: center;">${row.querySelector(`input[name="crit_${index}_${key}"]`).value}</td>`);
-                 rowsHtml += `<tr style="background-color: #fff;"><td style="border: 1px solid #e2e8f0; padding: 10px; font-weight: bold; color: #1e293b;">${name}</td>${criteriaCells}<td style="border: 1px solid #e2e8f0; padding: 10px; text-align: center;">${boxes}</td></tr>`;
-             });
-             
-             container.innerHTML = `
-                <div style="font-family: 'Inter', sans-serif; color: #333; width: 100%; padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
-                        <h1 style="font-size: 20px; font-weight: bold; color: #2563eb;">Relatório de Avaliação Digital${titleSuffix}</h1>
-                        <p style="color: #64748b; font-size: 12px;">${new Date().toLocaleDateString('pt-BR')}</p>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                        <thead><tr style="background-color: #f8fafc; color: #475569;"><th style="border: 1px solid #e2e8f0; padding: 12px; width: 25%;">FUNCIONÁRIO</th>${['ASSID','ORG','PART','AGIL','PONT'].map(l=>`<th style="border: 1px solid #e2e8f0; padding: 8px; text-align: center;">${l}</th>`).join('')}<th style="border: 1px solid #e2e8f0; padding: 12px; width: 10%;">CAIXAS</th></tr></thead>
-                        <tbody>${rowsHtml}</tbody>
-                    </table>
-                     <div style="margin-top: 20px; font-size: 10px; color: #94a3b8; text-align: right;">
-                        * Documento gerado digitalmente.
-                    </div>
-                </div>
-             `;
-             
-             const btn = document.querySelector('button[onclick="exportDigitalSheetPDF()"]');
-             const originalText = btn.innerHTML;
-             btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
-             lucide.createIcons();
-             
-             const scrollY = window.scrollY;
-             appContent.style.display = 'none';
-             modal.classList.add('hidden'); 
-             container.classList.remove('hidden');
-             container.style.width = '1100px'; container.style.margin = '0 auto';
-             window.scrollTo(0,0);
-
-             setTimeout(() => {
-                 let filename = 'Relatorio_Digital.pdf';
-                 if (config.referenceMonth) {
-                    const [y, m] = config.referenceMonth.split('-');
-                    const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
-                    const monthCap = mn.charAt(0).toUpperCase() + mn.slice(1);
-                    filename = `Bonus_${monthCap}_${y}_PDF.pdf`;
-                 }
-
-                 const contentHeight = container.scrollHeight;
-                 const contentWidth = container.scrollWidth;
-                 const opt = { margin: 10, filename: filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'px', format: [contentWidth + 20, contentHeight + 20], orientation: contentWidth > contentHeight ? 'landscape' : 'portrait' } };
-                 html2pdf().set(opt).from(container).save().then(() => {
-                     container.classList.add('hidden');
-                     appContent.style.display = 'block';
-                     modal.classList.remove('hidden');
-                     btn.innerHTML = originalText;
-                     window.scrollTo(0, scrollY);
-                 }).catch(err => {
-                     console.error(err);
-                     alert("Erro ao gerar PDF.");
-                     container.classList.add('hidden');
-                     appContent.style.display = 'block';
-                     modal.classList.remove('hidden');
-                     btn.innerHTML = originalText;
-                 });
-             }, 500);
+            printSimpleTable(); // Reuses PDF logic
         }
 
-        // --- ORIGINAL PDF GENERATION ---
+
+        // 2. MANUAL SHEETS (Fichas)
         function downloadManualSheets() {
             const container = document.getElementById('manual-sheets-content');
-            const btn = document.querySelector('button[onclick="downloadManualSheets()"]');
-            const originalText = btn.innerHTML;
-            container.innerHTML = '';
-            let titleSuffix = config.referenceMonth ? ` - ${new Date(config.referenceMonth.split('-')[0], config.referenceMonth.split('-')[1] - 1).toLocaleString('pt-BR', { month: 'long' })}` : "";
-            let rows = '';
-            let list = teamDatabase;
-            if (list.length === 0) for(let i=0; i<15; i++) rows += generateRowHTML({ name: "" });
-            else { list.forEach(emp => rows += generateRowHTML(emp)); for(let i=0; i<3; i++) rows += generateRowHTML({ name: "" }); }
-            container.innerHTML = `<div style="font-family: 'Inter', sans-serif; color: #333; width: 100%; padding: 20px;"><div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;"><h1 style="font-size: 20px; font-weight: bold; color: #2563eb;">Ficha de Avaliação Mensal${titleSuffix}</h1><p style="color: #64748b; font-size: 12px;">${new Date().toLocaleDateString('pt-BR')}</p></div><table style="width: 100%; border-collapse: collapse; font-size: 11px;"><thead><tr style="background-color: #f8fafc; color: #475569;"><th style="border: 1px solid #e2e8f0; padding: 12px; width: 25%;">FUNCIONÁRIO</th>${['ASSID','ORG','PART','AGIL','PONT'].map(l=>`<th style="border: 1px solid #e2e8f0; padding: 8px;">${l}</th>`).join('')}<th style="border: 1px solid #e2e8f0; padding: 12px; width: 10%;">CAIXAS</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-            btn.innerHTML = 'Gerando...';
-            const app = document.getElementById('app-content');
-            const scroll = window.scrollY;
-            app.style.display = 'none';
-            container.classList.remove('hidden');
-            container.style.width = '1122px'; // A4 LANDSCAPE WIDTH
-            container.style.margin = '0 auto';
-            window.scrollTo(0,0);
-            
-            setTimeout(() => {
-                const contentHeight = container.scrollHeight;
-                const contentWidth = container.scrollWidth;
-                const opt = { margin: [2, 2, 2, 2], filename: 'Ficha_Avaliacao.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'px', format: [contentWidth+20, contentHeight+20], orientation: contentWidth > contentHeight ? 'l' : 'p' } };
-                html2pdf().set(opt).from(container).save().then(() => {
-                    container.classList.add('hidden');
-                    app.style.display = 'block';
-                    btn.innerHTML = originalText;
-                    window.scrollTo(0, scroll);
-                });
-            }, 300);
-        }
-
-        function generateRowHTML(emp) {
-            if (!emp.name) return '';
-            const nameCell = `<span style="font-size: 13px; font-weight: 600; color: #1e293b;">${emp.name}</span>`;
-            const criteriaCells = Array(5).fill(0).map(() => `<td style="border: 1px solid #e2e8f0; padding: 8px; text-align: center;"><div style="display: flex; justify-content: center; gap: 15px;"><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 14px; height: 14px; border: 1px solid #94a3b8; border-radius: 3px;"></div><span style="color: #64748b; font-size: 10px;">5</span></div><div style="display: flex; align-items: center; gap: 4px;"><div style="width: 14px; height: 14px; border: 1px solid #94a3b8; border-radius: 3px;"></div><span style="color: #64748b; font-size: 10px;">10</span></div></div></td>`).join('');
-            return `<tr style="border-bottom: 1px solid #e2e8f0;"><td style="border: 1px solid #e2e8f0; padding: 10px;">${nameCell}</td>${criteriaCells}<td style="border: 1px solid #e2e8f0; padding: 10px;"></td></tr>`;
-        }
-
-        // --- NOVA FUNÇÃO: Tabela Simples Estilo Excel ---
-        function printSimpleTable() {
-            const container = document.getElementById('manual-sheets-content');
-            const btn = document.querySelector('button[onclick="printSimpleTable()"]');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
-            lucide.createIcons();
-
             container.innerHTML = '';
             
-            let titleSuffix = config.referenceMonth ? ` - ${new Date(config.referenceMonth.split('-')[0], config.referenceMonth.split('-')[1] - 1).toLocaleString('pt-BR', { month: 'long' })}` : "";
-            if(config.referenceMonth) {
+            const activeTeam = teamDatabase.filter(m => m.active);
+            
+            // Data atual formatada
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+            
+            // Mês de referência por extenso
+            let monthLabel = "__________________";
+            if (config.referenceMonth) {
                 const [y, m] = config.referenceMonth.split('-');
-                titleSuffix = ` - ${m}/${y}`;
+                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                monthLabel = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
             }
 
-            let tableHtml = `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #000;">
-                    <div style="margin-bottom: 15px;">
-                        <h2 style="margin: 0; font-size: 18px; text-transform: uppercase;">Relatório de Bônus${titleSuffix}</h2>
-                        <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">Gerado em ${new Date().toLocaleDateString('pt-BR')}</p>
+            let html = `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; width: 100%; max-width: 297mm; margin: 0 auto;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <img src="https://i.imgur.com/CNJpqbX.png" style="height: 50px; width: auto;" alt="Logo SPG">
+                            <div>
+                                <h1 style="margin: 0; font-size: 16px; text-transform: uppercase;">Avaliação de Desempenho da Equipe - SPG Packing</h1>
+                                <p style="margin: 2px 0 0 0; font-weight: bold; font-size: 12px;">Sítio Pedra Grande - SPG</p>
+                                <p style="margin: 2px 0 0 0; color: #666; font-size: 11px;">Mês de Referência: <strong>${monthLabel}</strong></p>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-size: 10px;">Data de Impressão: ${dateStr}</p>
+                            <p style="margin: 2px 0 0 0; font-size: 10px;">Responsável: _______________________</p>
+                        </div>
                     </div>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
                         <thead>
-                            <tr style="background-color: #e0e0e0;">
-                                <th style="border: 1px solid #000; padding: 6px; text-align: left;">FUNCIONÁRIO</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">CAIXAS</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">PROD.</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">ASSID</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">ORG</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">PART</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">AGIL</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">PONT</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: center;">TOTAL PTS</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: right;">BÔNUS</th>
-                                <th style="border: 1px solid #000; padding: 6px; text-align: right;">A RECEBER</th>
+                            <tr style="background-color: #f3f4f6;">
+                                <th style="border: 1px solid #000; padding: 6px 4px; text-align: left; width: 25%;">COLABORADOR</th>
+                                <th style="border: 1px solid #000; padding: 6px 4px; text-align: center; width: 8%;">CAIXAS</th>
+                                <th style="border: 1px solid #000; padding: 4px; text-align: center;">ASSIDUIDADE<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>
+                                <th style="border: 1px solid #000; padding: 4px; text-align: center;">ORGANIZAÇÃO<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>
+                                <th style="border: 1px solid #000; padding: 4px; text-align: center;">PARTICIPAÇÃO<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>
+                                <th style="border: 1px solid #000; padding: 4px; text-align: center;">AGILIDADE<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>
+                                <th style="border: 1px solid #000; padding: 4px; text-align: center;">PONTUALIDADE<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // Função auxiliar para desenhar os quadradinhos (versão compacta)
+            const checkBoxes = () => `
+                <div style="display: flex; justify-content: center; gap: 6px;">
+                    <div style="display: flex; flex-direction: column; align-items: center;"><div style="width: 10px; height: 10px; border: 1px solid #000;"></div><span style="font-size:7px; margin-top:1px;">0</span></div>
+                    <div style="display: flex; flex-direction: column; align-items: center;"><div style="width: 10px; height: 10px; border: 1px solid #000;"></div><span style="font-size:7px; margin-top:1px;">5</span></div>
+                    <div style="display: flex; flex-direction: column; align-items: center;"><div style="width: 10px; height: 10px; border: 1px solid #000;"></div><span style="font-size:7px; margin-top:1px;">10</span></div>
+                </div>
+            `;
+
+            activeTeam.forEach((member, i) => {
+                const bg = i % 2 === 0 ? '#fff' : '#f9fafb';
+                html += `
+                    <tr style="background-color: ${bg}; page-break-inside: avoid;">
+                        <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold; text-transform: uppercase; font-size: 9px;">${member.name}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; vertical-align: bottom;"><div style="border-bottom: 1px solid #000; width: 80%; margin: 0 auto;"></div></td>
+                        <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
+                        <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
+                        <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
+                        <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
+                        <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                    
+                    <div style="margin-top: 15px; display: flex; justify-content: space-between; font-size: 9px; color: #666;">
+                        <div>
+                            <!-- Legenda removida -->
+                        </div>
+                        <div style="text-align: right; width: 40%;">
+                            <div style="border-bottom: 1px solid #000; margin-bottom: 2px;"></div>
+                            <p style="text-align: center;">Assinatura do Avaliador</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // Trigger PDF
+            const app = document.getElementById('app-content');
+            const modal = document.getElementById('digitalSheetModal');
+            const scroll = window.scrollY;
+            
+            app.classList.add('hidden-force');
+            if(modal) modal.classList.add('hidden-force');
+            
+            container.classList.remove('hidden');
+            document.body.classList.add('printing-report');
+
+            window.print();
+
+            // Cleanup after print dialog closes
+            setTimeout(() => {
+                document.body.classList.remove('printing-report');
+                container.classList.add('hidden');
+                
+                // Restore app content
+                app.classList.remove('hidden-force');
+                
+                // CORREÇÃO CRÍTICA: Remove 'hidden-force' incondicionalmente.
+                // Antes verificava se !contains('hidden'), o que falhava se o modal estivesse fechado.
+                if(modal) {
+                     modal.classList.remove('hidden-force');
+                }
+                
+                window.scrollTo(0, scroll);
+            }, 100); // Reduzido de 1000ms para 100ms para evitar travamento
+        }
+
+
+        // 3. TABLE PDF PRINTING (Existing but robustified)
+        function printSimpleTable() {
+            const container = document.getElementById('manual-sheets-content');
+            container.innerHTML = '';
+            
+            // Verifica se é líder para esconder financeiro
+            const isLeader = currentUser && currentUser.role === 'lider';
+            
+            let titleSuffix = "";
+            if(config.referenceMonth) {
+                const [y, m] = config.referenceMonth.split('-');
+                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                titleSuffix = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
+            }
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+
+            let tableHtml = `
+                <div style="font-family: Arial, sans-serif; width: 100%;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <img src="https://i.imgur.com/CNJpqbX.png" style="height: 50px; width: auto;" alt="Logo SPG">
+                            <div>
+                                <h2 style="margin: 0; font-size: 18px; text-transform: uppercase; color: #1e293b;">Avaliação de Bônus da Equipe</h2>
+                                <p style="margin: 2px 0 0 0; font-weight: bold; font-size: 12px; color: #334155;">Sítio Pedra Grande - SPG</p>
+                                <p style="margin: 2px 0 0 0; color: #64748b; font-size: 11px;">Referência: <strong>${titleSuffix}</strong></p>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-size: 10px; color: #94a3b8;">Emissão: ${dateStr}</p>
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                        <thead>
+                            <tr style="background-color: #eee;">
+                                <th style="border: 1px solid #000; padding: 3px;">FUNCIONÁRIO</th>
+                                <th style="border: 1px solid #000; padding: 3px;">CAIXAS</th>
+                                <th style="border: 1px solid #000; padding: 3px;">PROD</th>
+                                <th style="border: 1px solid #000; padding: 3px;">ASSID</th>
+                                <th style="border: 1px solid #000; padding: 3px;">ORG</th>
+                                <th style="border: 1px solid #000; padding: 3px;">PART</th>
+                                <th style="border: 1px solid #000; padding: 3px;">AGIL</th>
+                                <th style="border: 1px solid #000; padding: 3px;">PONT</th>
+                                <th style="border: 1px solid #000; padding: 3px;">TOTAL PTS</th>
+                                ${!isLeader ? '<th style="border: 1px solid #000; padding: 3px;">BÔNUS R$</th>' : ''}
+                                ${!isLeader ? '<th style="border: 1px solid #000; padding: 3px;">TOTAL R$</th>' : ''}
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             let totalBonusSum = 0;
-            let totalReceiveSum = 0; 
-            
-            const filterName = document.getElementById('filterEmployee').value;
-            let listToPrint = employees;
-            if (filterName) {
-                listToPrint = employees.filter(e => e.name === filterName);
-            }
+            let totalReceiveSum = 0;
 
-            listToPrint.forEach(emp => {
+            employees.forEach(emp => {
                 const calc = calculateBonus(emp);
                 totalBonusSum += calc.bonusVal;
-                totalReceiveSum += calc.totalReceive; 
-                
+                totalReceiveSum += calc.totalReceive;
+
                 tableHtml += `
                     <tr>
-                        <td style="border: 1px solid #000; padding: 5px;">${emp.name}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.boxes}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${calc.prodPts}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.assiduity}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.organization}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.participation}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.agility}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${emp.criteria.punctuality}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold;">
-                            ${calc.totalPts} <span style="font-size: 9px; color: #666;">(${calc.bonusPercentage.toFixed(1)}%)</span>
+                        <td style="border: 1px solid #000; padding: 3px;">${emp.name}</td>
+                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.boxes}</td>
+                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${calc.hasPenalty ? '0' : calc.prodPts}</td>
+                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.criteria.assiduity}</td>
+                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.criteria.organization}</td>
+                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.criteria.participation}</td>
+                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.criteria.agility}</td>
+                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.criteria.punctuality}</td>
+                        <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">
+                            ${calc.totalPts}
+                            ${calc.hasPenalty ? '<div style="color: red; font-size: 8px; line-height: 1;">CANCELADO</div>' : ''}
                         </td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: right;">${formatCurrency(calc.bonusVal)}</td>
-                        <td style="border: 1px solid #000; padding: 5px; text-align: right; font-weight: bold;">${formatCurrency(calc.totalReceive)}</td>
+                        ${!isLeader ? `<td style="border: 1px solid #000; padding: 3px; text-align: right;">${formatCurrency(calc.bonusVal)}</td>` : ''}
+                        ${!isLeader ? `<td style="border: 1px solid #000; padding: 3px; text-align: right;">${formatCurrency(calc.totalReceive)}</td>` : ''}
                     </tr>
                 `;
             });
 
+            if (!isLeader) {
+                tableHtml += `
+                        <tr style="background-color: #eee; font-weight: bold;">
+                            <td colspan="9" style="border: 1px solid #000; padding: 3px; text-align: right;">TOTAIS:</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: right;">${formatCurrency(totalBonusSum)}</td>
+                            <td style="border: 1px solid #000; padding: 3px; text-align: right;">${formatCurrency(totalReceiveSum)}</td>
+                        </tr>
+                `;
+            }
+
             tableHtml += `
-                        </tbody>
-                        <tfoot>
-                            <tr style="background-color: #f0f0f0; font-weight: bold;">
-                                <td colspan="9" style="border: 1px solid #000; padding: 6px; text-align: right;">TOTAL GERAL:</td>
-                                <td style="border: 1px solid #000; padding: 6px; text-align: right;">${formatCurrency(totalBonusSum)}</td>
-                                <td style="border: 1px solid #000; padding: 6px; text-align: right;">${formatCurrency(totalReceiveSum)}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            `;
+                    </tbody>
+                </table>
+                <div style="margin-top: 15px; font-size: 9px; color: #666; text-align: center;">Documento gerado automaticamente pelo Sistema de Gestão de Bônus - SPG</div>
+            </div>`;
 
             container.innerHTML = tableHtml;
 
+            // Trigger Browser Print
             const app = document.getElementById('app-content');
+            const modal = document.getElementById('digitalSheetModal');
             const scroll = window.scrollY;
-            app.style.display = 'none';
+            
+            // Hide main app content
+            app.classList.add('hidden-force');
+            if(modal) modal.classList.add('hidden-force');
+            
+            // Show printable container and add printing class
             container.classList.remove('hidden');
-            container.style.width = '1100px'; 
-            container.style.margin = '0 auto';
-            window.scrollTo(0,0);
+            document.body.classList.add('printing-report');
 
+            // Open print dialog
+            window.print();
+
+            // Cleanup after print dialog closes (simulated with timeout since print is blocking/async depending on browser)
             setTimeout(() => {
-                let filename = 'Relatorio_Simples.pdf';
-                if (config.referenceMonth) {
-                    const [y, m] = config.referenceMonth.split('-');
-                    const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
-                    const monthCap = mn.charAt(0).toUpperCase() + mn.slice(1);
-                    filename = `Bonus_${monthCap}_${y}_Tabela.pdf`;
+                document.body.classList.remove('printing-report');
+                container.classList.add('hidden');
+                
+                // Restore app content
+                app.classList.remove('hidden-force');
+                
+                // CORREÇÃO CRÍTICA: Remove 'hidden-force' incondicionalmente.
+                // Isso garante que o modal possa ser aberto novamente, mesmo se estava fechado durante a impressão.
+                if(modal) {
+                     modal.classList.remove('hidden-force');
                 }
+                
+                window.scrollTo(0, scroll);
+            }, 100); // Reduzido de 500ms para 100ms
+        }
+        
+        // Export CSV helper function (reused)
+        function generateAndDownloadCSV(dataList, suffix, includeSuffix = false) {
+            let csvContent = "\uFEFF"; 
+            
+            let monthLabel = "Não definido";
+            let filename = "Bonus_Dados_CSV.csv"; // Nome padrão caso não tenha mês
 
-                const contentHeight = container.scrollHeight;
-                const contentWidth = container.scrollWidth;
+            if (config.referenceMonth) {
+                const [y, m] = config.referenceMonth.split('-');
+                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                const mnCap = mn.charAt(0).toUpperCase() + mn.slice(1);
+                monthLabel = `${mnCap}/${y}`;
                 
-                const opt = { 
-                    margin: 10, 
-                    filename: filename, 
-                    image: { type: 'jpeg', quality: 0.98 }, 
-                    html2canvas: { scale: 2, useCORS: true }, 
-                    jsPDF: { unit: 'px', format: [contentWidth + 20, contentHeight + 20], orientation: 'landscape' } 
-                };
-                
-                html2pdf().set(opt).from(container).save().then(() => {
-                    container.classList.add('hidden');
-                    app.style.display = 'block';
-                    btn.innerHTML = originalText;
-                    window.scrollTo(0, scroll);
-                }).catch(err => {
-                    console.error(err);
-                    alert("Erro ao gerar PDF.");
-                    container.classList.add('hidden');
-                    app.style.display = 'block';
-                    btn.innerHTML = originalText;
-                });
-            }, 500);
+                // Formato solicitado: Bonus_Mes_Ano_CSV
+                filename = `Bonus_${mnCap}_${y}_CSV.csv`;
+            }
+            
+            // Cabeçalho removido conforme solicitado
+            // csvContent += "Mes;Nome;SalarioBase;Caixas;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosTotais;ValorBonus;TotalReceber\n";
+
+            dataList.forEach(emp => {
+                const calc = calculateBonus(emp);
+                const c = emp.criteria;
+                const row = [
+                    monthLabel,
+                    emp.name,
+                    emp.salary.toFixed(2).replace('.', ','),
+                    emp.boxes,
+                    c.assiduity,
+                    c.organization,
+                    c.participation,
+                    c.agility,
+                    c.punctuality,
+                    calc.totalPts,
+                    calc.bonusVal.toFixed(2).replace('.', ','),
+                    calc.totalReceive.toFixed(2).replace('.', ',')
+                ];
+                csvContent += row.join(";") + "\n";
+            });
+            
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
-        function downloadPDF() {
+        function exportToCSV() {
+            if (employees.length === 0) return alert("Não há dados para exportar.");
+            generateAndDownloadCSV(employees, config.referenceMonth || "Geral");
         }
     </script>
 </body>
