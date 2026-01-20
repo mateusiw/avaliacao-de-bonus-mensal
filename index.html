@@ -25,6 +25,7 @@
         body[data-role="lider"] #launch-form-aside { display: none !important; }
         body[data-role="lider"] #admin-dashboard-content { display: none !important; } /* Oculta toda a área da tabela para líder */
         body[data-role="lider"] #table-section { display: none !important; }
+        body[data-role="lider"] #digitalSheetPdfBtn { display: none !important; } /* Oculta botão PDF do digital para líder */
         
         @media print {
             @page { margin: 0.5cm; size: landscape; }
@@ -113,7 +114,8 @@
         
         <!-- Navbar Superior -->
         <header class="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm no-print">
-            <div class="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
+            <!-- AUMENTO DA LARGURA AQUI: max-w-7xl para max-w-[95%] -->
+            <div class="max-w-[95%] mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="bg-blue-600 p-2 rounded-lg text-white">
                         <i data-lucide="calculator" class="w-5 h-5"></i>
@@ -133,7 +135,8 @@
             </div>
         </header>
 
-        <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 space-y-8">
+        <!-- AUMENTO DA LARGURA AQUI: max-w-7xl para max-w-[95%] -->
+        <main class="flex-1 max-w-[95%] w-full mx-auto p-4 md:p-8 space-y-8">
             
             <!-- Barra de Controles -->
             <section class="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between no-print" aria-label="Barra de Ferramentas">
@@ -381,11 +384,6 @@
                                         <input type="number" id="empBoxes" required placeholder="Qtd" oninput="updatePreview()" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Fator Individual (%) <span class="text-gray-300 font-normal normal-case">(Opcional)</span></label>
-                                    <input type="number" id="empFactor" step="0.01" placeholder="Padrão Global" oninput="updatePreview()" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
-                                    <p class="text-[10px] text-gray-400 mt-1">Preencha apenas se quiser uma % diferente para este funcionário.</p>
-                                </div>
                             </div>
 
                             <div class="pt-4 border-t border-gray-100">
@@ -416,7 +414,8 @@
 
     <!-- TELA DE PREENCHIMENTO DIGITAL -->
     <div id="digitalSheetModal" class="hidden fixed inset-0 bg-slate-100 z-50 overflow-y-auto no-print">
-        <div class="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+        <!-- AUMENTO DA LARGURA AQUI: max-w-7xl para max-w-[95%] -->
+        <div class="max-w-[95%] mx-auto p-4 md:p-8 space-y-6">
             <div class="flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-lg border border-slate-200 sticky top-4 z-20 gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -435,9 +434,9 @@
                         Cancelar
                     </button>
                     <button onclick="exportDigitalSheetCSV()" class="px-4 py-2 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> CSV
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Enviar Dados
                     </button>
-                    <button onclick="exportDigitalSheetPDF()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2 shadow-sm shadow-rose-200">
+                    <button id="digitalSheetPdfBtn" onclick="exportDigitalSheetPDF()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2 shadow-sm shadow-rose-200">
                         <i data-lucide="file-text" class="w-4 h-4"></i> PDF
                     </button>
                 </div>
@@ -810,25 +809,18 @@
                 };
             }
 
-            if (emp.customFactor !== undefined && emp.customFactor !== null && emp.customFactor !== "") {
-                const factor = parseFloat(emp.customFactor); 
-                const totalPts = prodPts + perfPts; 
-                finalPercent = totalPts * factor;
-                totalBonusVal = salary * (finalPercent / 100);
+            // Lógica Padrão (Sem Fator Individual)
+            const criteriaBonusPercent = (perfPts / 50) * config.criteriaPercent;
+            const criteriaBonusVal = salary * (criteriaBonusPercent / 100);
 
-            } else {
-                const criteriaBonusPercent = (perfPts / 50) * config.criteriaPercent;
-                const criteriaBonusVal = salary * (criteriaBonusPercent / 100);
-
-                let productionBonusPercent = 0;
-                if (prodPts > 0) { 
-                     productionBonusPercent = config.productionPercent;
-                }
-                const productionBonusVal = salary * (productionBonusPercent / 100);
-
-                totalBonusVal = criteriaBonusVal + productionBonusVal;
-                finalPercent = criteriaBonusPercent + productionBonusPercent;
+            let productionBonusPercent = 0;
+            if (prodPts > 0) { 
+                    productionBonusPercent = config.productionPercent;
             }
+            const productionBonusVal = salary * (productionBonusPercent / 100);
+
+            totalBonusVal = criteriaBonusVal + productionBonusVal;
+            finalPercent = criteriaBonusPercent + productionBonusPercent;
             
             const totalPts = prodPts + perfPts;
 
@@ -970,12 +962,21 @@
                     punctuality: parseCrit(cols[critStartIdx + 4])
                 };
 
+                // Tenta ler a observação (Coluna após os totais financeiros)
+                // A estrutura de exportação coloca a Obs na coluna critStartIdx + 8
+                // (Assid(0), Org(1), Part(2), Agil(3), Pont(4), TotalPts(5), Bonus(6), Total(7), OBS(8))
+                let obs = "";
+                if (cols.length > critStartIdx + 8) {
+                    obs = cols[critStartIdx + 8];
+                }
+
                 employees.push({ 
                     id: Date.now() + Math.random(), 
                     name: name, 
                     salary: salary, 
                     boxes: boxes, 
-                    criteria: criteria 
+                    criteria: criteria,
+                    observation: obs // Importa a observação
                 });
                 newCount++;
             }
@@ -1030,7 +1031,11 @@
                     tr.className = "hover:bg-slate-50 transition-colors group";
                     
                     tr.innerHTML = `
-                        <td class="p-4 font-medium text-slate-800">${emp.name}<div class="text-xs text-slate-400 font-normal financial-col">Base: ${formatCurrency(emp.salary)}</div></td>
+                        <td class="p-4 font-medium text-slate-800">
+                            ${emp.name}
+                            <div class="text-xs text-slate-400 font-normal financial-col">Base: ${formatCurrency(emp.salary)}</div>
+                            ${emp.observation ? `<div class="text-[11px] text-slate-500 mt-1.5 leading-tight italic bg-slate-100 p-1.5 rounded border border-slate-200">📝 ${emp.observation}</div>` : ''}
+                        </td>
                         <td class="p-4 text-center text-slate-600">${emp.boxes}</td>
                         <td class="p-4 text-center">${prodDisplay}</td>
                         <td class="p-2 text-center text-xs ${emp.criteria.assiduity === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.assiduity < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.assiduity}</td>
@@ -1088,27 +1093,19 @@
             const b = Number(document.getElementById('empBoxes').value) || 0;
             const points = getProductionPoints(b) + Object.values(newCriteria).reduce((a,b)=>a+b,0);
             
-            const customInput = document.getElementById('empFactor').value;
-            let percent = 0;
+            const prodPts = getProductionPoints(b);
+            const perfPts = Object.values(newCriteria).reduce((a,b)=>a+b,0);
             
-            if (customInput && !isNaN(parseFloat(customInput)) && customInput !== "") {
-                const factor = parseFloat(customInput);
-                percent = points * factor;
-            } else {
-                const prodPts = getProductionPoints(b);
-                const perfPts = Object.values(newCriteria).reduce((a,b)=>a+b,0);
-                
-                const cPercent = (perfPts / 50) * config.criteriaPercent;
-                let pPercent = 0;
-                
-                const hasPenalty = Object.values(newCriteria).some(val => val === 0);
-                
-                if (!hasPenalty && prodPts > 0) {
-                    pPercent = config.productionPercent;
-                }
-                
-                percent = cPercent + pPercent;
+            const cPercent = (perfPts / 50) * config.criteriaPercent;
+            let pPercent = 0;
+            
+            const hasPenalty = Object.values(newCriteria).some(val => val === 0);
+            
+            if (!hasPenalty && prodPts > 0) {
+                pPercent = config.productionPercent;
             }
+            
+            const percent = cPercent + pPercent;
             
             document.getElementById('previewPoints').innerText = `${points} pts (${percent.toFixed(1)}%)`;
         }
@@ -1122,8 +1119,6 @@
             
             document.getElementById('empSalary').value = formatCurrencyValue(emp.salary);
             document.getElementById('empBoxes').value = emp.boxes;
-            
-            document.getElementById('empFactor').value = emp.customFactor !== undefined ? emp.customFactor : "";
             
             newCriteria = { ...emp.criteria };
             renderCriteriaForm();
@@ -1145,7 +1140,6 @@
             document.getElementById('empName').value = "";
             document.getElementById('empSalary').value = "";
             document.getElementById('empBoxes').value = "";
-            document.getElementById('empFactor').value = ""; 
             newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
             renderCriteriaForm();
             updatePreview();
@@ -1163,7 +1157,6 @@
             const name = document.getElementById('empName').value;
             const salary = parseCurrency(document.getElementById('empSalary').value);
             const boxes = document.getElementById('empBoxes').value;
-            const customFactor = document.getElementById('empFactor').value; 
             
             if(!name || isNaN(salary)) return alert("Por favor, preencha o nome e o salário corretamente.");
             
@@ -1175,7 +1168,6 @@
                         name, 
                         salary: salary, 
                         boxes: Number(boxes), 
-                        customFactor: customFactor, 
                         criteria: {...newCriteria} 
                     };
                 }
@@ -1186,14 +1178,12 @@
                     name, 
                     salary: salary, 
                     boxes: Number(boxes), 
-                    customFactor: customFactor, 
                     criteria: {...newCriteria} 
                 });
                 
                 document.getElementById('empName').value = ''; 
                 document.getElementById('empSalary').value = ''; 
                 document.getElementById('empBoxes').value = '';
-                document.getElementById('empFactor').value = '';
                 newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
                 renderCriteriaForm(); 
             }
@@ -1259,15 +1249,17 @@
                 // Defaults - AGORA INICIA COM 0
                 let c = { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
                 let boxes = 0;
+                let obs = ""; // New
                 
                 if (existing) {
                     c = existing.criteria;
                     boxes = existing.boxes;
+                    obs = existing.observation || ""; // New
                 }
 
                 const tr = document.createElement('tr');
                 tr.setAttribute('data-name', member.name);
-                tr.className = "hover:bg-blue-50/50 transition-colors";
+                tr.className = "hover:bg-blue-50/50 transition-colors group"; // Added group for hover effects maybe
                 
                 // Criteria Buttons Helper
                 const btnHtml = (key, val) => `
@@ -1283,18 +1275,25 @@
                 `;
 
                 tr.innerHTML = `
-                    <td class="p-4 font-medium text-slate-800">${member.name}</td>
-                    <td class="p-4 text-center">${btnHtml('assiduity', c.assiduity)}</td>
-                    <td class="p-4 text-center">${btnHtml('organization', c.organization)}</td>
-                    <td class="p-4 text-center">${btnHtml('participation', c.participation)}</td>
-                    <td class="p-4 text-center">${btnHtml('agility', c.agility)}</td>
-                    <td class="p-4 text-center">${btnHtml('punctuality', c.punctuality)}</td>
-                    <td class="p-4">
+                    <td class="p-4 font-medium text-slate-800 min-w-[250px]">
+                        <div class="mb-2 text-sm">${member.name}</div>
+                        <textarea 
+                               placeholder="Observação (opcional)..." 
+                               onchange="updateDigitalEmployee('${member.name}', 'observation', this.value)"
+                               class="w-full p-2 text-xs border border-slate-200 rounded-lg bg-white text-slate-600 placeholder:text-slate-300 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all resize-y min-h-[60px]"
+                               rows="2">${obs}</textarea>
+                    </td>
+                    <td class="p-4 text-center align-top pt-6">${btnHtml('assiduity', c.assiduity)}</td>
+                    <td class="p-4 text-center align-top pt-6">${btnHtml('organization', c.organization)}</td>
+                    <td class="p-4 text-center align-top pt-6">${btnHtml('participation', c.participation)}</td>
+                    <td class="p-4 text-center align-top pt-6">${btnHtml('agility', c.agility)}</td>
+                    <td class="p-4 text-center align-top pt-6">${btnHtml('punctuality', c.punctuality)}</td>
+                    <td class="p-4 align-top pt-5">
                         <input type="number" value="${boxes}" 
                                onchange="updateDigitalEmployee('${member.name}', 'boxes', this.value)"
                                class="w-full p-2 border border-slate-200 rounded-lg text-center font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
                     </td>
-                    <td class="p-4 text-center">
+                    <td class="p-4 text-center align-top pt-6">
                         <button onclick="resetDigitalRow(this, '${member.name}')" class="text-slate-300 hover:text-red-500 p-2" title="Zerar">
                             <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                         </button>
@@ -1336,7 +1335,8 @@
                     salary: member ? member.salary : 1621,
                     boxes: 0,
                     // Defaults - AGORA INICIA COM 0
-                    criteria: { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 }
+                    criteria: { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 },
+                    observation: "" // Init
                 };
                 employees.push(emp);
                 empIndex = employees.length - 1;
@@ -1347,6 +1347,8 @@
             // Update Value
             if (key === 'boxes') {
                 emp.boxes = parseInt(value) || 0;
+            } else if (key === 'observation') { // Handle observation
+                emp.observation = value;
             } else {
                 emp.criteria[key] = parseInt(value);
             }
@@ -1363,6 +1365,7 @@
             if(emp) {
                 emp.boxes = 0;
                 emp.criteria = { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
+                emp.observation = ""; // Zera a observação no banco
                 saveData();
             }
 
@@ -1374,6 +1377,10 @@
                 b.className = 'criteria-btn w-9 h-9 rounded-full font-bold text-xs border transition-all bg-rose-100 text-rose-700 border-rose-300 ring-2 ring-rose-100';
             });
             tr.querySelector('input[type="number"]').value = 0;
+            
+            // Zera o textarea da observação
+            const txtArea = tr.querySelector('textarea');
+            if(txtArea) txtArea.value = "";
         }
 
         function resetDigitalSheet() {
@@ -1386,6 +1393,7 @@
                 if(activeNames.includes(emp.name)) {
                     emp.boxes = 0;
                     emp.criteria = { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
+                    emp.observation = ""; // Zera todas as observações
                 }
             });
             saveData();
@@ -1694,7 +1702,8 @@
                     c.punctuality,
                     calc.totalPts,
                     calc.bonusVal.toFixed(2).replace('.', ','),
-                    calc.totalReceive.toFixed(2).replace('.', ',')
+                    calc.totalReceive.toFixed(2).replace('.', ','),
+                    emp.observation || "" // Added to CSV
                 ];
                 csvContent += row.join(";") + "\n";
             });
