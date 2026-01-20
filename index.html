@@ -794,7 +794,8 @@
             let prodPts = getProductionPoints(boxes);
             let originalProdPts = prodPts;
             
-            const hasPenalty = Object.values(emp.criteria).some(val => Number(val) === 0);
+            // AGORA CANCELA SE FOR 0 OU 5
+            const hasPenalty = Object.values(emp.criteria).some(val => Number(val) === 0 || Number(val) === 5);
             
             if (hasPenalty) {
                 return { 
