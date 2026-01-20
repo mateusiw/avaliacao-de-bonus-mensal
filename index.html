@@ -878,65 +878,109 @@
         }
 
         function processCSV(text) {
-            const lines = text.split('\n');
-            if (lines.length < 2) return alert("Arquivo vazio.");
-            const header = lines[0];
-            let sep = header.includes(';') ? ';' : ',';
+            const lines = text.split('\n').filter(l => l.trim());
+            if (lines.length === 0) return alert("Arquivo vazio.");
             
-            const isHeader = header.toLowerCase().includes('nome') && (header.toLowerCase().includes('salário') || header.toLowerCase().includes('caixas'));
+            const firstLine = lines[0];
+            const sep = firstLine.includes(';') ? ';' : ',';
             
-            let hasMonthCol = false;
-            let startRow = 0;
+            // Verifica se tem cabeçalho
+            const headerLower = firstLine.toLowerCase();
+            const hasHeader = headerLower.includes('nome') && (headerLower.includes('salário') || headerLower.includes('caixas'));
             
-            if (isHeader) {
-                hasMonthCol = header.toLowerCase().includes('mês') || header.toLowerCase().includes('mes');
-                startRow = 1;
+            let startRow = hasHeader ? 1 : 0;
+            
+            // Determina a estrutura olhando para a primeira linha de DADOS
+            let nameIdx = 0;
+            
+            if (lines.length > startRow) {
+                const sampleCols = lines[startRow].split(sep).map(c => c.trim());
+                
+                // Heurística: 
+                // Se a exportação tem Mês na col 0, o Nome está na 1 e o Salário na 2.
+                // O Salário geralmente parece um número ("1621,00" ou "1.621,00").
+                // O Nome (col 1) não deve parecer número.
+                
+                const looksLikeNumber = (str) => {
+                    if (!str) return false;
+                    const clean = str.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+                    return !isNaN(parseFloat(clean)) && isFinite(clean);
+                };
+                
+                const col1 = sampleCols[1]; // Possível Nome
+                const col2 = sampleCols[2]; // Possível Salário
+                
+                // Se a Coluna 2 parece número (salário) e a Coluna 1 NÃO parece (nome),
+                // então a estrutura é provável: [Mês, Nome, Salário...] (nameIdx = 1)
+                if (sampleCols.length >= 3 && looksLikeNumber(col2) && !looksLikeNumber(col1)) {
+                    nameIdx = 1;
+                } 
+                // Fallback: Se o cabeçalho diz explicitamente "Mês"
+                if (hasHeader && (headerLower.includes('mês') || headerLower.includes('mes'))) {
+                    nameIdx = 1;
+                }
             }
-            
-            const nameIdx = hasMonthCol ? 1 : 0;
+
             const salaryIdx = nameIdx + 1;
             const boxesIdx = nameIdx + 2;
-            const critStartIdx = nameIdx + 3; 
+            const critStartIdx = nameIdx + 3;
 
             let newCount = 0;
             
-            const rows = lines.slice(startRow);
-            rows.forEach(row => {
-                if(!row.trim()) return;
+            for (let i = startRow; i < lines.length; i++) {
+                const row = lines[i];
+                // Remove aspas que o Excel as vezes coloca
                 const cols = row.split(sep).map(c => c.replace(/^"|"$/g, '').trim());
-                if (cols.length < 3) return;
+                
+                // Garante que tem colunas suficientes para ler pelo menos até as caixas
+                if (cols.length < boxesIdx + 1) continue;
                 
                 const name = cols[nameIdx];
-                let salary = 1621;
-                if (cols[salaryIdx]) {
-                    const sStr = cols[salaryIdx].replace('R$','').replace('.','').replace(',','.');
-                    if (!isNaN(parseFloat(sStr))) salary = parseFloat(sStr);
+                if (!name) continue;
+
+                let salary = 1621; // Valor padrão
+                const salaryStr = cols[salaryIdx];
+                
+                if (salaryStr) {
+                    // Parse robusto de moeda (remove R$, remove pontos de milhar, troca vírgula por ponto)
+                    const sClean = salaryStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+                    const sVal = parseFloat(sClean);
+                    if (!isNaN(sVal)) salary = sVal;
                 } else {
-                    const dbMember = teamDatabase.find(m => m.name === name);
-                    if (dbMember) salary = dbMember.salary;
+                     // Tenta achar no banco de dados da equipe se não vier no CSV
+                     const dbMember = teamDatabase.find(m => m.name === name);
+                     if (dbMember) salary = dbMember.salary;
                 }
+
                 const boxes = parseInt(cols[boxesIdx]) || 0;
                 
                 const parseCrit = (val) => {
-                    if (val === undefined || val === null || val.trim() === '') return 10;
+                    if (val === undefined || val === null || val.trim() === '') return 10; // Padrão 10 se vazio
                     const n = parseInt(val);
                     return isNaN(n) ? 10 : n;
                 };
-
-                const crit = { 
-                    assiduity: parseCrit(cols[critStartIdx]), 
-                    organization: parseCrit(cols[critStartIdx+1]), 
-                    participation: parseCrit(cols[critStartIdx+2]), 
-                    agility: parseCrit(cols[critStartIdx+3]), 
-                    punctuality: parseCrit(cols[critStartIdx+4]) 
+                
+                // Leitura segura dos critérios
+                const criteria = {
+                    assiduity: parseCrit(cols[critStartIdx]),
+                    organization: parseCrit(cols[critStartIdx + 1]),
+                    participation: parseCrit(cols[critStartIdx + 2]),
+                    agility: parseCrit(cols[critStartIdx + 3]),
+                    punctuality: parseCrit(cols[critStartIdx + 4])
                 };
-                if (name) { 
-                    employees.push({ id: Date.now()+Math.random(), name: name, salary: salary, boxes: boxes, criteria: crit }); 
-                    newCount++; 
-                }
-            });
 
-            saveData(); alert(`${newCount} registros importados!`);
+                employees.push({ 
+                    id: Date.now() + Math.random(), 
+                    name: name, 
+                    salary: salary, 
+                    boxes: boxes, 
+                    criteria: criteria 
+                });
+                newCount++;
+            }
+
+            saveData();
+            alert(`${newCount} registros importados com sucesso!`);
         }
 
         function removeEmployee(id) { if(confirm("Remover?")) { employees = employees.filter(e => e.id !== id); saveData(); } }
