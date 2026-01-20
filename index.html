@@ -149,11 +149,11 @@
                 <div class="flex flex-wrap gap-2 w-full xl:w-auto items-center">
                     
                     <!-- Seletor de Mês -->
-                    <div class="relative group bg-white border-2 border-blue-500 rounded-xl shadow-md flex items-center h-12 transition-all hover:shadow-lg hover:scale-[1.01]">
+                    <div class="relative group bg-white border-2 border-blue-500 rounded-xl shadow-md flex items-center h-12 w-64 transition-all hover:shadow-lg hover:scale-[1.01]">
                         <div class="pl-4 text-blue-600">
                             <i data-lucide="calendar" class="w-5 h-5"></i>
                         </div>
-                        <input type="month" id="referenceMonth" onchange="updateConfig('referenceMonth', this.value); updateTitle();" class="bg-transparent border-none text-slate-800 text-base font-bold py-1.5 pl-3 pr-4 focus:ring-0 outline-none cursor-pointer h-full" aria-label="Seletor de Mês de Referência">
+                        <input type="month" id="referenceMonth" onchange="updateConfig('referenceMonth', this.value); updateTitle();" class="bg-transparent border-none text-slate-800 text-base font-bold py-1.5 pl-3 pr-4 focus:ring-0 outline-none cursor-pointer h-full w-full capitalize" aria-label="Seletor de Mês de Referência">
                     </div>
                     
                     <!-- Filtro por Nome -->
@@ -1525,140 +1525,6 @@
                 
                 // CORREÇÃO CRÍTICA: Remove 'hidden-force' incondicionalmente.
                 // Antes verificava se !contains('hidden'), o que falhava se o modal estivesse fechado.
-                if(modal) {
-                     modal.classList.remove('hidden-force');
-                }
-                
-                window.scrollTo(0, scroll);
-            }, 100); // Reduzido de 1000ms para 100ms para evitar travamento
-        }
-
-
-        // 3. TABLE PDF PRINTING (Existing but robustified)
-        function printSimpleTable() {
-            const container = document.getElementById('manual-sheets-content');
-            container.innerHTML = '';
-            
-            // Verifica se é líder para esconder financeiro
-            const isLeader = currentUser && currentUser.role === 'lider';
-            
-            let titleSuffix = "";
-            if(config.referenceMonth) {
-                const [y, m] = config.referenceMonth.split('-');
-                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
-                titleSuffix = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
-            }
-
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('pt-BR');
-
-            let tableHtml = `
-                <div style="font-family: Arial, sans-serif; width: 100%;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 10px;">
-                        <div style="display: flex; align-items: center; gap: 20px;">
-                            <img src="https://i.imgur.com/CNJpqbX.png" style="height: 50px; width: auto;" alt="Logo SPG">
-                            <div>
-                                <h2 style="margin: 0; font-size: 18px; text-transform: uppercase; color: #1e293b;">Avaliação de Bônus da Equipe</h2>
-                                <p style="margin: 2px 0 0 0; font-weight: bold; font-size: 12px; color: #334155;">Sítio Pedra Grande - SPG</p>
-                                <p style="margin: 2px 0 0 0; color: #64748b; font-size: 11px;">Referência: <strong>${titleSuffix}</strong></p>
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <p style="margin: 0; font-size: 10px; color: #94a3b8;">Emissão: ${dateStr}</p>
-                        </div>
-                    </div>
-
-                    <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
-                        <thead>
-                            <tr style="background-color: #eee;">
-                                <th style="border: 1px solid #000; padding: 3px;">FUNCIONÁRIO</th>
-                                <th style="border: 1px solid #000; padding: 3px;">CAIXAS</th>
-                                <th style="border: 1px solid #000; padding: 3px;">PROD</th>
-                                <th style="border: 1px solid #000; padding: 3px;">ASSID</th>
-                                <th style="border: 1px solid #000; padding: 3px;">ORG</th>
-                                <th style="border: 1px solid #000; padding: 3px;">PART</th>
-                                <th style="border: 1px solid #000; padding: 3px;">AGIL</th>
-                                <th style="border: 1px solid #000; padding: 3px;">PONT</th>
-                                <th style="border: 1px solid #000; padding: 3px;">TOTAL PTS</th>
-                                ${!isLeader ? '<th style="border: 1px solid #000; padding: 3px;">BÔNUS R$</th>' : ''}
-                                ${!isLeader ? '<th style="border: 1px solid #000; padding: 3px;">TOTAL R$</th>' : ''}
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            let totalBonusSum = 0;
-            let totalReceiveSum = 0;
-
-            employees.forEach(emp => {
-                const calc = calculateBonus(emp);
-                totalBonusSum += calc.bonusVal;
-                totalReceiveSum += calc.totalReceive;
-
-                tableHtml += `
-                    <tr>
-                        <td style="border: 1px solid #000; padding: 3px;">${emp.name}</td>
-                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.boxes}</td>
-                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${calc.hasPenalty ? '0' : calc.prodPts}</td>
-                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.criteria.assiduity}</td>
-                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.criteria.organization}</td>
-                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.criteria.participation}</td>
-                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.criteria.agility}</td>
-                        <td style="border: 1px solid #000; padding: 3px; text-align: center;">${emp.criteria.punctuality}</td>
-                        <td style="border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold;">
-                            ${calc.totalPts}
-                            ${calc.hasPenalty ? '<div style="color: red; font-size: 8px; line-height: 1;">CANCELADO</div>' : ''}
-                        </td>
-                        ${!isLeader ? `<td style="border: 1px solid #000; padding: 3px; text-align: right;">${formatCurrency(calc.bonusVal)}</td>` : ''}
-                        ${!isLeader ? `<td style="border: 1px solid #000; padding: 3px; text-align: right;">${formatCurrency(calc.totalReceive)}</td>` : ''}
-                    </tr>
-                `;
-            });
-
-            if (!isLeader) {
-                tableHtml += `
-                        <tr style="background-color: #eee; font-weight: bold;">
-                            <td colspan="9" style="border: 1px solid #000; padding: 3px; text-align: right;">TOTAIS:</td>
-                            <td style="border: 1px solid #000; padding: 3px; text-align: right;">${formatCurrency(totalBonusSum)}</td>
-                            <td style="border: 1px solid #000; padding: 3px; text-align: right;">${formatCurrency(totalReceiveSum)}</td>
-                        </tr>
-                `;
-            }
-
-            tableHtml += `
-                    </tbody>
-                </table>
-                <div style="margin-top: 15px; font-size: 9px; color: #666; text-align: center;">Documento gerado automaticamente pelo Sistema de Gestão de Bônus - SPG</div>
-            </div>`;
-
-            container.innerHTML = tableHtml;
-
-            // Trigger Browser Print
-            const app = document.getElementById('app-content');
-            const modal = document.getElementById('digitalSheetModal');
-            const scroll = window.scrollY;
-            
-            // Hide main app content
-            app.classList.add('hidden-force');
-            if(modal) modal.classList.add('hidden-force');
-            
-            // Show printable container and add printing class
-            container.classList.remove('hidden');
-            document.body.classList.add('printing-report');
-
-            // Open print dialog
-            window.print();
-
-            // Cleanup after print dialog closes (simulated with timeout since print is blocking/async depending on browser)
-            setTimeout(() => {
-                document.body.classList.remove('printing-report');
-                container.classList.add('hidden');
-                
-                // Restore app content
-                app.classList.remove('hidden-force');
-                
-                // CORREÇÃO CRÍTICA: Remove 'hidden-force' incondicionalmente.
-                // Isso garante que o modal possa ser aberto novamente, mesmo se estava fechado durante a impressão.
                 if(modal) {
                      modal.classList.remove('hidden-force');
                 }
