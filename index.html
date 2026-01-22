@@ -50,7 +50,9 @@
             body.printing-report #app-content,
             body.printing-report #login-screen,
             body.printing-report #digitalSheetModal,
-            body.printing-report #confirmModal {
+            body.printing-report #confirmModal,
+            body.printing-report #custom-confirm-modal,
+            body.printing-report #toast-container {
                 display: none !important;
             }
         }
@@ -65,6 +67,31 @@
         
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+
+        /* Toast Styles */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 14px;
+            animation: slideIn 0.3s ease-out forwards;
+            max-width: 300px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -75,6 +102,9 @@
 
     <!-- Imagem escondida para garantir cache -->
     <img src="https://i.imgur.com/CNJpqbX.png" style="display:none;" id="preloadLogo" alt="preload">
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
     <!-- TELA DE LOGIN -->
     <section id="login-screen" class="fixed inset-0 z-50 bg-gray-50 flex items-center justify-center p-4" aria-label="Tela de Login">
@@ -497,6 +527,18 @@
         </div>
     </div>
 
+    <!-- MODAL CONFIRM GENÉRICO -->
+    <div id="custom-confirm-modal" class="hidden fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in no-print">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center space-y-4">
+            <h3 class="text-lg font-bold text-slate-800" id="custom-confirm-title">Confirmação</h3>
+            <p class="text-sm text-slate-600" id="custom-confirm-message">Tem certeza?</p>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button id="custom-confirm-cancel" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-slate-700 rounded-xl font-medium transition-colors">Cancelar</button>
+                <button id="custom-confirm-ok" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md transition-all active:scale-95">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL VER BASE DA EQUIPE -->
     <div id="viewTeamModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col animate-fade-in-up">
@@ -531,6 +573,46 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <script>
+        // --- HELPER FUNCTIONS FOR TOAST AND CONFIRM ---
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function showCustomConfirm(message, callback) {
+            const modal = document.getElementById('custom-confirm-modal');
+            const msgEl = document.getElementById('custom-confirm-message');
+            const okBtn = document.getElementById('custom-confirm-ok');
+            const cancelBtn = document.getElementById('custom-confirm-cancel');
+
+            msgEl.textContent = message;
+            modal.classList.remove('hidden');
+
+            const close = () => {
+                modal.classList.add('hidden');
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            okBtn.onclick = () => {
+                close();
+                callback(true);
+            };
+
+            cancelBtn.onclick = () => {
+                close();
+                callback(false);
+            };
+        }
+        // --- END HELPER FUNCTIONS ---
+
         let currentUser = null;
         let editingId = null;
 
@@ -854,11 +936,13 @@
         function saveData() { localStorage.setItem('bonusApp_employees', JSON.stringify(employees)); renderAll(); }
 
         function resetData() { 
-            if(confirm("Apagar todos os dados da planilha atual?")) { 
-                localStorage.removeItem('bonusApp_employees'); 
-                employees = [];
-                renderAll();
-            } 
+            showCustomConfirm("Apagar todos os dados da planilha atual?", (confirmed) => {
+                if(confirmed) { 
+                    localStorage.removeItem('bonusApp_employees'); 
+                    employees = [];
+                    renderAll();
+                } 
+            });
         }
 
         function toggleSettings() { 
@@ -877,7 +961,7 @@
 
         function processCSV(text) {
             const lines = text.split('\n').filter(l => l.trim());
-            if (lines.length === 0) return alert("Arquivo vazio.");
+            if (lines.length === 0) return showToast("Arquivo vazio.");
             
             const firstLine = lines[0];
             const sep = firstLine.includes(';') ? ';' : ',';
@@ -987,10 +1071,17 @@
             }
 
             saveData();
-            alert(`${newCount} registros importados com sucesso!`);
+            showToast(`${newCount} registros importados com sucesso!`);
         }
 
-        function removeEmployee(id) { if(confirm("Remover?")) { employees = employees.filter(e => e.id !== id); saveData(); } }
+        function removeEmployee(id) { 
+            showCustomConfirm("Remover este colaborador?", (confirmed) => {
+                if(confirmed) { 
+                    employees = employees.filter(e => e.id !== id); 
+                    saveData(); 
+                }
+            });
+        }
 
         function renderAll() {
             const tbody = document.getElementById('employeesTableBody');
@@ -1163,7 +1254,7 @@
             const salary = parseCurrency(document.getElementById('empSalary').value);
             const boxes = document.getElementById('empBoxes').value;
             
-            if(!name || isNaN(salary)) return alert("Por favor, preencha o nome e o salário corretamente.");
+            if(!name || isNaN(salary)) return showToast("Por favor, preencha o nome e o salário corretamente.");
             
             if (editingId) {
                 const index = employees.findIndex(e => e.id === editingId);
@@ -1231,7 +1322,7 @@
                     document.getElementById('digitalSheetModal').classList.remove('hidden');
                 } catch (error) {
                     console.error("Erro ao abrir digital:", error);
-                    alert("Houve um erro ao carregar a tabela. Por favor, tente novamente.");
+                    showToast("Houve um erro ao carregar a tabela. Por favor, tente novamente.");
                 }
             }, 50); // Reduzido para 50ms para ser mais rápido
         }
@@ -1363,46 +1454,50 @@
         }
 
         function resetDigitalRow(btn, name) {
-            if(!confirm(`Zerar notas de ${name}?`)) return;
-            
-            // Reset in data
-            const emp = employees.find(e => e.name === name);
-            if(emp) {
-                emp.boxes = 0;
-                emp.criteria = { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
-                emp.observation = ""; // Zera a observação no banco
-                saveData();
-            }
+            showCustomConfirm(`Zerar notas de ${name}?`, (confirmed) => {
+                if(!confirmed) return;
+                
+                // Reset in data
+                const emp = employees.find(e => e.name === name);
+                if(emp) {
+                    emp.boxes = 0;
+                    emp.criteria = { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
+                    emp.observation = ""; // Zera a observação no banco
+                    saveData();
+                }
 
-            // Update UI
-            const tr = btn.closest('tr');
-            tr.querySelectorAll('.criteria-btn').forEach(b => {
-                b.setAttribute('data-value', 0);
-                b.innerText = '0';
-                b.className = 'criteria-btn w-9 h-9 rounded-full font-bold text-xs border transition-all bg-rose-100 text-rose-700 border-rose-300 ring-2 ring-rose-100';
+                // Update UI
+                const tr = btn.closest('tr');
+                tr.querySelectorAll('.criteria-btn').forEach(b => {
+                    b.setAttribute('data-value', 0);
+                    b.innerText = '0';
+                    b.className = 'criteria-btn w-9 h-9 rounded-full font-bold text-xs border transition-all bg-rose-100 text-rose-700 border-rose-300 ring-2 ring-rose-100';
+                });
+                tr.querySelector('input[type="number"]').value = 0;
+                
+                // Zera o textarea da observação
+                const txtArea = tr.querySelector('textarea');
+                if(txtArea) txtArea.value = "";
             });
-            tr.querySelector('input[type="number"]').value = 0;
-            
-            // Zera o textarea da observação
-            const txtArea = tr.querySelector('textarea');
-            if(txtArea) txtArea.value = "";
         }
 
         function resetDigitalSheet() {
-            if(!confirm("Tem certeza que deseja ZERAR TODOS os registros da tela?")) return;
-            
-            // Filter only displayed
-            const activeNames = teamDatabase.filter(m=>m.active).map(m=>m.name);
-            
-            employees.forEach(emp => {
-                if(activeNames.includes(emp.name)) {
-                    emp.boxes = 0;
-                    emp.criteria = { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
-                    emp.observation = ""; // Zera todas as observações
-                }
+            showCustomConfirm("Tem certeza que deseja ZERAR TODOS os registros da tela?", (confirmed) => {
+                if(!confirmed) return;
+                
+                // Filter only displayed
+                const activeNames = teamDatabase.filter(m=>m.active).map(m=>m.name);
+                
+                employees.forEach(emp => {
+                    if(activeNames.includes(emp.name)) {
+                        emp.boxes = 0;
+                        emp.criteria = { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 };
+                        emp.observation = ""; // Zera todas as observações
+                    }
+                });
+                saveData();
+                renderDigitalSheet();
             });
-            saveData();
-            renderDigitalSheet();
         }
 
         function exportDigitalSheetCSV() {
@@ -1590,8 +1685,143 @@
         }
 
         function exportToCSV() {
-            if (employees.length === 0) return alert("Não há dados para exportar.");
+            if (employees.length === 0) return showToast("Não há dados para exportar.");
             generateAndDownloadCSV(employees, config.referenceMonth || "Geral");
+        }
+        
+        // PRINT SIMPLE TABLE (For Admin Report) -> AGORA GERA RELATÓRIO FORMATADO
+        function printSimpleTable() {
+            if (employees.length === 0) return showToast("Não há dados para imprimir.");
+
+            const container = document.getElementById('manual-sheets-content');
+            container.innerHTML = '';
+            
+            // Data atual formatada
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+            const timeStr = now.toLocaleTimeString('pt-BR');
+            
+            // Mês de referência
+            let monthLabel = "Geral";
+            if (config.referenceMonth) {
+                const [y, m] = config.referenceMonth.split('-');
+                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                monthLabel = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
+            }
+
+            // Totais
+            let totalBonus = 0;
+            let totalSalary = 0;
+            let totalFinal = 0;
+
+            let tableRows = '';
+            employees.forEach(emp => {
+                const calc = calculateBonus(emp);
+                totalBonus += calc.bonusVal;
+                totalSalary += emp.salary;
+                totalFinal += calc.totalReceive;
+
+                // LOGICA PARA TAG CANCELADO NA IMPRESSÃO
+                const ptsDisplay = calc.hasPenalty 
+                    ? `<div style="color: #ef4444;">${calc.totalPts}<br><span style="font-size: 7px; text-transform: uppercase; font-weight: bold;">CANCELADO</span></div>`
+                    : calc.totalPts;
+
+                const bonusColor = calc.hasPenalty ? '#ef4444' : '#059669';
+
+                tableRows += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 6px; text-align: left;">${emp.name}</td>
+                        <td style="padding: 6px; text-align: center;">${emp.boxes}</td>
+                        <td style="padding: 6px; text-align: center;">${calc.prodPts}</td>
+                        <td style="padding: 6px; text-align: center;">${calc.perfPts}</td>
+                        <td style="padding: 6px; text-align: center; font-weight: bold;">${ptsDisplay}</td>
+                        <td style="padding: 6px; text-align: right;">${formatCurrency(emp.salary)}</td>
+                        <td style="padding: 6px; text-align: right; font-weight: bold; color: ${bonusColor};">+ ${formatCurrency(calc.bonusVal)}</td>
+                        <td style="padding: 6px; text-align: right; font-weight: bold;">${formatCurrency(calc.totalReceive)}</td>
+                    </tr>
+                `;
+            });
+
+            const html = `
+                <div style="font-family: 'Inter', Arial, sans-serif; max-width: 297mm; margin: 0 auto; padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <img src="https://i.imgur.com/CNJpqbX.png" style="height: 50px; width: auto;" alt="Logo">
+                            <div>
+                                <h1 style="margin: 0; font-size: 20px; color: #1e293b; text-transform: uppercase;">Relatório de Fechamento</h1>
+                                <p style="margin: 4px 0 0; color: #64748b; font-size: 12px;">Competência: <strong>${monthLabel}</strong></p>
+                            </div>
+                        </div>
+                        <div style="text-align: right; font-size: 10px; color: #94a3b8;">
+                            <p>Gerado em: ${dateStr} às ${timeStr}</p>
+                            <p>Emitido por: ${currentUser ? currentUser.name : 'Sistema'}</p>
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <thead>
+                            <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; font-size: 10px; color: #64748b;">
+                                <th style="padding: 10px; text-align: left;">Colaborador</th>
+                                <th style="padding: 10px; text-align: center;">Cx</th>
+                                <th style="padding: 10px; text-align: center;">Prod</th>
+                                <th style="padding: 10px; text-align: center;">Crit</th>
+                                <th style="padding: 10px; text-align: center;">Total Pts</th>
+                                <th style="padding: 10px; text-align: right;">Salário Base</th>
+                                <th style="padding: 10px; text-align: right;">Bônus</th>
+                                <th style="padding: 10px; text-align: right;">Total a Receber</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 2px solid #333;">
+                                <td colspan="5" style="padding: 10px; text-align: right; text-transform: uppercase;">Totais Gerais</td>
+                                <td style="padding: 10px; text-align: right;">${formatCurrency(totalSalary)}</td>
+                                <td style="padding: 10px; text-align: right; color: #059669;">${formatCurrency(totalBonus)}</td>
+                                <td style="padding: 10px; text-align: right; color: #0f172a;">${formatCurrency(totalFinal)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                        <div style="border-top: 1px solid #333; padding-top: 10px; text-align: center; font-size: 12px;">
+                            <p style="font-weight: bold; margin-bottom: 4px;">Gerência Financeira</p>
+                            <p style="color: #64748b; font-size: 10px;">Visto / Data</p>
+                        </div>
+                        <div style="border-top: 1px solid #333; padding-top: 10px; text-align: center; font-size: 12px;">
+                            <p style="font-weight: bold; margin-bottom: 4px;">Gerência RH</p>
+                            <p style="color: #64748b; font-size: 10px;">Visto / Data</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // Trigger Print Logic
+            const app = document.getElementById('app-content');
+            const modal = document.getElementById('digitalSheetModal');
+            const scroll = window.scrollY;
+            
+            app.classList.add('hidden-force');
+            if(modal) modal.classList.add('hidden-force');
+            
+            container.classList.remove('hidden');
+            document.body.classList.add('printing-report');
+
+            setTimeout(() => {
+                 window.print();
+                 
+                 // Cleanup logic inside the timeout to happen after print dialog triggers
+                 setTimeout(() => {
+                    document.body.classList.remove('printing-report');
+                    container.classList.add('hidden');
+                    app.classList.remove('hidden-force');
+                    if(modal) modal.classList.remove('hidden-force');
+                    window.scrollTo(0, scroll);
+                }, 500);
+            }, 100);
         }
     </script>
 </body>
