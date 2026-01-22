@@ -1139,6 +1139,62 @@
                 }
             }
 
+            // --- NOVA LÓGICA: DETECTAR E ATUALIZAR MÊS DE REFERÊNCIA ---
+            if (nameIdx === 1 && lines.length > startRow) {
+                try {
+                    // Pega a primeira linha de dados para ler o mês
+                    const firstDataCols = lines[startRow].split(sep).map(c => c.replace(/^"|"$/g, '').trim());
+                    const monthStr = firstDataCols[0]; // Esperado: "Janeiro/2026" ou "01/2026"
+
+                    if (monthStr && monthStr.includes('/')) {
+                        const parts = monthStr.split('/');
+                        if (parts.length === 2) {
+                            let mPart = parts[0].toLowerCase().trim();
+                            const yPart = parts[1].trim();
+
+                            // Mapa de meses PT-BR para números
+                            const monthMap = {
+                                'janeiro': '01', 'jan': '01',
+                                'fevereiro': '02', 'fev': '02',
+                                'março': '03', 'marco': '03', 'mar': '03',
+                                'abril': '04', 'abr': '04',
+                                'maio': '05', 'mai': '05',
+                                'junho': '06', 'jun': '06',
+                                'julho': '07', 'jul': '07',
+                                'agosto': '08', 'ago': '08',
+                                'setembro': '09', 'set': '09',
+                                'outubro': '10', 'out': '10',
+                                'novembro': '11', 'nov': '11',
+                                'dezembro': '12', 'dez': '12'
+                            };
+
+                            // Tenta obter o número do mês pelo nome ou usa o próprio número se for numérico
+                            let mNum = monthMap[mPart] || (parseInt(mPart) < 10 ? '0' + parseInt(mPart) : mPart);
+                            
+                            // Valida se ficou no formato correto (ex: 01 a 12)
+                            if (parseInt(mNum) >= 1 && parseInt(mNum) <= 12 && yPart.length === 4) {
+                                // Formata para YYYY-MM (formato do input type="month")
+                                if (mNum.length === 1) mNum = '0' + mNum;
+                                const newRef = `${yPart}-${mNum}`;
+
+                                // Atualiza o input e a configuração
+                                const dateInput = document.getElementById('referenceMonth');
+                                if (dateInput.value !== newRef) {
+                                    dateInput.value = newRef;
+                                    // Atualiza config sem chamar renderAll ainda (pois renderAll será chamado no final da importação)
+                                    config.referenceMonth = newRef;
+                                    localStorage.setItem('bonusApp_config', JSON.stringify(config));
+                                    showToast(`Mês alterado para: ${monthStr}`);
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erro ao tentar extrair data do CSV", e);
+                }
+            }
+            // ------------------------------------------------------------
+
             const salaryIdx = nameIdx + 1;
             const boxesIdx = nameIdx + 2;
             const critStartIdx = nameIdx + 3;
