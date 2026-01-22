@@ -191,7 +191,7 @@
                                aria-label="Seletor de Mês de Referência">
                     </div>
                     
-                    <!-- Filtro por Nome MULTI-SELECT -->
+                    <!-- Filtro por Nome MULTI-SELECT (DASHBOARD) -->
                     <div class="relative group bg-white border border-gray-200 rounded-lg shadow-sm flex items-center h-10 admin-only" id="filterContainer">
                         <div class="pl-3 text-slate-400">
                             <i data-lucide="filter" class="w-4 h-4"></i>
@@ -203,7 +203,7 @@
                             <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
                         </button>
 
-                        <!-- Dropdown Content (Hidden by default) -->
+                        <!-- Dropdown Content -->
                         <!-- AUMENTO DA LARGURA: w-64 para w-72 -->
                         <div id="filterDropdown" class="hidden absolute top-full left-0 mt-1 w-72 bg-white border border-gray-200 rounded-xl shadow-xl z-20 p-2 max-h-96 overflow-y-auto">
                             <div class="flex justify-between items-center px-2 py-1 mb-2 border-b border-gray-100">
@@ -218,7 +218,7 @@
                             </div>
                         </div>
                         
-                        <!-- Overlay invisível para fechar ao clicar fora (ativado via JS) -->
+                        <!-- Overlay -->
                         <div id="filterOverlay" class="hidden fixed inset-0 z-10" onclick="toggleFilterDropdown()"></div>
                     </div>
 
@@ -492,24 +492,53 @@
         <!-- AUMENTO DA LARGURA AQUI: max-w-7xl para max-w-[95%] -->
         <div class="max-w-[95%] mx-auto p-4 md:p-8 space-y-6">
             <div class="flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-lg border border-slate-200 sticky top-4 z-20 gap-4">
-                <div>
+                <div class="flex-1">
                     <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                         <div class="p-1.5 bg-blue-100 rounded text-blue-600"><i data-lucide="monitor-check" class="w-5 h-5"></i></div>
                         Avaliação Digital em Lote
                     </h2>
                     <p class="text-xs text-slate-500 mt-0.5">Realize o lançamento das avaliações e clique em "Enviar Dados"</p>
                 </div>
+
+                <!-- NOVO FILTRO DE EQUIPE PARA AVALIAÇÃO -->
+                <div class="relative group" id="digitalFilterContainer">
+                    <button onclick="toggleDigitalFilterDropdown()" class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors text-xs font-medium text-slate-600 shadow-sm w-48 justify-between">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="users" class="w-3.5 h-3.5 text-blue-500"></i>
+                            <span id="digitalFilterLabel">Selecionar Equipe</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+                    </button>
+
+                    <!-- Dropdown Content -->
+                    <div id="digitalFilterDropdown" class="hidden absolute top-full right-0 mt-1 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-30 p-2 max-h-80 overflow-y-auto">
+                        <div class="flex justify-between items-center px-2 py-1 mb-2 border-b border-gray-100">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Visibilidade</span>
+                            <div class="flex gap-2">
+                                <button onclick="selectAllDigitalFilters(true)" class="text-[10px] text-blue-600 hover:text-blue-800 font-medium">Todos</button>
+                                <button onclick="selectAllDigitalFilters(false)" class="text-[10px] text-slate-400 hover:text-slate-600">Nenhum</button>
+                            </div>
+                        </div>
+                        <div id="digitalFilterOptionsList" class="space-y-0.5">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                    
+                    <!-- Overlay -->
+                    <div id="digitalFilterOverlay" class="hidden fixed inset-0 z-20" onclick="toggleDigitalFilterDropdown()"></div>
+                </div>
+
                 <div class="flex gap-2 w-full md:w-auto">
                     <!-- NOVO BOTÃO: Limpar Tudo -->
                     <button onclick="resetDigitalSheet()" class="px-4 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-medium text-sm transition-colors flex items-center gap-2" title="Zerar todas as avaliações ativas">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">Limpar Tudo</span>
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">Limpar</span>
                     </button>
                     
                     <button onclick="closeDigitalSheet()" class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-slate-600 border border-gray-200 rounded-lg font-medium text-sm transition-colors">
                         Cancelar
                     </button>
                     <button onclick="exportDigitalSheetCSV()" class="px-4 py-2 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Enviar Dados
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Enviar
                     </button>
                     <button id="digitalSheetPdfBtn" onclick="exportDigitalSheetPDF()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2 shadow-sm shadow-rose-200">
                         <i data-lucide="file-text" class="w-4 h-4"></i> PDF
@@ -772,7 +801,7 @@
             { name: "FRANCISCO DA SILVA FERREIRA", salary: 1621 },
             { name: "LUCAS RIBEIRO DA SILVA", salary: 1621 },
             { name: "LEANDRO ALTINO FERREIRA", salary: 1621 },
-            { name: "FELIPE BARBOSA BANDEIRA", salary: 1621, active: false }, // Definido como inativo (férias)
+            { name: "FELIPE BARBOSA BANDEIRA", salary: 1621 }, 
             { name: "ANTONIO PATRICK ARAUJO LEMOS", salary: 1621 },
             { name: "FABIANA MARQUES BARBOSA", salary: 1621 },
             { name: "BRUNA PEREIRA DA SILVA", salary: 1621 },
@@ -795,8 +824,11 @@
         let newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
         const criteriaLabels = { assiduity: 'Assiduidade', organization: 'Organização', participation: 'Participação', agility: 'Agilidade', punctuality: 'Pontualidade' };
 
-        // Variável global para armazenar os filtros ativos (nomes)
+        // Variável global para armazenar os filtros ativos (nomes) - DASHBOARD
         let activeFilterNames = [];
+        
+        // Variável global para armazenar filtros ativos (nomes) - AVALIAÇÃO DIGITAL
+        let digitalFilterNames = [];
 
         window.onload = function() {
             checkAuth();
@@ -824,7 +856,7 @@
             if (badge) badge.innerText = teamDatabase.filter(m => m.active).length;
         }
 
-        // Funções do Dropdown de Filtro Multi-Seleção
+        // Funções do Dropdown de Filtro Multi-Seleção (DASHBOARD)
         function toggleFilterDropdown() {
             const dropdown = document.getElementById('filterDropdown');
             const overlay = document.getElementById('filterOverlay');
@@ -1503,6 +1535,10 @@
                 currentMonth = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
             }
 
+            // Inicializa Filtro Digital com todos selecionados
+            const activeTeam = teamDatabase.filter(m => m.active);
+            digitalFilterNames = activeTeam.map(m => m.name);
+
             // Usa requestAnimationFrame para garantir que o clique seja processado visualmente na hora
             requestAnimationFrame(() => {
                 document.getElementById('modalMonthName').textContent = currentMonth;
@@ -1535,13 +1571,110 @@
             renderAll(); // Refresh main view to show updates
         }
 
+        // --- NEW DIGITAL FILTER FUNCTIONS ---
+        function toggleDigitalFilterDropdown() {
+            const dropdown = document.getElementById('digitalFilterDropdown');
+            const overlay = document.getElementById('digitalFilterOverlay');
+            if(dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                overlay.classList.remove('hidden');
+            } else {
+                dropdown.classList.add('hidden');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function handleDigitalFilterChange(checkbox) {
+            const name = checkbox.value;
+            if(checkbox.checked) {
+                if(!digitalFilterNames.includes(name)) digitalFilterNames.push(name);
+            } else {
+                digitalFilterNames = digitalFilterNames.filter(n => n !== name);
+            }
+            updateDigitalFilterDisplay();
+            renderDigitalSheet(); // Re-render table rows
+        }
+
+        function selectAllDigitalFilters(selectAll) {
+            const activeTeam = teamDatabase.filter(m => m.active);
+            if(selectAll) {
+                digitalFilterNames = activeTeam.map(m => m.name);
+            } else {
+                digitalFilterNames = [];
+            }
+            
+            const checkboxes = document.querySelectorAll('#digitalFilterOptionsList input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = selectAll);
+            
+            updateDigitalFilterDisplay();
+            renderDigitalSheet(); // Re-render
+        }
+
+        function updateDigitalFilterDisplay() {
+            const activeTeamCount = teamDatabase.filter(m => m.active).length;
+            const label = document.getElementById('digitalFilterLabel');
+            
+            if (digitalFilterNames.length === 0) {
+                label.innerText = "Nenhum Selecionado";
+            } else if (digitalFilterNames.length === activeTeamCount) {
+                label.innerText = "Equipe Completa";
+            } else {
+                label.innerText = `${digitalFilterNames.length} Selecionados`;
+            }
+        }
+
+        function renderDigitalFilterOptions() {
+            const filterList = document.getElementById('digitalFilterOptionsList');
+            if(!filterList) return;
+            
+            filterList.innerHTML = '';
+            
+            // Usar teamDatabase para listar todos os ativos, não só employees
+            const activeMembers = teamDatabase.filter(m => m.active);
+
+            activeMembers.forEach(member => {
+                const isChecked = digitalFilterNames.includes(member.name);
+                
+                const div = document.createElement('div');
+                div.className = "flex items-center hover:bg-slate-50 rounded px-2 py-1.5 cursor-pointer";
+                div.onclick = (e) => {
+                    if(e.target.type !== 'checkbox') {
+                        const cb = div.querySelector('input');
+                        cb.checked = !cb.checked;
+                        handleDigitalFilterChange(cb);
+                    }
+                };
+
+                div.innerHTML = `
+                    <input type="checkbox" value="${member.name}" ${isChecked ? 'checked' : ''} 
+                           onchange="handleDigitalFilterChange(this)"
+                           class="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer">
+                    <span class="ml-2 text-[10px] font-medium text-slate-700 select-none truncate w-full" title="${member.name}">${member.name}</span>
+                `;
+                filterList.appendChild(div);
+            });
+            updateDigitalFilterDisplay();
+        }
+        // ------------------------------------
+
         function renderDigitalSheet() {
+            // Render Filter UI first
+            renderDigitalFilterOptions();
+
             const tbody = document.querySelector('#digitalSheetTable tbody');
             tbody.innerHTML = '';
 
             const activeMembers = teamDatabase.filter(m => m.active);
 
-            activeMembers.forEach((member, index) => {
+            // Filter active members based on digitalFilterNames
+            const displayedMembers = activeMembers.filter(m => digitalFilterNames.includes(m.name));
+
+            if(displayedMembers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400 text-xs italic">Nenhum colaborador selecionado no filtro.</td></tr>';
+                return;
+            }
+
+            displayedMembers.forEach((member, index) => {
                 // Find existing entry for this month
                 const existing = employees.find(e => e.name === member.name);
                 
@@ -1704,7 +1837,30 @@
         }
 
         function exportDigitalSheetCSV() {
-            exportToCSV(); // Reuses existing logic which dumps 'employees'
+            // Verifica se há nomes no filtro digital
+            if (!digitalFilterNames || digitalFilterNames.length === 0) {
+                return showToast("Selecione pelo menos um colaborador para enviar.");
+            }
+
+            // Constrói a lista de exportação baseada APENAS nos nomes filtrados/selecionados
+            const listToExport = digitalFilterNames.map(name => {
+                // 1. Tenta encontrar os dados reais (se já tiver lançado algo)
+                const existing = employees.find(e => e.name === name);
+                if (existing) return existing;
+
+                // 2. Se não tiver dados lançados (estiver tudo 0 visualmente), cria um objeto zerado para exportar
+                // Isso garante que o que você vê na tela (mesmo zerado) saia no CSV
+                const member = teamDatabase.find(m => m.name === name);
+                return {
+                    name: name,
+                    salary: member ? member.salary : 1621,
+                    boxes: 0,
+                    criteria: { assiduity: 0, organization: 0, participation: 0, agility: 0, punctuality: 0 },
+                    observation: ""
+                };
+            });
+
+            generateAndDownloadCSV(listToExport, config.referenceMonth || "Geral");
         }
 
         function exportDigitalSheetPDF() {
