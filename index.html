@@ -2029,8 +2029,8 @@
                 filename = `Bonus_${mnCap}_${y}_CSV.csv`;
             }
             
-            // Cabeçalho ATUALIZADO (incluindo PontosProducao e PontosCriterios)
-            csvContent += "Mes;Nome;SalarioBase;Caixas;PontosProducao;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosCriterios;PontosTotais;ValorBonus;TotalReceber;Observacao\n";
+            // Cabeçalho REMOVIDO conforme solicitado
+            // csvContent += "Mes;Nome;SalarioBase;Caixas;PontosProducao;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosCriterios;PontosTotais;ValorBonus;TotalReceber;Observacao\n";
 
             dataList.forEach(emp => {
                 const calc = calculateBonus(emp);
@@ -2046,7 +2046,7 @@
                     c.participation,
                     c.agility,
                     c.punctuality,
-                    calc.perfPts, // NOVA COLUNA: Pontos Critérios (Soma das notas)
+                    calc.perfPts, // Pontos Critérios (Soma das notas)
                     calc.totalPts, // Total Geral
                     calc.bonusVal.toFixed(2).replace('.', ','),
                     calc.totalReceive.toFixed(2).replace('.', ','),
