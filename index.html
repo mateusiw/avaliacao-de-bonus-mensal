@@ -210,7 +210,7 @@
                         <!-- AUMENTO DA LARGURA: w-64 para w-72 -->
                         <div id="filterDropdown" class="hidden absolute top-full left-0 mt-1 w-72 bg-white border border-gray-200 rounded-xl shadow-xl z-20 p-2 max-h-96 overflow-y-auto">
                             <div class="flex justify-between items-center px-2 py-1 mb-2 border-b border-gray-100">
-                                <span class="text-xs font-bold text-slate-500 uppercase">Filtrar Equipa</span>
+                                <span class="text-xs font-bold text-slate-500 uppercase">Filtrar Equipe</span>
                                 <div class="flex gap-2">
                                     <button onclick="selectAllFilters(true)" class="text-[10px] text-blue-600 hover:text-blue-800 font-medium">Todos</button>
                                     <button onclick="selectAllFilters(false)" class="text-[10px] text-slate-400 hover:text-slate-600">Nenhum</button>
@@ -234,9 +234,9 @@
                             <span class="text-[10px] font-bold">Config</span>
                         </button>
                         
-                        <button onclick="viewTeamDatabase()" class="relative flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Gerenciar Equipa">
+                        <button onclick="viewTeamDatabase()" class="relative flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm" title="Gerenciar Equipe">
                             <i data-lucide="users-2" class="w-5 h-5 mb-0.5"></i>
-                            <span class="text-[10px] font-bold">Equipa</span>
+                            <span class="text-[10px] font-bold">Equipe</span>
                             <span id="teamCountBadge" class="absolute top-1 right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white border-2 border-white shadow-sm">0</span>
                         </button>
                         
@@ -362,7 +362,7 @@
 
                 <!-- Card 4: Equipe -->
                 <article class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between h-28 hover:border-indigo-200 transition-colors">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Equipa Avaliada</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Equipe Avaliada</p>
                     <div class="flex items-end justify-between">
                         <output class="text-xl font-bold text-slate-700" id="totalEmployeesDisplay">0</output>
                         <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
@@ -376,7 +376,7 @@
             <section id="leader-dashboard" class="hidden mt-10 animate-fade-in" aria-label="Painel do Líder">
                  <div class="text-center mb-12">
                     <h2 class="text-2xl font-bold text-slate-800">Painel do Avaliador</h2>
-                    <p class="text-slate-500 mt-2">Realize a avaliação da equipa.</p>
+                    <p class="text-slate-500 mt-2">Realize a avaliação da equipe.</p>
                 </div>
                 <div class="flex justify-center max-w-3xl mx-auto">
                     <button onclick="openDigitalSheet()" class="flex flex-col items-center justify-center p-10 bg-white border border-gray-200 rounded-2xl hover:border-emerald-500 hover:shadow-xl hover:-translate-y-1 transition-all group h-48 w-full max-w-sm">
@@ -508,7 +508,7 @@
                     <button onclick="toggleDigitalFilterDropdown()" class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors text-xs font-medium text-slate-600 shadow-sm w-48 justify-between">
                         <div class="flex items-center gap-2">
                             <i data-lucide="users" class="w-3.5 h-3.5 text-blue-500"></i>
-                            <span id="digitalFilterLabel">Selecionar Equipa</span>
+                            <span id="digitalFilterLabel">Selecionar Equipe</span>
                         </div>
                         <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
                     </button>
@@ -616,7 +616,7 @@
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col animate-fade-in-up">
             <div class="p-5 border-b border-gray-100 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <i data-lucide="database" class="w-5 h-5 text-blue-600"></i> Base de Equipa
+                    <i data-lucide="database" class="w-5 h-5 text-blue-600"></i> Base de Equipe
                 </h3>
                 <button onclick="closeViewTeam()" class="text-slate-400 hover:text-slate-700 bg-gray-100 hover:bg-gray-200 rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
@@ -1232,31 +1232,37 @@
 
             const salaryIdx = nameIdx + 1;
             const boxesIdx = nameIdx + 2;
-            const critStartIdx = nameIdx + 3;
-
+            
             let newCount = 0;
             
             for (let i = startRow; i < lines.length; i++) {
                 const row = lines[i];
-                // Remove aspas que o Excel as vezes coloca
                 const cols = row.split(sep).map(c => c.replace(/^"|"$/g, '').trim());
                 
-                // Garante que tem colunas suficientes para ler pelo menos até as caixas
+                // Garante que tem colunas suficientes
                 if (cols.length < boxesIdx + 1) continue;
                 
                 const name = cols[nameIdx];
                 if (!name) continue;
 
+                // DETECÇÃO AUTOMÁTICA DE VERSÃO DO CSV
+                // V1: ... Caixas(3), Assid(4)... (Total ~13 cols)
+                // V2: ... Caixas(3), PontosProd(4), Assid(5)... (Total ~14 cols)
+                // V3: ... Caixas(3), PontosProd(4), Assid(5)... PontosCrit(10)... (Total ~15 cols)
+                
+                let critStartIdx = nameIdx + 3; // Padrão antigo
+                if (cols.length >= 14) {
+                    critStartIdx = nameIdx + 4; // Pula a coluna de Pontos de Produção
+                }
+
                 let salary = 1621; // Valor padrão
                 const salaryStr = cols[salaryIdx];
                 
                 if (salaryStr) {
-                    // Parse robusto de moeda (remove R$, remove pontos de milhar, troca vírgula por ponto)
                     const sClean = salaryStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
                     const sVal = parseFloat(sClean);
                     if (!isNaN(sVal)) salary = sVal;
                 } else {
-                     // Tenta achar no banco de dados da equipe se não vier no CSV
                      const dbMember = teamDatabase.find(m => m.name === name);
                      if (dbMember) salary = dbMember.salary;
                 }
@@ -1264,12 +1270,11 @@
                 const boxes = parseInt(cols[boxesIdx]) || 0;
                 
                 const parseCrit = (val) => {
-                    if (val === undefined || val === null || val.trim() === '') return 10; // Padrão 10 se vazio
+                    if (val === undefined || val === null || val.trim() === '') return 10;
                     const n = parseInt(val);
                     return isNaN(n) ? 10 : n;
                 };
                 
-                // Leitura segura dos critérios
                 const criteria = {
                     assiduity: parseCrit(cols[critStartIdx]),
                     organization: parseCrit(cols[critStartIdx + 1]),
@@ -1278,12 +1283,15 @@
                     punctuality: parseCrit(cols[critStartIdx + 4])
                 };
 
-                // Tenta ler a observação (Coluna após os totais financeiros)
-                // A estrutura de exportação coloca a Obs na coluna critStartIdx + 8
-                // (Assid(0), Org(1), Part(2), Agil(3), Pont(4), TotalPts(5), Bonus(6), Total(7), OBS(8))
+                // Lógica da Observação:
+                // V1: offset 8
+                // V3 (com PontosCrit): offset 9
+                let obsOffset = 8;
+                if (cols.length >= 15) obsOffset = 9;
+
                 let obs = "";
-                if (cols.length > critStartIdx + 8) {
-                    obs = cols[critStartIdx + 8];
+                if (cols.length > critStartIdx + obsOffset) {
+                    obs = cols[critStartIdx + obsOffset];
                 }
 
                 employees.push({ 
@@ -1292,7 +1300,7 @@
                     salary: salary, 
                     boxes: boxes, 
                     criteria: criteria,
-                    observation: obs // Importa a observação
+                    observation: obs 
                 });
                 newCount++;
             }
@@ -1620,7 +1628,7 @@
             if (digitalFilterNames.length === 0) {
                 label.innerText = "Nenhum Selecionado";
             } else if (digitalFilterNames.length === activeTeamCount) {
-                label.innerText = "Equipa Completa";
+                label.innerText = "Equipe Completa";
             } else {
                 label.innerText = `${digitalFilterNames.length} Selecionados`;
             }
@@ -1905,7 +1913,7 @@
                         <div style="display: flex; align-items: center; gap: 15px;">
                             <img src="https://i.imgur.com/CNJpqbX.png" style="height: 50px; width: auto;" alt="Logo SPG">
                             <div>
-                                <h1 style="margin: 0; font-size: 16px; text-transform: uppercase;">Avaliação de Desempenho da Equipa - SPG Packing</h1>
+                                <h1 style="margin: 0; font-size: 16px; text-transform: uppercase;">Avaliação de Desempenho da Equipe - SPG Packing</h1>
                                 <p style="margin: 2px 0 0 0; font-weight: bold; font-size: 12px;">Sítio Pedra Grande - SPG</p>
                                 <p style="margin: 2px 0 0 0; color: #666; font-size: 11px;">Mês de Referência: <strong>${monthLabel}</strong></p>
                             </div>
@@ -2021,8 +2029,8 @@
                 filename = `Bonus_${mnCap}_${y}_CSV.csv`;
             }
             
-            // Cabeçalho removido conforme solicitado
-            // csvContent += "Mes;Nome;SalarioBase;Caixas;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosTotais;ValorBonus;TotalReceber\n";
+            // Cabeçalho ATUALIZADO (incluindo PontosProducao e PontosCriterios)
+            csvContent += "Mes;Nome;SalarioBase;Caixas;PontosProducao;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosCriterios;PontosTotais;ValorBonus;TotalReceber;Observacao\n";
 
             dataList.forEach(emp => {
                 const calc = calculateBonus(emp);
@@ -2032,15 +2040,17 @@
                     emp.name,
                     emp.salary.toFixed(2).replace('.', ','),
                     emp.boxes,
+                    calc.prodPts, // Pontos de Produção
                     c.assiduity,
                     c.organization,
                     c.participation,
                     c.agility,
                     c.punctuality,
-                    calc.totalPts,
+                    calc.perfPts, // NOVA COLUNA: Pontos Critérios (Soma das notas)
+                    calc.totalPts, // Total Geral
                     calc.bonusVal.toFixed(2).replace('.', ','),
                     calc.totalReceive.toFixed(2).replace('.', ','),
-                    emp.observation || "" // Added to CSV
+                    emp.observation || ""
                 ];
                 csvContent += row.join(";") + "\n";
             });
