@@ -194,6 +194,14 @@
                                aria-label="Seletor de Mês de Referência">
                     </div>
                     
+                    <!-- FILTRO DE SETOR (MAIN) -->
+                    <select id="mainDeptSelect" onchange="handleMainDeptChange()" class="h-10 px-3 bg-white border border-gray-200 rounded-lg text-sm font-medium text-slate-600 shadow-sm outline-none hover:border-blue-300 transition-colors cursor-pointer admin-only">
+                        <option value="Todos">Todos os Setores</option>
+                        <option value="Produção Packing">Produção Packing</option>
+                        <option value="Escritório">Escritório</option>
+                        <option value="Limpeza">Limpeza</option>
+                    </select>
+
                     <!-- Filtro por Nome MULTI-SELECT (DASHBOARD) -->
                     <div class="relative group bg-white border border-gray-200 rounded-lg shadow-sm flex items-center h-10 admin-only" id="filterContainer">
                         <div class="pl-3 text-slate-400">
@@ -503,32 +511,43 @@
                     <p class="text-xs text-slate-500 mt-0.5">Realize o lançamento das avaliações e clique em "Enviar Dados"</p>
                 </div>
 
-                <!-- NOVO FILTRO DE EQUIPA PARA AVALIAÇÃO -->
-                <div class="relative group" id="digitalFilterContainer">
-                    <button onclick="toggleDigitalFilterDropdown()" class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors text-xs font-medium text-slate-600 shadow-sm w-48 justify-between">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="users" class="w-3.5 h-3.5 text-blue-500"></i>
-                            <span id="digitalFilterLabel">Selecionar Equipe</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
-                    </button>
+                <!-- ENVOLTÓRIO DOS FILTROS -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- NOVO FILTRO DE SETOR -->
+                    <select id="digitalDeptSelect" onchange="handleDigitalDeptChange()" class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-slate-600 shadow-sm outline-none hover:border-blue-300 transition-colors cursor-pointer">
+                        <option value="Todos">Todos os Setores</option>
+                        <option value="Produção Packing">Produção Packing</option>
+                        <option value="Escritório">Escritório</option>
+                        <option value="Limpeza">Limpeza</option>
+                    </select>
 
-                    <!-- Dropdown Content -->
-                    <div id="digitalFilterDropdown" class="hidden absolute top-full right-0 mt-1 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-30 p-2 max-h-80 overflow-y-auto">
-                        <div class="flex justify-between items-center px-2 py-1 mb-2 border-b border-gray-100">
-                            <span class="text-[10px] font-bold text-slate-500 uppercase">Visibilidade</span>
-                            <div class="flex gap-2">
-                                <button onclick="selectAllDigitalFilters(true)" class="text-[10px] text-blue-600 hover:text-blue-800 font-medium">Todos</button>
-                                <button onclick="selectAllDigitalFilters(false)" class="text-[10px] text-slate-400 hover:text-slate-600">Nenhum</button>
+                    <!-- NOVO FILTRO DE EQUIPA PARA AVALIAÇÃO -->
+                    <div class="relative group" id="digitalFilterContainer">
+                        <button onclick="toggleDigitalFilterDropdown()" class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors text-xs font-medium text-slate-600 shadow-sm w-48 justify-between">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="users" class="w-3.5 h-3.5 text-blue-500"></i>
+                                <span id="digitalFilterLabel">Selecionar Equipe</span>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-3 h-3 text-slate-400"></i>
+                        </button>
+
+                        <!-- Dropdown Content -->
+                        <div id="digitalFilterDropdown" class="hidden absolute top-full right-0 mt-1 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-30 p-2 max-h-80 overflow-y-auto">
+                            <div class="flex justify-between items-center px-2 py-1 mb-2 border-b border-gray-100">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase">Visibilidade</span>
+                                <div class="flex gap-2">
+                                    <button onclick="selectAllDigitalFilters(true)" class="text-[10px] text-blue-600 hover:text-blue-800 font-medium">Todos</button>
+                                    <button onclick="selectAllDigitalFilters(false)" class="text-[10px] text-slate-400 hover:text-slate-600">Nenhum</button>
+                                </div>
+                            </div>
+                            <div id="digitalFilterOptionsList" class="space-y-0.5">
+                                <!-- Injected via JS -->
                             </div>
                         </div>
-                        <div id="digitalFilterOptionsList" class="space-y-0.5">
-                            <!-- Injected via JS -->
-                        </div>
+                        
+                        <!-- Overlay -->
+                        <div id="digitalFilterOverlay" class="hidden fixed inset-0 z-20" onclick="toggleDigitalFilterDropdown()"></div>
                     </div>
-                    
-                    <!-- Overlay -->
-                    <div id="digitalFilterOverlay" class="hidden fixed inset-0 z-20" onclick="toggleDigitalFilterDropdown()"></div>
                 </div>
 
                 <div class="flex gap-2 w-full md:w-auto">
@@ -798,34 +817,46 @@
         let employees = JSON.parse(localStorage.getItem('bonusApp_employees')) || [];
         
         const defaultTeam = [
-            { name: "EMANUEL CARDOSO ARAUJO", salary: 1621 },
-            { name: "MARCOS FEITOSA DE OLIVEIRA", salary: 1621 },
-            { name: "GABRIEL CARDOSO ARAUJO", salary: 1621 },
-            { name: "FRANCISCO DA SILVA FERREIRA", salary: 1621 },
-            { name: "LUCAS RIBEIRO DA SILVA", salary: 1621 },
-            { name: "LEANDRO ALTINO FERREIRA", salary: 1621 },
-            { name: "FELIPE BARBOSA BANDEIRA", salary: 1621 }, 
-            { name: "ANTONIO PATRICK ARAUJO LEMOS", salary: 1621 },
-            { name: "FABIANA MARQUES BARBOSA", salary: 1621 },
-            { name: "BRUNA PEREIRA DA SILVA", salary: 1621 },
-            { name: "MONICA BATISTA FARIAS", salary: 1621 },
-            { name: "KARINE MARQUES DE ALMEIDA MARTINS", salary: 1621 },
-            { name: "PEDRO LUCAS DE SOUZA GONÇALVES", salary: 1621 },
-            { name: "GLAYLSON LIMA FERREIRA", salary: 1621 },
-            { name: "DIONISIO PEREIRA DE ALBUQUERQUE", salary: 1621 }
+            { name: "EMANUEL CARDOSO ARAÚJO", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "FRANCISCA IDAIANY MELO RODRIGUES", salary: 1621, department: "Escritório", location: "SPG Sede" },
+            { name: "FELIPE BARBOSA BANDEIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "THAYNARA RODRIGUES DA SILVA", salary: 1621, department: "Escritório", location: "SPG Sede" },
+            { name: "LUCAS RIBEIRO DA SILVA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "JOÃO VICTOR GONÇALVES", salary: 1621, department: "Escritório", location: "SPG Sede" },
+            { name: "ANTONIO PATRICK ARAÚJO LEMOS", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "MARIA DA CONCEIÇÃO DE JESUS RAMALHO", salary: 1621, department: "Limpeza", location: "SPG Sede" },
+            { name: "FABIANA MARQUES BARBOSA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "DIONISIO PEREIRA DE ALBUQUERQUE", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "PEDRO LUCAS DE SOUZA GONÇALVES", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "LEANDRO ALTINO FERREIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "MARCOS FEITOSA DE OLIVEIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "FRANCISCO DA SILVA FERREIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "GABRIEL CARDOSO ARAÚJO", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "FRANCISCO LUCAS INACIO DE SOUSA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "BRUNA PEREIRA DA SILVA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "GLAYLSON LIMA FERREIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "KARINE MARQUES DE ALMEIDA MARTINS", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
+            { name: "MONICA BATISTA FARIAS", salary: 1621, department: "Produção Packing", location: "SPG Sede" }
         ];
 
-        let teamDatabase = JSON.parse(localStorage.getItem('bonusApp_team')) || defaultTeam;
-
-        teamDatabase.forEach(m => {
-            // Se active não estiver definido (undefined), define como true.
-            // Se já estiver definido como false (caso do Felipe acima), mantém false.
-            if (m.active === undefined) m.active = true;
+        // Sincroniza a nova lista com o cache, preservando apenas o status 'active' se o colaborador já existia
+        let cachedTeam = JSON.parse(localStorage.getItem('bonusApp_team')) || [];
+        let teamDatabase = defaultTeam.map(dt => {
+            const existing = cachedTeam.find(ct => ct.name === dt.name);
+            return { 
+                ...dt, 
+                active: existing && existing.active !== undefined ? existing.active : true,
+                location: existing && existing.location ? existing.location : dt.location
+            };
         });
         localStorage.setItem('bonusApp_team', JSON.stringify(teamDatabase));
 
         let newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
         const criteriaLabels = { assiduity: 'Assiduidade', organization: 'Organização', participation: 'Participação', agility: 'Agilidade', punctuality: 'Pontualidade' };
+
+        // Variável global para armazenar setor atual selecionado
+        let mainActiveDept = 'Todos';
+        let digitalActiveDept = 'Todos';
 
         // Variável global para armazenar os filtros ativos (nomes) - DASHBOARD
         let activeFilterNames = [];
@@ -849,14 +880,39 @@
             const activeTeam = teamDatabase.filter(m => m.active);
             activeFilterNames = activeTeam.map(m => m.name);
             
+            document.getElementById('mainDeptSelect').value = mainActiveDept;
+
             renderEmployeeSelect(); 
             renderCriteriaForm();
             renderAll();
         };
 
         function updateTeamCountBadge() {
+            let activeTeam = teamDatabase.filter(m => m.active);
+            if (mainActiveDept !== 'Todos') {
+                activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === mainActiveDept);
+            }
             const badge = document.getElementById('teamCountBadge');
-            if (badge) badge.innerText = teamDatabase.filter(m => m.active).length;
+            if (badge) badge.innerText = activeTeam.length;
+        }
+
+        // --- FILTRO DE SETOR DA TELA PRINCIPAL ---
+        function handleMainDeptChange() {
+            mainActiveDept = document.getElementById('mainDeptSelect').value;
+            
+            // Ao mudar o setor, garantir que seleciona as pessoas daquele setor
+            let activeTeam = teamDatabase.filter(m => m.active);
+            if (mainActiveDept !== 'Todos') {
+                activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === mainActiveDept);
+            }
+            
+            // Adiciona as pessoas do novo setor no array de seleção se não estiverem
+            activeTeam.forEach(m => {
+                if (!activeFilterNames.includes(m.name)) activeFilterNames.push(m.name);
+            });
+
+            renderEmployeeSelect();
+            renderAll();
         }
 
         // Funções do Dropdown de Filtro Multi-Seleção (DASHBOARD)
@@ -884,11 +940,19 @@
         }
 
         function selectAllFilters(selectAll) {
-            const activeTeam = teamDatabase.filter(m => m.active);
+            let activeTeam = teamDatabase.filter(m => m.active);
+            if (mainActiveDept !== 'Todos') {
+                activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === mainActiveDept);
+            }
+
             if(selectAll) {
-                activeFilterNames = activeTeam.map(m => m.name);
+                const namesToAdd = activeTeam.map(m => m.name);
+                namesToAdd.forEach(n => {
+                    if (!activeFilterNames.includes(n)) activeFilterNames.push(n);
+                });
             } else {
-                activeFilterNames = [];
+                const namesToRemove = activeTeam.map(m => m.name);
+                activeFilterNames = activeFilterNames.filter(n => !namesToRemove.includes(n));
             }
             
             // Atualiza checkboxes visuais
@@ -900,26 +964,39 @@
         }
 
         function updateFilterDisplay() {
-            const activeTeamCount = teamDatabase.filter(m => m.active).length;
+            let activeTeam = teamDatabase.filter(m => m.active);
+            if (mainActiveDept !== 'Todos') {
+                activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === mainActiveDept);
+            }
+            const activeTeamCount = activeTeam.length;
+            const selectedInSector = activeTeam.filter(m => activeFilterNames.includes(m.name)).length;
+
             const label = document.getElementById('filterLabel');
             
-            if (activeFilterNames.length === 0) {
+            if (selectedInSector === 0) {
                 label.innerText = "Nenhum";
-            } else if (activeFilterNames.length === activeTeamCount) {
+            } else if (selectedInSector === activeTeamCount) {
                 label.innerText = "Todos";
-            } else if (activeFilterNames.length === 1) {
-                label.innerText = activeFilterNames[0].split(' ')[0] + "..."; // Primeiro nome
+            } else if (selectedInSector === 1) {
+                const firstFound = activeTeam.find(m => activeFilterNames.includes(m.name));
+                label.innerText = firstFound ? firstFound.name.split(' ')[0] + "..." : "Selecionados";
             } else {
-                label.innerText = `${activeFilterNames.length} Selecionados`;
+                label.innerText = `${selectedInSector} Selecionados`;
             }
         }
 
         function renderEmployeeSelect() {
             const select = document.getElementById('empName');
+            let activeTeam = teamDatabase.filter(m => m.active);
+            
+            if (mainActiveDept !== 'Todos') {
+                activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === mainActiveDept);
+            }
+
             // Populate select normal
             if(select) {
                 select.innerHTML = '<option value="">Selecione um colaborador...</option>';
-                teamDatabase.filter(m => m.active).forEach(member => { 
+                activeTeam.forEach(member => { 
                     const opt = document.createElement('option'); 
                     opt.value = member.name; 
                     opt.text = member.name;
@@ -931,11 +1008,11 @@
             const filterList = document.getElementById('filterOptionsList');
             if(filterList) {
                 filterList.innerHTML = '';
-                teamDatabase.filter(m => m.active).forEach(member => {
+                activeTeam.forEach(member => {
                     const isChecked = activeFilterNames.includes(member.name);
                     
                     const div = document.createElement('div');
-                    div.className = "flex items-center hover:bg-slate-50 rounded px-2 py-1 cursor-pointer";
+                    div.className = "flex items-center hover:bg-slate-50 rounded px-2 py-1.5 cursor-pointer";
                     div.onclick = (e) => {
                         // Permite clicar na linha inteira, mas evita duplo clique se clicar direto no checkbox
                         if(e.target.type !== 'checkbox') {
@@ -959,19 +1036,50 @@
             updateTeamCountBadge();
         }
 
+        function getDeptColors(dept) {
+            if (dept === 'Escritório') return 'text-purple-600 bg-purple-50 border-purple-200';
+            if (dept === 'Limpeza') return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+            return 'text-blue-600 bg-blue-50 border-blue-200'; // Default / Packing
+        }
+
+        function getLocationColors(loc) {
+            if (loc === 'SPG Oásis') return 'text-amber-700 bg-amber-50 border-amber-200';
+            return 'text-slate-600 bg-slate-50 border-slate-200'; // SPG Sede or Default
+        }
+
         function viewTeamDatabase() {
             const tbody = document.getElementById('viewTeamTableBody');
             tbody.innerHTML = '';
-            teamDatabase.forEach((member, index) => {
+            
+            // Filtra a exibição com base no setor selecionado na tela principal
+            let displayedTeam = teamDatabase;
+            if (mainActiveDept !== 'Todos') {
+                displayedTeam = teamDatabase.filter(m => (m.department || 'Produção Packing') === mainActiveDept);
+            }
+
+            displayedTeam.forEach((member) => {
+                // Encontra o índice original para a função de toggle funcionar corretamente
+                const originalIndex = teamDatabase.findIndex(m => m.name === member.name);
+                
                 const tr = document.createElement('tr');
                 const rowClass = member.active ? '' : 'opacity-50 bg-gray-50';
                 
                 tr.className = rowClass;
+                
+                const deptColors = getDeptColors(member.department || 'Produção Packing');
+                const locColors = getLocationColors(member.location || 'SPG Sede');
+
                 tr.innerHTML = `
-                    <td class="p-4 font-medium text-slate-700">${member.name}</td>
+                    <td class="p-4 font-medium text-slate-700">
+                        ${member.name}
+                        <div class="mt-1 flex gap-1.5 flex-wrap">
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${deptColors}">${member.department || 'Produção Packing'}</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${locColors} flex items-center gap-0.5"><i data-lucide="map-pin" class="w-2.5 h-2.5"></i> ${member.location || 'SPG Sede'}</span>
+                        </div>
+                    </td>
                     <td class="p-4 text-right font-mono text-slate-600">${formatCurrency(member.salary)}</td>
                     <td class="p-4 text-center">
-                        <button onclick="toggleMemberStatus(${index}, this)" class="px-2 py-1 rounded text-xs font-bold border transition-colors flex items-center gap-1 mx-auto ${member.active ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-red-500 bg-red-50 border-red-200'}">
+                        <button onclick="toggleMemberStatus(${originalIndex}, this)" class="px-2 py-1 rounded text-xs font-bold border transition-colors flex items-center gap-1 mx-auto ${member.active ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-red-500 bg-red-50 border-red-200'}">
                              <i data-lucide="${member.active ? 'check-circle-2' : 'x-circle'}" class="w-3 h-3"></i>
                              <span>${member.active ? 'Ativo' : 'Inativo'}</span>
                         </button>
@@ -991,11 +1099,11 @@
             // Se inativou, remove dos filtros ativos
             if(!teamDatabase[index].active) {
                 activeFilterNames = activeFilterNames.filter(n => n !== teamDatabase[index].name);
+                digitalFilterNames = digitalFilterNames.filter(n => n !== teamDatabase[index].name);
             } else {
-                // Se ativou, adiciona aos filtros (opcional, mas bom UX)
-                if(!activeFilterNames.includes(teamDatabase[index].name)) {
-                    activeFilterNames.push(teamDatabase[index].name);
-                }
+                // Se ativou, adiciona aos filtros
+                if(!activeFilterNames.includes(teamDatabase[index].name)) activeFilterNames.push(teamDatabase[index].name);
+                if(!digitalFilterNames.includes(teamDatabase[index].name)) digitalFilterNames.push(teamDatabase[index].name);
             }
 
             viewTeamDatabase(); // Re-render modal
@@ -1333,15 +1441,15 @@
                 document.getElementById('headerTitle').innerText = `Relatório de Bônus - ${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
             }
 
-            // FILTER LOGIC: Use activeFilterNames
+            // FILTER LOGIC: Use activeFilterNames AND mainActiveDept
             let displayedEmployees = employees;
             
-            // Se a lista de filtros não estiver vazia, filtra por ela
-            // Se estiver vazia, assumimos "Nenhum selecionado" -> mostra nada? Ou mostra tudo?
-            // UX Padrão: Se nada selecionado, lista vazia. Se "Todos" selecionado, lista cheia.
-            // O estado inicial seta todos como selecionados.
             if (activeFilterNames.length > 0) {
-                displayedEmployees = employees.filter(e => activeFilterNames.includes(e.name));
+                displayedEmployees = employees.filter(e => {
+                    const dbMember = teamDatabase.find(m => m.name === e.name);
+                    const deptMatch = mainActiveDept === 'Todos' || (dbMember && (dbMember.department || 'Produção Packing') === mainActiveDept);
+                    return activeFilterNames.includes(e.name) && deptMatch;
+                });
             } else {
                 displayedEmployees = []; // Nenhum selecionado
             }
@@ -1351,6 +1459,11 @@
             } else {
                 displayedEmployees.forEach(emp => {
                     const calc = calculateBonus(emp);
+                    const dbMember = teamDatabase.find(m => m.name === emp.name);
+                    const empDept = dbMember && dbMember.department ? dbMember.department : 'Produção Packing';
+                    const empLoc = dbMember && dbMember.location ? dbMember.location : 'SPG Sede';
+                    const deptColors = getDeptColors(empDept);
+                    const locColors = getLocationColors(empLoc);
                     
                     // Somar totais
                     totalBonus += calc.bonusVal;
@@ -1374,7 +1487,11 @@
                     tr.innerHTML = `
                         <td class="p-4 font-medium text-slate-800">
                             ${emp.name}
-                            <div class="text-xs text-slate-400 font-normal financial-col">Base: ${formatCurrency(emp.salary)}</div>
+                            <div class="mt-1 flex items-center gap-2 flex-wrap">
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${deptColors}">${empDept}</span>
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${locColors} flex items-center gap-0.5"><i data-lucide="map-pin" class="w-2.5 h-2.5"></i> ${empLoc}</span>
+                                <span class="text-xs text-slate-400 font-normal financial-col">Base: ${formatCurrency(emp.salary)}</span>
+                            </div>
                             ${emp.observation ? `<div class="text-[11px] text-slate-500 mt-1.5 leading-tight italic bg-slate-100 p-1.5 rounded border border-slate-200">📝 ${emp.observation}</div>` : ''}
                         </td>
                         <td class="p-4 text-center text-slate-600">${emp.boxes}</td>
@@ -1538,6 +1655,11 @@
 
         // 1. DIGITAL SHEET FUNCTIONS
         function openDigitalSheet() {
+            // Sincroniza o filtro digital com o filtro da tela principal
+            digitalActiveDept = mainActiveDept;
+            const deptSelect = document.getElementById('digitalDeptSelect');
+            if(deptSelect) deptSelect.value = digitalActiveDept;
+
             // Verifica o mês atual para exibir no alerta
             let currentMonth = "Mês não selecionado";
             if (config.referenceMonth) {
@@ -1546,8 +1668,11 @@
                 currentMonth = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
             }
 
-            // Inicializa Filtro Digital com todos selecionados
-            const activeTeam = teamDatabase.filter(m => m.active);
+            // Inicializa Filtro Digital com todos do setor selecionado
+            let activeTeam = teamDatabase.filter(m => m.active);
+            if (digitalActiveDept !== 'Todos') {
+                activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === digitalActiveDept);
+            }
             digitalFilterNames = activeTeam.map(m => m.name);
 
             // Usa requestAnimationFrame para garantir que o clique seja processado visualmente na hora
@@ -1582,6 +1707,23 @@
             renderAll(); // Refresh main view to show updates
         }
 
+        // --- FILTRO DE SETOR DA TELA DIGITAL ---
+        function handleDigitalDeptChange() {
+            digitalActiveDept = document.getElementById('digitalDeptSelect').value;
+            
+            let activeTeam = teamDatabase.filter(m => m.active);
+            if (digitalActiveDept !== 'Todos') {
+                activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === digitalActiveDept);
+            }
+            
+            // Atualiza os selecionados para englobar os do novo setor filtrado
+            activeTeam.forEach(m => {
+                if (!digitalFilterNames.includes(m.name)) digitalFilterNames.push(m.name);
+            });
+
+            renderDigitalSheet();
+        }
+
         // --- NEW DIGITAL FILTER FUNCTIONS ---
         function toggleDigitalFilterDropdown() {
             const dropdown = document.getElementById('digitalFilterDropdown');
@@ -1607,11 +1749,19 @@
         }
 
         function selectAllDigitalFilters(selectAll) {
-            const activeTeam = teamDatabase.filter(m => m.active);
+            let activeTeam = teamDatabase.filter(m => m.active);
+            if (digitalActiveDept !== 'Todos') {
+                activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === digitalActiveDept);
+            }
+
             if(selectAll) {
-                digitalFilterNames = activeTeam.map(m => m.name);
+                const namesToAdd = activeTeam.map(m => m.name);
+                namesToAdd.forEach(n => {
+                    if (!digitalFilterNames.includes(n)) digitalFilterNames.push(n);
+                });
             } else {
-                digitalFilterNames = [];
+                const namesToRemove = activeTeam.map(m => m.name);
+                digitalFilterNames = digitalFilterNames.filter(n => !namesToRemove.includes(n));
             }
             
             const checkboxes = document.querySelectorAll('#digitalFilterOptionsList input[type="checkbox"]');
@@ -1622,15 +1772,22 @@
         }
 
         function updateDigitalFilterDisplay() {
-            const activeTeamCount = teamDatabase.filter(m => m.active).length;
+            let activeTeam = teamDatabase.filter(m => m.active);
+            if (digitalActiveDept !== 'Todos') {
+                activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === digitalActiveDept);
+            }
+            
+            const activeTeamCount = activeTeam.length;
+            const selectedInSector = activeTeam.filter(m => digitalFilterNames.includes(m.name)).length;
+            
             const label = document.getElementById('digitalFilterLabel');
             
-            if (digitalFilterNames.length === 0) {
+            if (selectedInSector === 0) {
                 label.innerText = "Nenhum Selecionado";
-            } else if (digitalFilterNames.length === activeTeamCount) {
+            } else if (selectedInSector === activeTeamCount) {
                 label.innerText = "Equipe Completa";
             } else {
-                label.innerText = `${digitalFilterNames.length} Selecionados`;
+                label.innerText = `${selectedInSector} Selecionados`;
             }
         }
 
@@ -1640,8 +1797,11 @@
             
             filterList.innerHTML = '';
             
-            // Usar teamDatabase para listar todos os ativos, não só employees
-            const activeMembers = teamDatabase.filter(m => m.active);
+            // Usar teamDatabase para listar ativos DO SETOR atual
+            let activeMembers = teamDatabase.filter(m => m.active);
+            if (digitalActiveDept !== 'Todos') {
+                activeMembers = activeMembers.filter(m => (m.department || 'Produção Packing') === digitalActiveDept);
+            }
 
             activeMembers.forEach(member => {
                 const isChecked = digitalFilterNames.includes(member.name);
@@ -1675,7 +1835,12 @@
             const tbody = document.querySelector('#digitalSheetTable tbody');
             tbody.innerHTML = '';
 
-            const activeMembers = teamDatabase.filter(m => m.active);
+            let activeMembers = teamDatabase.filter(m => m.active);
+            
+            // Filtra primeiro pelo setor
+            if (digitalActiveDept !== 'Todos') {
+                activeMembers = activeMembers.filter(m => (m.department || 'Produção Packing') === digitalActiveDept);
+            }
 
             // Filter active members based on digitalFilterNames
             const displayedMembers = activeMembers.filter(m => digitalFilterNames.includes(m.name));
@@ -1832,8 +1997,12 @@
             showCustomConfirm("Tem certeza que deseja ZERAR TODOS os registros da tela?", (confirmed) => {
                 if(!confirmed) return;
                 
-                // Filter only displayed
-                const activeNames = teamDatabase.filter(m=>m.active).map(m=>m.name);
+                // Filter only displayed na tela atual
+                let activeTeam = teamDatabase.filter(m => m.active);
+                if (digitalActiveDept !== 'Todos') {
+                    activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === digitalActiveDept);
+                }
+                const activeNames = activeTeam.filter(m => digitalFilterNames.includes(m.name)).map(m=>m.name);
                 
                 employees.forEach(emp => {
                     if(activeNames.includes(emp.name)) {
@@ -1886,6 +2055,9 @@
             
             // 1. Filtragem baseada na seleção atual
             let activeTeam = teamDatabase.filter(m => m.active);
+            if (mainActiveDept !== 'Todos') {
+                activeTeam = activeTeam.filter(m => (m.department || 'Produção Packing') === mainActiveDept);
+            }
             
             if (activeFilterNames.length > 0) {
                 activeTeam = activeTeam.filter(m => activeFilterNames.includes(m.name));
@@ -2075,7 +2247,11 @@
             // 1. Filtragem baseada na seleção atual
             let filteredList = employees;
             if (activeFilterNames.length > 0) {
-                filteredList = employees.filter(e => activeFilterNames.includes(e.name));
+                filteredList = employees.filter(e => {
+                    const dbMember = teamDatabase.find(m => m.name === e.name);
+                    const deptMatch = mainActiveDept === 'Todos' || (dbMember && (dbMember.department || 'Produção Packing') === mainActiveDept);
+                    return activeFilterNames.includes(e.name) && deptMatch;
+                });
             } else {
                 filteredList = [];
             }
