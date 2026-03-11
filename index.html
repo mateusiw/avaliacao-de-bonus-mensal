@@ -127,7 +127,12 @@
                 
                 <div>
                     <label for="loginPass" class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Senha</label>
-                    <input type="password" id="loginPass" autocomplete="current-password" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" placeholder="••••••••" required>
+                    <div class="relative">
+                        <input type="password" id="loginPass" autocomplete="current-password" class="w-full p-3 pr-12 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" placeholder="••••••••" required>
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-blue-600 transition-colors" title="Mostrar/Ocultar senha" tabindex="-1">
+                            <i data-lucide="eye" id="togglePasswordIcon" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div id="loginError" class="hidden p-3 bg-red-50 text-red-600 text-sm rounded-xl text-center font-medium border border-red-100" role="alert">
@@ -741,6 +746,20 @@
 
         const INACTIVITY_LIMIT = 3600000;
 
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('loginPass');
+            const icon = document.getElementById('togglePasswordIcon');
+            
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passInput.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
         function handleLogin(e) {
             e.preventDefault();
             const user = document.getElementById('loginUser').value.toLowerCase().trim();
@@ -1339,31 +1358,27 @@
             
             // Determina a estrutura olhando para a primeira linha de DADOS
             let nameIdx = 0;
+            let sampleCols = [];
+            
+            const looksLikeNumber = (str) => {
+                if (!str) return false;
+                const clean = str.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+                return !isNaN(parseFloat(clean)) && isFinite(clean);
+            };
             
             if (lines.length > startRow) {
-                const sampleCols = lines[startRow].split(sep).map(c => c.trim());
+                sampleCols = lines[startRow].split(sep).map(c => c.trim());
                 
                 // Heurística: 
-                // Se a exportação tem Mês na col 0, o Nome está na 1 e o Salário na 2.
-                // O Salário geralmente parece um número ("1621,00" ou "1.621,00").
-                // O Nome (col 1) não deve parecer número.
-                
-                const looksLikeNumber = (str) => {
-                    if (!str) return false;
-                    const clean = str.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
-                    return !isNaN(parseFloat(clean)) && isFinite(clean);
-                };
-                
                 const col1 = sampleCols[1]; // Possível Nome
-                const col2 = sampleCols[2]; // Possível Salário
+                const col2 = sampleCols[2]; // Possível Salário (formato antigo) ou Cargo (novo formato)
                 
-                // Se a Coluna 2 parece número (salário) e a Coluna 1 NÃO parece (nome),
-                // então a estrutura é provável: [Mês, Nome, Salário...] (nameIdx = 1)
                 if (sampleCols.length >= 3 && looksLikeNumber(col2) && !looksLikeNumber(col1)) {
+                    nameIdx = 1; // Formatos V1 a V3
+                } else if (hasHeader && (headerLower.includes('mês') || headerLower.includes('mes'))) {
                     nameIdx = 1;
-                } 
-                // Fallback: Se o cabeçalho diz explicitamente "Mês"
-                if (hasHeader && (headerLower.includes('mês') || headerLower.includes('mes'))) {
+                } else if (sampleCols.length >= 6 && !looksLikeNumber(sampleCols[2]) && !looksLikeNumber(sampleCols[3]) && !looksLikeNumber(sampleCols[4]) && looksLikeNumber(sampleCols[5])) {
+                    // Novo formato: col 2(Cargo), 3(Local), 4(Setor) são strings; col 5(Salário) é número
                     nameIdx = 1;
                 }
             }
@@ -1436,8 +1451,28 @@
             }
             // ------------------------------------------------------------
 
-            const salaryIdx = nameIdx + 1;
-            const boxesIdx = nameIdx + 2;
+            // DETECÇÃO AUTOMÁTICA DE VERSÃO DO CSV
+            let isV4 = false; // V4 inclui Cargo, Local e Setor
+            if (sampleCols.length > nameIdx + 4) {
+                const c1 = sampleCols[nameIdx + 1];
+                const c2 = sampleCols[nameIdx + 2];
+                const c3 = sampleCols[nameIdx + 3];
+                const c4 = sampleCols[nameIdx + 4]; // Salario no V4
+                
+                if (!looksLikeNumber(c1) && !looksLikeNumber(c2) && !looksLikeNumber(c3) && looksLikeNumber(c4)) {
+                    isV4 = true;
+                }
+            }
+
+            const salaryIdx = isV4 ? nameIdx + 4 : nameIdx + 1;
+            const boxesIdx = isV4 ? nameIdx + 5 : nameIdx + 2;
+            
+            let critStartIdx = nameIdx + 3; // Padrão antigo (V1)
+            if (isV4) {
+                critStartIdx = nameIdx + 7; // Pula Cargo, Local, Setor, Salario, Caixas e PontosProd (V4)
+            } else if (sampleCols.length >= 14) {
+                critStartIdx = nameIdx + 4; // Pula a coluna de Pontos de Produção (V2, V3)
+            }
             
             let newCount = 0;
             
@@ -1450,16 +1485,6 @@
                 
                 const name = cols[nameIdx];
                 if (!name) continue;
-
-                // DETECÇÃO AUTOMÁTICA DE VERSÃO DO CSV
-                // V1: ... Caixas(3), Assid(4)... (Total ~13 cols)
-                // V2: ... Caixas(3), PontosProd(4), Assid(5)... (Total ~14 cols)
-                // V3: ... Caixas(3), PontosProd(4), Assid(5)... PontosCrit(10)... (Total ~15 cols)
-                
-                let critStartIdx = nameIdx + 3; // Padrão antigo
-                if (cols.length >= 14) {
-                    critStartIdx = nameIdx + 4; // Pula a coluna de Pontos de Produção
-                }
 
                 let salary = 1621; // Valor padrão
                 const salaryStr = cols[salaryIdx];
@@ -1490,10 +1515,10 @@
                 };
 
                 // Lógica da Observação:
-                // V1: offset 8
-                // V3 (com PontosCrit): offset 9
-                let obsOffset = 8;
-                if (cols.length >= 15) obsOffset = 9;
+                let obsOffset = 8; // V1, V2
+                if (isV4 || sampleCols.length >= 15) {
+                    obsOffset = 9; // V3, V4 (Ambos possuem coluna de soma dos critérios)
+                }
 
                 let obs = "";
                 if (cols.length > critStartIdx + obsOffset) {
@@ -2349,18 +2374,26 @@
                 filename = `Bonus_${mnCap}_${y}_CSV.csv`;
             }
             
-            // Cabeçalho REMOVIDO conforme solicitado
-            // csvContent += "Mes;Nome;SalarioBase;Caixas;PontosProducao;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosCriterios;PontosTotais;ValorBonus;TotalReceber;Observacao\n";
+            // Cabeçalho REMOVIDO conforme solicitado, mas atualizado com a nova estrutura para referência
+            // csvContent += "Mes;Nome;Cargo;Local;Setor;SalarioBase;Caixas;PontosProducao;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosCriterios;PontosTotais;ValorBonus;TotalReceber;Observacao\n";
 
             dataList.forEach(emp => {
                 const calc = calculateBonus(emp);
                 const c = emp.criteria;
+                const dbMember = teamDatabase.find(m => m.name === emp.name);
+                
+                const cargo = dbMember && dbMember.jobTitle ? dbMember.jobTitle : 'Operacional';
+                const local = dbMember && dbMember.location ? dbMember.location : 'SPG Sede';
+                const setor = dbMember && dbMember.department ? dbMember.department : 'Produção Packing';
                 
                 const isFixedBonusRole = calc.isFixedBonus;
                 
                 const row = [
                     monthLabel,
                     emp.name,
+                    cargo,
+                    local,
+                    setor,
                     emp.salary.toFixed(2).replace('.', ','),
                     isFixedBonusRole ? 0 : emp.boxes, // Zera caixas na exportação se for líder/escritório
                     isFixedBonusRole ? 0 : calc.prodPts, // Pontos de Produção
