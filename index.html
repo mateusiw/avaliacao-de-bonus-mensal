@@ -2380,6 +2380,16 @@
             }, 100); // Reduzido de 500ms para 100ms
         }
         
+        // Função para formatar o nome (Iniciais Maiúsculas, preposições minúsculas)
+        function formatNameForCSV(name) {
+            if (!name) return "";
+            const lowers = ['da', 'de', 'do', 'das', 'dos', 'e'];
+            return name.toLowerCase().split(' ').map((word, index) => {
+                if (index !== 0 && lowers.includes(word)) return word;
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
+        }
+
         // Export CSV helper function (reused)
         function generateAndDownloadCSV(dataList, suffix, includeSuffix = false) {
             let csvContent = "\uFEFF"; 
@@ -2413,7 +2423,7 @@
                 
                 const row = [
                     monthLabel,
-                    emp.name,
+                    formatNameForCSV(emp.name), // NOME FORMATADO AQUI
                     cargo,
                     local,
                     setor,
