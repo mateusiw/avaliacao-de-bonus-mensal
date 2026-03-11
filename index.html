@@ -28,7 +28,6 @@
         body[data-role="lider"] #launch-form-aside { display: none !important; }
         body[data-role="lider"] #admin-dashboard-content { display: none !important; } /* Oculta toda a área da tabela para líder */
         body[data-role="lider"] #table-section { display: none !important; }
-        body[data-role="lider"] #digitalSheetPdfBtn { display: none !important; } /* Oculta botão PDF do digital para líder */
         
         @media print {
             @page { margin: 0.5cm; size: landscape; }
@@ -561,9 +560,6 @@
                     </button>
                     <button onclick="exportDigitalSheetCSV()" class="px-4 py-2 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
                         <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Enviar
-                    </button>
-                    <button id="digitalSheetPdfBtn" onclick="exportDigitalSheetPDF()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2 shadow-sm shadow-rose-200">
-                        <i data-lucide="file-text" class="w-4 h-4"></i> PDF
                     </button>
                 </div>
             </div>
@@ -1865,6 +1861,9 @@
                     obs = existing.observation || ""; // New
                 }
 
+                const mDept = member.department || 'Produção Packing';
+                const mLoc = member.location || 'SPG Sede';
+
                 const tr = document.createElement('tr');
                 tr.setAttribute('data-name', member.name);
                 tr.className = "hover:bg-blue-50/50 transition-colors group"; // Added group for hover effects maybe
@@ -1884,7 +1883,8 @@
 
                 tr.innerHTML = `
                     <td class="p-4 font-medium text-slate-800 min-w-[250px]">
-                        <div class="mb-2 text-sm">${member.name}</div>
+                        <div class="text-sm">${member.name}</div>
+                        <div class="text-[9px] text-slate-400 mb-2 font-normal uppercase tracking-wide">${mLoc} &bull; ${mDept}</div>
                         <textarea 
                                placeholder="Observação (opcional)..." 
                                onchange="updateDigitalEmployee('${member.name}', 'observation', this.value)"
@@ -2043,11 +2043,6 @@
             generateAndDownloadCSV(listToExport, config.referenceMonth || "Geral");
         }
 
-        function exportDigitalSheetPDF() {
-            printSimpleTable(); // Reuses PDF logic
-        }
-
-
         // 2. MANUAL SHEETS (Fichas)
         function downloadManualSheets() {
             const container = document.getElementById('manual-sheets-content');
@@ -2122,9 +2117,15 @@
 
             activeTeam.forEach((member, i) => {
                 const bg = i % 2 === 0 ? '#fff' : '#f9fafb';
+                const mDept = member.department || 'Produção Packing';
+                const mLoc = member.location || 'SPG Sede';
+
                 html += `
                     <tr style="background-color: ${bg}; page-break-inside: avoid;">
-                        <td style="border: 1px solid #000; padding: 4px 6px; font-weight: bold; text-transform: uppercase; font-size: 9px;">${member.name}</td>
+                        <td style="border: 1px solid #000; padding: 4px 6px;">
+                            <div style="font-weight: bold; text-transform: uppercase; font-size: 9px;">${member.name}</div>
+                            <div style="font-size: 7px; color: #555; margin-top: 2px;">${mLoc} | ${mDept}</div>
+                        </td>
                         <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; vertical-align: bottom;"><div style="border-bottom: 1px solid #000; width: 80%; margin: 0 auto;"></div></td>
                         <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
                         <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
@@ -2282,6 +2283,10 @@
             let tableRows = '';
             filteredList.forEach(emp => {
                 const calc = calculateBonus(emp);
+                const dbMember = teamDatabase.find(m => m.name === emp.name);
+                const empDept = dbMember && dbMember.department ? dbMember.department : 'Produção Packing';
+                const empLoc = dbMember && dbMember.location ? dbMember.location : 'SPG Sede';
+
                 totalBonus += calc.bonusVal;
                 totalSalary += emp.salary;
                 totalFinal += calc.totalReceive;
@@ -2295,7 +2300,10 @@
 
                 tableRows += `
                     <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 3px 6px; text-align: left;">${emp.name}</td>
+                        <td style="padding: 3px 6px; text-align: left;">
+                            <div style="font-weight: 600;">${emp.name}</div>
+                            <div style="font-size: 7px; color: #64748b; margin-top: 1px;">${empLoc} | ${empDept}</div>
+                        </td>
                         <td style="padding: 3px 6px; text-align: center;">${emp.boxes}</td>
                         <td style="padding: 3px 6px; text-align: center;">${calc.prodPts}</td>
                         <td style="padding: 3px 6px; text-align: center;">${calc.perfPts}</td>
@@ -2351,10 +2359,10 @@
 
                     <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
                         <div style="border-top: 1px solid #333; padding-top: 5px; text-align: center; font-size: 10px;">
-                            <p style="color: #64748b;">Visto Responsável</p>
+                            <p style="color: #64748b;">Visto Avaliador</p>
                         </div>
                         <div style="border-top: 1px solid #333; padding-top: 5px; text-align: center; font-size: 10px;">
-                            <p style="color: #64748b;">Visto Diretoria</p>
+                            <p style="color: #64748b;">Visto RH</p>
                         </div>
                     </div>
                 </div>
