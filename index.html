@@ -1237,6 +1237,18 @@
             const perfPts = Object.values(emp.criteria).reduce((a, b) => a + Number(b), 0);
             const hasPenalty = Object.values(emp.criteria).some(val => Number(val) === 0 || Number(val) === 5);
 
+            // GERA O RELATO AUTOMÁTICO DO MOTIVO DO CANCELAMENTO
+            let cancelReason = "";
+            if (hasPenalty) {
+                const badCrits = [];
+                for (const k in emp.criteria) {
+                    if (emp.criteria[k] === 0 || emp.criteria[k] === 5) {
+                        badCrits.push(`${criteriaLabels[k]} (${emp.criteria[k]})`);
+                    }
+                }
+                cancelReason = `Cancelado por nota baixa: ${badCrits.join(", ")}`;
+            }
+
             // LOGICA PARA LÍDER / ESCRITÓRIO
             if (isFixedBonusRole) {
                 let bonusVal = 0;
@@ -1254,7 +1266,8 @@
                     bonusVal: bonusVal, 
                     totalReceive: salary + bonusVal,
                     hasPenalty: hasPenalty,
-                    isFixedBonus: true
+                    isFixedBonus: true,
+                    cancelReason: cancelReason
                 };
             }
             
@@ -1275,7 +1288,8 @@
                     bonusVal: 0, 
                     totalReceive: salary, 
                     hasPenalty: true,
-                    isFixedBonus: false
+                    isFixedBonus: false,
+                    cancelReason: cancelReason
                 };
             }
 
@@ -1303,7 +1317,8 @@
                 bonusVal: totalBonusVal, 
                 totalReceive: salary + totalBonusVal,
                 hasPenalty: false,
-                isFixedBonus: false
+                isFixedBonus: false,
+                cancelReason: ""
             };
         }
 
@@ -1613,6 +1628,14 @@
                         `;
                     }
 
+                    // Combina a observação manual com a razão do cancelamento automático para exibir na UI
+                    let combinedObsUI = emp.observation || "";
+                    if (calc.cancelReason) {
+                        combinedObsUI = combinedObsUI 
+                            ? `${combinedObsUI} <br><span class="text-red-600 font-semibold block mt-1">⚠️ ${calc.cancelReason}</span>` 
+                            : `<span class="text-red-600 font-semibold">⚠️ ${calc.cancelReason}</span>`;
+                    }
+
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 transition-colors group";
                     
@@ -1625,7 +1648,7 @@
                                 <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${locColors} flex items-center gap-0.5"><i data-lucide="map-pin" class="w-2.5 h-2.5"></i> ${empLoc}</span>
                                 <span class="text-xs text-slate-400 font-normal financial-col">Base: ${formatCurrency(emp.salary)}</span>
                             </div>
-                            ${emp.observation ? `<div class="text-[11px] text-slate-500 mt-1.5 leading-tight italic bg-slate-100 p-1.5 rounded border border-slate-200">📝 ${emp.observation}</div>` : ''}
+                            ${combinedObsUI ? `<div class="text-[11px] text-slate-500 mt-1.5 leading-tight italic bg-slate-100 p-1.5 rounded border border-slate-200">${combinedObsUI}</div>` : ''}
                         </td>
                         <td class="p-4 text-center text-slate-600">${boxesDisplay}</td>
                         <td class="p-4 text-center">${prodDisplay}</td>
@@ -2374,8 +2397,8 @@
                 filename = `Bonus_${mnCap}_${y}_CSV.csv`;
             }
             
-            // Cabeçalho REMOVIDO conforme solicitado
-            // csvContent += "Mes;Nome;Cargo;Local;Setor;SalarioBase;Caixas;PontosProducao;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosCriterios;PontosTotais;ValorBonus;TotalReceber;Observacao\n";
+            // Cabeçalho atualizado: Adicionada a coluna "MotivoCancelamento" separada da Observação
+            csvContent += "Mes;Nome;Cargo;Local;Setor;SalarioBase;Caixas;PontosProducao;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosCriterios;PontosTotais;ValorBonus;TotalReceber;Observacao;MotivoCancelamento\n";
 
             dataList.forEach(emp => {
                 const calc = calculateBonus(emp);
@@ -2406,7 +2429,8 @@
                     calc.totalPts, // Total Geral
                     calc.bonusVal.toFixed(2).replace('.', ','),
                     calc.totalReceive.toFixed(2).replace('.', ','),
-                    emp.observation || ""
+                    emp.observation || "", // Apenas o relato digitado pelo avaliador
+                    calc.cancelReason || "" // Apenas o motivo automático gerado pelo sistema
                 ];
                 csvContent += row.join(";") + "\n";
             });
