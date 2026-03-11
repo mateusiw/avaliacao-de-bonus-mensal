@@ -187,7 +187,7 @@
                         </div>
                         <input type="month" 
                                id="referenceMonth" 
-                               onchange="updateConfig('referenceMonth', this.value); updateTitle();" 
+                               onchange="handleMonthChange(this)" 
                                class="w-full h-full border-none bg-transparent text-slate-800 font-bold px-3 text-base focus:ring-0 cursor-pointer outline-none uppercase"
                                style="color-scheme: light;"
                                aria-label="Seletor de Mês de Referência">
@@ -247,10 +247,6 @@
                             <span id="teamCountBadge" class="absolute top-1 right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white border-2 border-white shadow-sm">0</span>
                         </button>
                         
-                        <button onclick="resetData()" class="flex flex-col items-center justify-center w-16 h-14 bg-white border border-gray-200 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm" title="Limpar Tudo">
-                            <i data-lucide="trash-2" class="w-5 h-5 mb-0.5"></i>
-                            <span class="text-[10px] font-bold">Limpar</span>
-                        </button>
                     </div>
 
                     <div class="h-10 w-px bg-gray-300 mx-2 hidden sm:block admin-only"></div>
@@ -401,7 +397,13 @@
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex-1">
                         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                             <h3 class="font-bold text-slate-700">Detalhamento da Folha</h3>
-                            <span class="text-xs font-medium text-slate-400 bg-white px-2 py-1 rounded border border-gray-200">Mês Atual</span>
+                            <div class="flex items-center gap-3">
+                                <button onclick="resetData()" class="text-[11px] font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-100 transition-colors flex items-center gap-1.5 admin-only shadow-sm" title="Apagar todos os lançamentos">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    Limpar Tudo
+                                </button>
+                                <span id="currentMonthBadge" class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1.5 rounded-md border border-blue-200 uppercase tracking-wider shadow-sm">Mês Atual</span>
+                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm">
@@ -428,7 +430,7 @@
                     
                     <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-xs text-slate-500 flex flex-col md:flex-row gap-8 justify-between">
                          <div>
-                            <strong class="block mb-1 text-slate-700 uppercase tracking-wide text-[10px]">Tabela de Produção</strong>
+                            <strong class="block mb-1 text-slate-700 uppercase tracking-wide text-[10px]">Tabela de Produção (Operacional)</strong>
                             <ul class="space-y-0.5 list-disc list-inside marker:text-blue-300">
                                 <li>>= 600 cx: 50 pts (3.08%)</li>
                                 <li>(Abaixo de 600: 0 pts)</li>
@@ -438,6 +440,11 @@
                             <strong class="block mb-1 text-slate-700 uppercase tracking-wide text-[10px]">Critérios (Max 50)</strong>
                             <p>Max 50 pts (3.08%)</p>
                             <p class="mt-1 text-slate-400">Total Possível: 100 pts (6.169%)</p>
+                         </div>
+                         <div>
+                            <strong class="block mb-1 text-slate-700 uppercase tracking-wide text-[10px]">Líderes & Escritório</strong>
+                            <p>Avaliação por critérios apenas (50 pts = R$ 100,00).</p>
+                            <p class="mt-1 text-red-500 font-medium">Nota 5 ou 0 cancela o bônus.</p>
                          </div>
                     </div>
                 </section>
@@ -478,9 +485,9 @@
                                 </div>
                             </div>
 
-                            <div class="bg-blue-50 p-3 rounded-lg flex justify-between items-center text-blue-800 text-sm font-medium">
-                                <span>Pontuação Prevista:</span>
-                                <output class="font-bold text-lg" id="previewPoints">0</output>
+                            <div class="bg-blue-50 p-3 rounded-lg flex flex-col justify-center text-blue-800 text-sm font-medium">
+                                <span class="text-xs text-blue-600 mb-1">Resultado Previsto:</span>
+                                <output class="font-bold text-lg leading-none" id="previewPoints">0 pts</output>
                             </div>
 
                             <button type="submit" id="addBtn" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-all shadow-md active:scale-[0.98]">
@@ -626,6 +633,20 @@
         </div>
     </div>
 
+    <!-- MODAL DE AVISO (BLOQUEIO) -->
+    <div id="alertModal" class="hidden fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in no-print">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center space-y-4">
+            <div class="mx-auto bg-amber-100 w-12 h-12 rounded-full flex items-center justify-center text-amber-600 mb-2">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">Ação Bloqueada</h3>
+            <p class="text-sm text-slate-600" id="alertModalMessage">Aviso genérico.</p>
+            <div class="pt-2">
+                <button onclick="closeAlertModal()" class="w-full px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold shadow-md transition-all active:scale-95">Entendi</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL VER BASE DA EQUIPE -->
     <div id="viewTeamModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col animate-fade-in-up">
@@ -697,6 +718,15 @@
                 close();
                 callback(false);
             };
+        }
+
+        function showAlertModal(message) {
+            document.getElementById('alertModalMessage').textContent = message;
+            document.getElementById('alertModal').classList.remove('hidden');
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alertModal').classList.add('hidden');
         }
         // --- END HELPER FUNCTIONS ---
 
@@ -813,26 +843,26 @@
         let employees = JSON.parse(localStorage.getItem('bonusApp_employees')) || [];
         
         const defaultTeam = [
-            { name: "EMANUEL CARDOSO ARAÚJO", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "FRANCISCA IDAIANY MELO RODRIGUES", salary: 1621, department: "Escritório", location: "SPG Sede" },
-            { name: "FELIPE BARBOSA BANDEIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "THAYNARA RODRIGUES DA SILVA", salary: 1621, department: "Escritório", location: "SPG Sede" },
-            { name: "LUCAS RIBEIRO DA SILVA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "JOÃO VICTOR GONÇALVES", salary: 1621, department: "Escritório", location: "SPG Sede" },
-            { name: "ANTONIO PATRICK ARAÚJO LEMOS", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "MARIA DA CONCEIÇÃO DE JESUS RAMALHO", salary: 1621, department: "Limpeza", location: "SPG Sede" },
-            { name: "FABIANA MARQUES BARBOSA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "DIONISIO PEREIRA DE ALBUQUERQUE", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "PEDRO LUCAS DE SOUZA GONÇALVES", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "LEANDRO ALTINO FERREIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "MARCOS FEITOSA DE OLIVEIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "FRANCISCO DA SILVA FERREIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "GABRIEL CARDOSO ARAÚJO", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "FRANCISCO LUCAS INACIO DE SOUSA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "BRUNA PEREIRA DA SILVA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "GLAYLSON LIMA FERREIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "KARINE MARQUES DE ALMEIDA MARTINS", salary: 1621, department: "Produção Packing", location: "SPG Sede" },
-            { name: "MONICA BATISTA FARIAS", salary: 1621, department: "Produção Packing", location: "SPG Sede" }
+            { name: "EMANUEL CARDOSO ARAÚJO", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "FRANCISCA IDAIANY MELO RODRIGUES", salary: 1621, department: "Escritório", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "FELIPE BARBOSA BANDEIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "THAYNARA RODRIGUES DA SILVA", salary: 1621, department: "Escritório", location: "SPG Sede", jobTitle: "Líder" },
+            { name: "LUCAS RIBEIRO DA SILVA", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "JOÃO VICTOR GONÇALVES", salary: 1621, department: "Escritório", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "ANTONIO PATRICK ARAÚJO LEMOS", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "MARIA DA CONCEIÇÃO DE JESUS RAMALHO", salary: 1621, department: "Limpeza", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "FABIANA MARQUES BARBOSA", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "DIONISIO PEREIRA DE ALBUQUERQUE", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "PEDRO LUCAS DE SOUZA GONÇALVES", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "LEANDRO ALTINO FERREIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "MARCOS FEITOSA DE OLIVEIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "FRANCISCO DA SILVA FERREIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "GABRIEL CARDOSO ARAÚJO", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "FRANCISCO LUCAS INACIO DE SOUSA", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "BRUNA PEREIRA DA SILVA", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "GLAYLSON LIMA FERREIRA", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "KARINE MARQUES DE ALMEIDA MARTINS", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" },
+            { name: "MONICA BATISTA FARIAS", salary: 1621, department: "Produção Packing", location: "SPG Sede", jobTitle: "Operacional" }
         ];
 
         // Sincroniza a nova lista com o cache, preservando apenas o status 'active' se o colaborador já existia
@@ -842,7 +872,8 @@
             return { 
                 ...dt, 
                 active: existing && existing.active !== undefined ? existing.active : true,
-                location: existing && existing.location ? existing.location : dt.location
+                location: existing && existing.location ? existing.location : dt.location,
+                jobTitle: existing && existing.jobTitle ? existing.jobTitle : (dt.jobTitle || 'Operacional')
             };
         });
         localStorage.setItem('bonusApp_team', JSON.stringify(teamDatabase));
@@ -1042,6 +1073,11 @@
             if (loc === 'SPG Oásis') return 'text-amber-700 bg-amber-50 border-amber-200';
             return 'text-slate-600 bg-slate-50 border-slate-200'; // SPG Sede or Default
         }
+        
+        function getJobTitleColors(job) {
+            if (job === 'Líder') return 'text-slate-100 bg-slate-700 border-slate-800 shadow-sm';
+            return 'hidden'; // Don't show anything for default operational role
+        }
 
         function viewTeamDatabase() {
             const tbody = document.getElementById('viewTeamTableBody');
@@ -1064,11 +1100,13 @@
                 
                 const deptColors = getDeptColors(member.department || 'Produção Packing');
                 const locColors = getLocationColors(member.location || 'SPG Sede');
+                const jobColors = getJobTitleColors(member.jobTitle || 'Operacional');
 
                 tr.innerHTML = `
                     <td class="p-4 font-medium text-slate-700">
                         ${member.name}
-                        <div class="mt-1 flex gap-1.5 flex-wrap">
+                        <div class="mt-1 flex gap-1.5 flex-wrap items-center">
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${jobColors}"><i data-lucide="star" class="w-2.5 h-2.5 inline-block mr-0.5"></i>${member.jobTitle || 'Operacional'}</span>
                             <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${deptColors}">${member.department || 'Produção Packing'}</span>
                             <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${locColors} flex items-center gap-0.5"><i data-lucide="map-pin" class="w-2.5 h-2.5"></i> ${member.location || 'SPG Sede'}</span>
                         </div>
@@ -1110,14 +1148,28 @@
         function autoFillSalary() {
             const select = document.getElementById('empName');
             const salaryInput = document.getElementById('empSalary');
+            const boxesInput = document.getElementById('empBoxes');
             const selectedName = select.value;
             
             const member = teamDatabase.find(m => m.name === selectedName);
             if (member) {
                 salaryInput.value = formatCurrencyValue(member.salary);
+                
+                // Travar campo de caixas para líderes e escritório no lançamento manual
+                if (member.jobTitle === 'Líder' || member.department === 'Escritório') {
+                    boxesInput.value = 0;
+                    boxesInput.disabled = true;
+                    boxesInput.classList.add('opacity-50', 'bg-gray-200', 'cursor-not-allowed');
+                } else {
+                    boxesInput.disabled = false;
+                    boxesInput.classList.remove('opacity-50', 'bg-gray-200', 'cursor-not-allowed');
+                }
             } else {
                  salaryInput.value = "";
+                 boxesInput.disabled = false;
+                 boxesInput.classList.remove('opacity-50', 'bg-gray-200', 'cursor-not-allowed');
             }
+            updatePreview();
         }
         
         function formatCurrencyValue(value) {
@@ -1139,25 +1191,61 @@
             return parseFloat(str.replace(/\./g, '').replace(',', '.'));
         }
 
+        function handleMonthChange(input) {
+            const newVal = input.value;
+            // Se já existem dados lançados e tenta mudar o mês
+            if (employees.length > 0 && config.referenceMonth && config.referenceMonth !== newVal) {
+                // Reverte para o mês anterior
+                input.value = config.referenceMonth;
+                showAlertModal("Você já possui dados na tabela. Limpe o histórico (botão Limpar Tudo) antes de alterar o mês de referência para não misturar os meses.");
+                return;
+            }
+            updateConfig('referenceMonth', newVal);
+            updateTitle();
+        }
+
         function getProductionPoints(boxes) {
             if (boxes >= 600) return 50;
             return 0;
         }
 
         function calculateBonus(emp) {
+            const dbMember = teamDatabase.find(m => m.name === emp.name);
+            const isFixedBonusRole = dbMember && (dbMember.jobTitle === "Líder" || dbMember.department === "Escritório");
             const boxes = emp.boxes || 0;
             const salary = Number(emp.salary) || 0;
             
             const perfPts = Object.values(emp.criteria).reduce((a, b) => a + Number(b), 0);
+            const hasPenalty = Object.values(emp.criteria).some(val => Number(val) === 0 || Number(val) === 5);
+
+            // LOGICA PARA LÍDER / ESCRITÓRIO
+            if (isFixedBonusRole) {
+                let bonusVal = 0;
+                // Ganha 100 se e somente se tirar nota 10 em TUDO e não tiver penalidade
+                if (!hasPenalty && perfPts === 50) {
+                    bonusVal = 100;
+                }
+
+                return { 
+                    prodPts: '-', 
+                    originalProdPts: 0, 
+                    perfPts: perfPts, 
+                    totalPts: perfPts, 
+                    bonusPercentage: 0, 
+                    bonusVal: bonusVal, 
+                    totalReceive: salary + bonusVal,
+                    hasPenalty: hasPenalty,
+                    isFixedBonus: true
+                };
+            }
             
+            // LOGICA PARA OPERACIONAL
             let totalBonusVal = 0;
             let finalPercent = 0;
             let prodPts = getProductionPoints(boxes);
             let originalProdPts = prodPts;
             
             // AGORA CANCELA SE FOR 0 OU 5
-            const hasPenalty = Object.values(emp.criteria).some(val => Number(val) === 0 || Number(val) === 5);
-            
             if (hasPenalty) {
                 return { 
                     prodPts: 0, 
@@ -1167,7 +1255,8 @@
                     bonusPercentage: 0, 
                     bonusVal: 0, 
                     totalReceive: salary, 
-                    hasPenalty: true 
+                    hasPenalty: true,
+                    isFixedBonus: false
                 };
             }
 
@@ -1194,7 +1283,8 @@
                 bonusPercentage: finalPercent, 
                 bonusVal: totalBonusVal, 
                 totalReceive: salary + totalBonusVal,
-                hasPenalty: false 
+                hasPenalty: false,
+                isFixedBonus: false
             };
         }
 
@@ -1279,11 +1369,15 @@
             }
 
             // --- NOVA LÓGICA: DETECTAR E ATUALIZAR MÊS DE REFERÊNCIA ---
+            let incomingMonthRef = null;
+            let monthStrForDisplay = "";
+
             if (nameIdx === 1 && lines.length > startRow) {
                 try {
                     // Pega a primeira linha de dados para ler o mês
                     const firstDataCols = lines[startRow].split(sep).map(c => c.replace(/^"|"$/g, '').trim());
                     const monthStr = firstDataCols[0]; // Esperado: "Janeiro/2026" ou "01/2026"
+                    monthStrForDisplay = monthStr;
 
                     if (monthStr && monthStr.includes('/')) {
                         const parts = monthStr.split('/');
@@ -1314,22 +1408,30 @@
                             if (parseInt(mNum) >= 1 && parseInt(mNum) <= 12 && yPart.length === 4) {
                                 // Formata para YYYY-MM (formato do input type="month")
                                 if (mNum.length === 1) mNum = '0' + mNum;
-                                const newRef = `${yPart}-${mNum}`;
-
-                                // Atualiza o input e a configuração
-                                const dateInput = document.getElementById('referenceMonth');
-                                if (dateInput.value !== newRef) {
-                                    dateInput.value = newRef;
-                                    // Atualiza config sem chamar renderAll ainda (pois renderAll será chamado no final da importação)
-                                    config.referenceMonth = newRef;
-                                    localStorage.setItem('bonusApp_config', JSON.stringify(config));
-                                    showToast(`Mês alterado para: ${monthStr}`);
-                                }
+                                incomingMonthRef = `${yPart}-${mNum}`;
                             }
                         }
                     }
                 } catch (e) {
                     console.error("Erro ao tentar extrair data do CSV", e);
+                }
+            }
+
+            // BLOQUEIO DE SEGURANÇA: Impede misturar meses se já houver dados
+            if (incomingMonthRef && employees.length > 0 && config.referenceMonth && config.referenceMonth !== incomingMonthRef) {
+                showAlertModal(`O arquivo importado é de ${monthStrForDisplay}, mas você já possui dados de outro mês na tela.\n\nLimpe o histórico (clique em "Limpar Tudo") para poder inserir o arquivo atual sem misturar os resultados.`);
+                return; // Encerra a função e não importa
+            }
+
+            // Atualiza mês base se tudo estiver certo
+            if (incomingMonthRef) {
+                const dateInput = document.getElementById('referenceMonth');
+                if (dateInput.value !== incomingMonthRef) {
+                    dateInput.value = incomingMonthRef;
+                    // Atualiza config sem chamar renderAll ainda (pois renderAll será chamado no final da importação)
+                    config.referenceMonth = incomingMonthRef;
+                    localStorage.setItem('bonusApp_config', JSON.stringify(config));
+                    showToast(`Mês alterado para: ${monthStrForDisplay}`);
                 }
             }
             // ------------------------------------------------------------
@@ -1433,8 +1535,15 @@
             
             if (config.referenceMonth) {
                 const [y, m] = config.referenceMonth.split('-');
-                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
-                document.getElementById('headerTitle').innerText = `Relatório de Bônus - ${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
+                const mnLong = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                const mnShort = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'short' }).replace('.', '');
+                
+                document.getElementById('headerTitle').innerText = `Relatório de Bônus - ${mnLong.charAt(0).toUpperCase() + mnLong.slice(1)} de ${y}`;
+                
+                const badge = document.getElementById('currentMonthBadge');
+                if(badge) {
+                    badge.innerText = `REF: ${mnShort.toUpperCase()}/${y}`;
+                }
             }
 
             // FILTER LOGIC: Use activeFilterNames AND mainActiveDept
@@ -1460,15 +1569,17 @@
                     const empLoc = dbMember && dbMember.location ? dbMember.location : 'SPG Sede';
                     const deptColors = getDeptColors(empDept);
                     const locColors = getLocationColors(empLoc);
+                    const jobColors = getJobTitleColors(dbMember && dbMember.jobTitle ? dbMember.jobTitle : 'Operacional');
                     
                     // Somar totais
                     totalBonus += calc.bonusVal;
                     totalSalary += emp.salary;
                     totalFinal += calc.totalReceive;
                     
-                    let prodDisplay = `<span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">${calc.prodPts}</span>`;
+                    let prodDisplay = calc.isFixedBonus ? `<span class="text-slate-300">-</span>` : `<span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-bold">${calc.prodPts}</span>`;
+                    let boxesDisplay = calc.isFixedBonus ? `<span class="text-slate-300">-</span>` : emp.boxes;
                     
-                    if (calc.hasPenalty) {
+                    if (calc.hasPenalty && !calc.isFixedBonus) {
                         prodDisplay = `
                             <div class="flex flex-col items-center">
                                 <span class="text-red-500 font-bold text-xs" title="Cancelado por nota 0">0</span>
@@ -1484,13 +1595,14 @@
                         <td class="p-4 font-medium text-slate-800">
                             ${emp.name}
                             <div class="mt-1 flex items-center gap-2 flex-wrap">
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${jobColors}"><i data-lucide="star" class="w-2.5 h-2.5 inline-block mr-0.5"></i>${dbMember?.jobTitle || 'Operacional'}</span>
                                 <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${deptColors}">${empDept}</span>
                                 <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${locColors} flex items-center gap-0.5"><i data-lucide="map-pin" class="w-2.5 h-2.5"></i> ${empLoc}</span>
                                 <span class="text-xs text-slate-400 font-normal financial-col">Base: ${formatCurrency(emp.salary)}</span>
                             </div>
                             ${emp.observation ? `<div class="text-[11px] text-slate-500 mt-1.5 leading-tight italic bg-slate-100 p-1.5 rounded border border-slate-200">📝 ${emp.observation}</div>` : ''}
                         </td>
-                        <td class="p-4 text-center text-slate-600">${emp.boxes}</td>
+                        <td class="p-4 text-center text-slate-600">${boxesDisplay}</td>
                         <td class="p-4 text-center">${prodDisplay}</td>
                         <td class="p-2 text-center text-xs ${emp.criteria.assiduity === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.assiduity < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.assiduity}</td>
                         <td class="p-2 text-center text-xs ${emp.criteria.organization === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.organization < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.organization}</td>
@@ -1545,23 +1657,31 @@
         function setCriteria(key, val) { newCriteria[key] = val; renderCriteriaForm(); }
 
         function updatePreview() {
+            const select = document.getElementById('empName');
+            const selectedName = select.value;
+            const dbMember = teamDatabase.find(m => m.name === selectedName);
+            const isFixedBonusRole = dbMember && (dbMember.jobTitle === 'Líder' || dbMember.department === 'Escritório');
+
             const b = Number(document.getElementById('empBoxes').value) || 0;
-            const points = getProductionPoints(b) + Object.values(newCriteria).reduce((a,b)=>a+b,0);
-            
-            const prodPts = getProductionPoints(b);
             const perfPts = Object.values(newCriteria).reduce((a,b)=>a+b,0);
-            
+            const hasPenalty = Object.values(newCriteria).some(val => val === 0 || val === 5);
+
+            if (isFixedBonusRole) {
+                let valStr = (!hasPenalty && perfPts === 50) ? 'R$ 100,00' : 'R$ 0,00';
+                document.getElementById('previewPoints').innerText = `${perfPts} pts (Fixo: ${valStr})`;
+                return;
+            }
+
+            const points = getProductionPoints(b) + perfPts;
+            const prodPts = getProductionPoints(b);
             const cPercent = (perfPts / 50) * config.criteriaPercent;
             let pPercent = 0;
-            
-            const hasPenalty = Object.values(newCriteria).some(val => val === 0);
             
             if (!hasPenalty && prodPts > 0) {
                 pPercent = config.productionPercent;
             }
             
             const percent = cPercent + pPercent;
-            
             document.getElementById('previewPoints').innerText = `${points} pts (${percent.toFixed(1)}%)`;
         }
 
@@ -1576,6 +1696,10 @@
             document.getElementById('empBoxes').value = emp.boxes;
             
             newCriteria = { ...emp.criteria };
+            
+            // Re-trigger auto fill so UI blocks the boxes field if they are a Leader
+            autoFillSalary(); 
+            
             renderCriteriaForm();
             updatePreview();
             
@@ -1595,6 +1719,8 @@
             document.getElementById('empName').value = "";
             document.getElementById('empSalary').value = "";
             document.getElementById('empBoxes').value = "";
+            document.getElementById('empBoxes').disabled = false;
+            document.getElementById('empBoxes').classList.remove('opacity-50', 'bg-gray-200', 'cursor-not-allowed');
             newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
             renderCriteriaForm();
             updatePreview();
@@ -1639,8 +1765,11 @@
                 document.getElementById('empName').value = ''; 
                 document.getElementById('empSalary').value = ''; 
                 document.getElementById('empBoxes').value = '';
+                document.getElementById('empBoxes').disabled = false;
+                document.getElementById('empBoxes').classList.remove('opacity-50', 'bg-gray-200', 'cursor-not-allowed');
                 newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
                 renderCriteriaForm(); 
+                updatePreview();
             }
             saveData();
         }
@@ -1863,6 +1992,8 @@
 
                 const mDept = member.department || 'Produção Packing';
                 const mLoc = member.location || 'SPG Sede';
+                const isFixedBonusRole = member.jobTitle === 'Líder' || member.department === 'Escritório';
+                const isLider = member.jobTitle === 'Líder';
 
                 const tr = document.createElement('tr');
                 tr.setAttribute('data-name', member.name);
@@ -1883,8 +2014,11 @@
 
                 tr.innerHTML = `
                     <td class="p-4 font-medium text-slate-800 min-w-[250px]">
-                        <div class="text-sm">${member.name}</div>
-                        <div class="text-[9px] text-slate-400 mb-2 font-normal uppercase tracking-wide">${mLoc} &bull; ${mDept}</div>
+                        <div class="text-sm flex items-center gap-2">
+                            ${member.name}
+                            ${isLider ? `<span class="text-[9px] font-bold uppercase text-slate-100 bg-slate-700 px-1.5 py-0.5 rounded-md leading-none shadow-sm"><i data-lucide="star" class="w-2.5 h-2.5 inline-block mr-0.5"></i>Líder</span>` : ''}
+                        </div>
+                        <div class="text-[9px] text-slate-400 mb-2 font-normal uppercase tracking-wide mt-1">${mLoc} &bull; ${mDept}</div>
                         <textarea 
                                placeholder="Observação (opcional)..." 
                                onchange="updateDigitalEmployee('${member.name}', 'observation', this.value)"
@@ -1897,12 +2031,15 @@
                     <td class="p-4 text-center align-top pt-6">${btnHtml('agility', c.agility)}</td>
                     <td class="p-4 text-center align-top pt-6">${btnHtml('punctuality', c.punctuality)}</td>
                     <td class="p-4 align-top pt-5">
-                        <input type="number" value="${boxes}" 
+                        ${isFixedBonusRole ? 
+                            `<div class="w-full p-2 rounded-lg text-center font-medium text-slate-300 text-xs italic mt-2 border border-dashed border-slate-200 bg-slate-50">Não se aplica</div>` : 
+                            `<input type="number" value="${boxes}" 
                                onchange="updateDigitalEmployee('${member.name}', 'boxes', this.value)"
-                               class="w-full p-2 border border-slate-200 rounded-lg text-center font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                               class="w-full p-2 border border-slate-200 rounded-lg text-center font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">`
+                        }
                     </td>
                     <td class="p-4 text-center align-top pt-6">
-                        <button onclick="resetDigitalRow(this, '${member.name}')" class="text-slate-300 hover:text-red-500 p-2" title="Zerar">
+                        <button onclick="resetDigitalRow(this, '${member.name}', ${isFixedBonusRole})" class="text-slate-300 hover:text-red-500 p-2" title="Zerar">
                             <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                         </button>
                     </td>
@@ -1965,7 +2102,7 @@
             saveData();
         }
 
-        function resetDigitalRow(btn, name) {
+        function resetDigitalRow(btn, name, isFixedBonusRole) {
             showCustomConfirm(`Zerar notas de ${name}?`, (confirmed) => {
                 if(!confirmed) return;
                 
@@ -1985,7 +2122,11 @@
                     b.innerText = '0';
                     b.className = 'criteria-btn w-9 h-9 rounded-full font-bold text-xs border transition-all bg-rose-100 text-rose-700 border-rose-300 ring-2 ring-rose-100';
                 });
-                tr.querySelector('input[type="number"]').value = 0;
+                
+                if (!isFixedBonusRole) {
+                    const boxInput = tr.querySelector('input[type="number"]');
+                    if(boxInput) boxInput.value = 0;
+                }
                 
                 // Zera o textarea da observação
                 const txtArea = tr.querySelector('textarea');
@@ -2119,14 +2260,20 @@
                 const bg = i % 2 === 0 ? '#fff' : '#f9fafb';
                 const mDept = member.department || 'Produção Packing';
                 const mLoc = member.location || 'SPG Sede';
+                const isFixedBonusRole = member.jobTitle === 'Líder' || member.department === 'Escritório';
+                const isLider = member.jobTitle === 'Líder';
+                
+                const jobTitleHtml = isLider ? ` | <b>LÍDER</b>` : '';
 
                 html += `
                     <tr style="background-color: ${bg}; page-break-inside: avoid;">
                         <td style="border: 1px solid #000; padding: 4px 6px;">
                             <div style="font-weight: bold; text-transform: uppercase; font-size: 9px;">${member.name}</div>
-                            <div style="font-size: 7px; color: #555; margin-top: 2px;">${mLoc} | ${mDept}</div>
+                            <div style="font-size: 7px; color: #555; margin-top: 2px;">${mLoc} | ${mDept}${jobTitleHtml}</div>
                         </td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; vertical-align: bottom;"><div style="border-bottom: 1px solid #000; width: 80%; margin: 0 auto;"></div></td>
+                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; vertical-align: bottom;">
+                            ${isFixedBonusRole ? '-' : '<div style="border-bottom: 1px solid #000; width: 80%; margin: 0 auto;"></div>'}
+                        </td>
                         <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
                         <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
                         <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
@@ -2208,12 +2355,15 @@
             dataList.forEach(emp => {
                 const calc = calculateBonus(emp);
                 const c = emp.criteria;
+                
+                const isFixedBonusRole = calc.isFixedBonus;
+                
                 const row = [
                     monthLabel,
                     emp.name,
                     emp.salary.toFixed(2).replace('.', ','),
-                    emp.boxes,
-                    calc.prodPts, // Pontos de Produção
+                    isFixedBonusRole ? 0 : emp.boxes, // Zera caixas na exportação se for líder/escritório
+                    isFixedBonusRole ? 0 : calc.prodPts, // Pontos de Produção
                     c.assiduity,
                     c.organization,
                     c.participation,
@@ -2286,6 +2436,8 @@
                 const dbMember = teamDatabase.find(m => m.name === emp.name);
                 const empDept = dbMember && dbMember.department ? dbMember.department : 'Produção Packing';
                 const empLoc = dbMember && dbMember.location ? dbMember.location : 'SPG Sede';
+                const isFixedBonusRole = dbMember && (dbMember.jobTitle === 'Líder' || dbMember.department === 'Escritório');
+                const isLider = dbMember && dbMember.jobTitle === 'Líder';
 
                 totalBonus += calc.bonusVal;
                 totalSalary += emp.salary;
@@ -2297,15 +2449,16 @@
                     : calc.totalPts;
 
                 const bonusColor = calc.hasPenalty ? '#ef4444' : '#059669';
+                const jobTitleHtml = isLider ? ` | <b>LÍDER</b>` : '';
 
                 tableRows += `
                     <tr style="border-bottom: 1px solid #eee;">
                         <td style="padding: 3px 6px; text-align: left;">
                             <div style="font-weight: 600;">${emp.name}</div>
-                            <div style="font-size: 7px; color: #64748b; margin-top: 1px;">${empLoc} | ${empDept}</div>
+                            <div style="font-size: 7px; color: #64748b; margin-top: 1px;">${empLoc} | ${empDept}${jobTitleHtml}</div>
                         </td>
-                        <td style="padding: 3px 6px; text-align: center;">${emp.boxes}</td>
-                        <td style="padding: 3px 6px; text-align: center;">${calc.prodPts}</td>
+                        <td style="padding: 3px 6px; text-align: center;">${isFixedBonusRole ? '-' : emp.boxes}</td>
+                        <td style="padding: 3px 6px; text-align: center;">${isFixedBonusRole ? '-' : calc.prodPts}</td>
                         <td style="padding: 3px 6px; text-align: center;">${calc.perfPts}</td>
                         <td style="padding: 3px 6px; text-align: center; font-weight: bold;">${ptsDisplay}</td>
                         <td style="padding: 3px 6px; text-align: right;">${formatCurrency(emp.salary)}</td>
