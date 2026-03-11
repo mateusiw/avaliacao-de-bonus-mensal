@@ -2374,8 +2374,8 @@
                 filename = `Bonus_${mnCap}_${y}_CSV.csv`;
             }
             
-            // Cabeçalho REMOVIDO conforme solicitado, mas atualizado com a nova estrutura para referência
-            // csvContent += "Mes;Nome;Cargo;Local;Setor;SalarioBase;Caixas;PontosProducao;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosCriterios;PontosTotais;ValorBonus;TotalReceber;Observacao\n";
+            // Cabeçalho restaurado conforme solicitado
+            csvContent += "Mes;Nome;Cargo;Local;Setor;SalarioBase;Caixas;PontosProducao;Assiduidade;Organizacao;Participacao;Agilidade;Pontualidade;PontosCriterios;PontosTotais;ValorBonus;TotalReceber;Observacao\n";
 
             dataList.forEach(emp => {
                 const calc = calculateBonus(emp);
