@@ -6,12 +6,51 @@
     <title>Relatório de Bônus Mensal</title>
     
     <!-- Configurações PWA Embutidas (Ícones e Manifesto) -->
-    <link rel="icon" type="image/png" href="https://i.imgur.com/ezKp9uo.png">
-    <link rel="apple-touch-icon" href="https://i.imgur.com/ezKp9uo.png">
-    
+    <link rel="icon" type="image/png" href="https://i.imgur.com/ezKp9uo.png" id="siteFavicon">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/ezKp9uo.png" id="siteAppleTouchIcon">
+
     <!-- Manifesto Embutido para Chrome/Android (CORRIGIDO COM "purpose":"any maskable") -->
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Gestão de Bônus SPG","short_name":"Bônus SPG","start_url":".","display":"standalone","background_color":"#f9fafb","theme_color":"#2563eb","icons":[{"src":"https://i.imgur.com/ezKp9uo.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"https://i.imgur.com/ezKp9uo.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}'>
-    
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Gestão de Bônus SPG","short_name":"Bônus SPG","start_url":".","display":"standalone","background_color":"#f9fafb","theme_color":"#2563eb","icons":[{"src":"https://i.imgur.com/ezKp9uo.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"https://i.imgur.com/ezKp9uo.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}' id="siteManifest">
+
+    <script>
+        const BRAND_LOGO_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="96" fill="#2563eb"/>
+    <text x="256" y="300" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="170" font-weight="800" letter-spacing="2" fill="#ffffff">SPG</text>
+</svg>`.trim();
+
+        function getBrandLogoDataUri() {
+            return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(BRAND_LOGO_SVG)}`;
+        }
+
+        function applyBrandAssets() {
+            const logoUri      = getBrandLogoDataUri();
+            const favicon      = document.getElementById('siteFavicon');
+            const appleTouchIcon = document.getElementById('siteAppleTouchIcon');
+            const manifestLink = document.getElementById('siteManifest');
+
+            if (favicon) favicon.href = logoUri;
+            if (appleTouchIcon) appleTouchIcon.href = logoUri;
+            if (manifestLink) {
+                const manifest = {
+                    name: 'Gestão de Bônus SPG',
+                    short_name: 'Bônus SPG',
+                    start_url: '.',
+                    display: 'standalone',
+                    background_color: '#f9fafb',
+                    theme_color: '#2563eb',
+                    icons: [
+                        { src: logoUri, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+                        { src: logoUri, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+                    ]
+                };
+                manifestLink.href = `data:application/manifest+json,${encodeURIComponent(JSON.stringify(manifest))}`;
+            }
+        }
+
+        applyBrandAssets();
+    </script>
+
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -2638,19 +2677,24 @@
             const boxes = document.getElementById('empBoxes').value;
             
             if(!name || isNaN(salary)) return showToast("Por favor, preencha o nome e o salário corretamente.");
-            
+
+            const wasUpdate = !!editingId;
+            let updatedEmp = null;
+
             if (editingId) {
                 const index = employees.findIndex(e => e.id === editingId);
                 if (index !== -1) {
-                    employees[index] = { 
-                        id: editingId, 
-                        name, 
-                        salary: salary, 
-                        boxes: Number(boxes), 
-                        criteria: {...newCriteria} 
+                    employees[index] = {
+                        id: editingId,
+                        name,
+                        salary: salary,
+                        boxes: Number(boxes),
+                        criteria: {...newCriteria},
+                        observation: employees[index].observation || ""
                     };
+                    updatedEmp = employees[index];
                 }
-                cancelEdit(); 
+                cancelEdit();
             } else {
                 employees.push({ 
                     id: Date.now(), 
@@ -2666,10 +2710,15 @@
                 document.getElementById('empBoxes').disabled = false;
                 document.getElementById('empBoxes').classList.remove('opacity-50', 'bg-gray-200', 'cursor-not-allowed');
                 newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
-                renderCriteriaForm(); 
+                renderCriteriaForm();
                 updatePreview();
             }
             saveData();
+
+            // Edição de colaborador já existente: atualiza só a linha dele na planilha
+            if (wasUpdate && updatedEmp && config.appsScriptUrl) {
+                updateEmployeeInSheets(updatedEmp);
+            }
         }
 
         // ==============================================================
@@ -4709,8 +4758,71 @@
             }
         }
 
+        // Monta a linha (array de colunas) no mesmo formato gravado na planilha
+        function _empToSheetRow(emp, monthLabel) {
+            const calc = calculateBonus(emp);
+            const c = emp.criteria;
+            const dbMember = teamDatabase.find(m => m.name === emp.name);
+            const cargo = dbMember?.jobTitle || 'Operacional';
+            const local = dbMember?.location  || 'SPG Sede';
+            const setor = dbMember?.department || 'Produção Packing';
+            const isFixed = calc.isFixedBonus;
+
+            return [
+                monthLabel,
+                formatNameForCSV(emp.name),
+                cargo,
+                local,
+                setor,
+                parseFloat(emp.salary.toFixed(2)),
+                isFixed ? 0 : emp.boxes,
+                isFixed ? 0 : (typeof calc.prodPts === 'number' ? calc.prodPts : 0),
+                c.assiduity,
+                c.organization,
+                c.participation,
+                c.agility,
+                c.punctuality,
+                calc.perfPts,
+                calc.totalPts,
+                parseFloat(calc.bonusVal.toFixed(2)),
+                parseFloat(calc.totalReceive.toFixed(2)),
+                emp.observation   || "",
+                calc.cancelReason || ""
+            ];
+        }
+
+        // Atualiza somente a linha do colaborador editado, sem tocar nos demais
+        async function updateEmployeeInSheets(emp) {
+            const url = config.appsScriptUrl;
+            if (!url) return;
+
+            const monthLabel = getMonthLabel();
+            const row = _empToSheetRow(emp, monthLabel);
+
+            showToast("Atualizando registro na planilha...");
+            try {
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ op: 'updateRow', month: monthLabel, name: formatNameForCSV(emp.name), row })
+                });
+                const json = await resp.json();
+                if (json.success) {
+                    showToast("✓ Registro atualizado na planilha!");
+                    _allSheetsData = null;
+                    autoSyncFromSheets(true);
+                } else {
+                    showAlertModal("Erro ao atualizar: " + (json.error || "Resposta inválida do Apps Script."));
+                }
+            } catch (err) {
+                console.error(err);
+                showAlertModal("Erro de conexão ao atualizar a planilha. Verifique a URL e tente novamente.");
+            }
+        }
+
         // --- ENVIAR PARA A PLANILHA ---
-        async function sendToSheets(dataList) {
+        async function sendToSheets(dataList, replace = false) {
             const url = config.appsScriptUrl;
             if (!url) {
                 generateAndDownloadCSV(dataList, config.referenceMonth || "Geral");
@@ -4718,50 +4830,21 @@
             }
 
             const monthLabel = getMonthLabel();
+            const rows = dataList.map(emp => _empToSheetRow(emp, monthLabel));
 
-            const rows = dataList.map(emp => {
-                const calc = calculateBonus(emp);
-                const c = emp.criteria;
-                const dbMember = teamDatabase.find(m => m.name === emp.name);
-                const cargo = dbMember?.jobTitle || 'Operacional';
-                const local = dbMember?.location  || 'SPG Sede';
-                const setor = dbMember?.department || 'Produção Packing';
-                const isFixed = calc.isFixedBonus;
-
-                return [
-                    monthLabel,
-                    formatNameForCSV(emp.name),
-                    cargo,
-                    local,
-                    setor,
-                    parseFloat(emp.salary.toFixed(2)),
-                    isFixed ? 0 : emp.boxes,
-                    isFixed ? 0 : (typeof calc.prodPts === 'number' ? calc.prodPts : 0),
-                    c.assiduity,
-                    c.organization,
-                    c.participation,
-                    c.agility,
-                    c.punctuality,
-                    calc.perfPts,
-                    calc.totalPts,
-                    parseFloat(calc.bonusVal.toFixed(2)),
-                    parseFloat(calc.totalReceive.toFixed(2)),
-                    emp.observation   || "",
-                    calc.cancelReason || ""
-                ];
-            });
-
-            showToast("Enviando dados para a planilha...");
+            showToast(replace ? "Atualizando dados na planilha..." : "Enviando dados para a planilha...");
             try {
                 const resp = await fetch(url, {
                     method: 'POST',
                     redirect: 'follow',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ month: monthLabel, replace: false, rows })
+                    body: JSON.stringify({ month: monthLabel, replace, rows })
                 });
                 const json = await resp.json();
                 if (json.success) {
-                    showToast("✓ " + json.inserted + " registros enviados para a planilha com sucesso!");
+                    showToast(replace
+                        ? "✓ Planilha atualizada com sucesso!"
+                        : "✓ " + json.inserted + " registros enviados para a planilha com sucesso!");
                     // Atualiza cache para que a checagem de duplicatas funcione na próxima vez
                     _allSheetsData = null;
                     autoSyncFromSheets(true);
