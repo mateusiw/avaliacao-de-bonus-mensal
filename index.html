@@ -21,7 +21,8 @@
     
     <!-- CSS Crítico -->
     <style>
-        body { font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+        * { -webkit-tap-highlight-color: transparent; }
         
         /* Regras para esconder financeiro e tabela do Líder */
         body[data-role="lider"] .financial-col { display: none !important; }
@@ -116,6 +117,214 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+
+        /* ===== ADAPTAÇÕES MOBILE ===== */
+
+        /* Barra de navegação inferior */
+        #mobile-bottom-bar {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #fff;
+            border-top: 1.5px solid #e2e8f0;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+            padding: 4px 0;
+            padding-bottom: max(4px, env(safe-area-inset-bottom));
+            z-index: 25;
+            align-items: stretch;
+        }
+        #mobile-bottom-bar button {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 8px 4px;
+            font-size: 9px;
+            font-weight: 700;
+            color: #64748b;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: color 0.15s, transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #mobile-bottom-bar button:active { transform: scale(0.92); }
+        #mobile-bottom-bar button.active-tab { color: #2563eb; }
+        #mobile-bottom-bar .mob-eval-btn { color: #059669; }
+
+        /* Menu slide-up */
+        #mobile-more-menu {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 36;
+            background: rgba(15,23,42,0.5);
+            -webkit-backdrop-filter: blur(3px);
+            backdrop-filter: blur(3px);
+        }
+        #mobile-more-menu.mobile-open { display: block; }
+        #mobile-more-panel {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            padding: 12px 16px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
+            box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+        }
+        #mobile-more-panel button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 12px;
+            border-radius: 12px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
+            text-align: left;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s;
+        }
+        #mobile-more-panel button:active { background: #f1f5f9; }
+        #mobile-more-panel .mob-icon-wrap {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        #mobile-more-panel .mob-danger { color: #dc2626; background: #fef2f2; margin-top: 4px; }
+        #mobile-more-panel .mob-danger .mob-icon-wrap { background: #fee2e2; }
+
+        @media (max-width: 639px) {
+            /* Mostra barra inferior */
+            #mobile-bottom-bar { display: flex; }
+
+            /* Padding para não ficar atrás da barra */
+            #app-content > main {
+                padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important;
+            }
+
+            /* Toolbar horizontal scroll */
+            .admin-toolbar-groups {
+                flex-wrap: nowrap !important;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                padding-bottom: 4px;
+                gap: 12px !important;
+            }
+            .admin-toolbar-groups::-webkit-scrollbar { display: none; }
+            .admin-toolbar-groups > .w-px { display: none !important; }
+
+            /* Coluna fixa na tabela principal */
+            #table-section .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+            #table-section table thead tr th:first-child,
+            #table-section table tbody tr td:first-child {
+                position: sticky;
+                left: 0;
+                z-index: 2;
+                background: #fff;
+                box-shadow: 3px 0 6px -2px rgba(0,0,0,0.07);
+            }
+            #table-section table tbody tr:hover td:first-child { background: #f8fafc; }
+            #table-section table td, #table-section table th { white-space: nowrap; }
+
+            /* Scroll suave em todas as tabelas */
+            .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+
+            /* Botões de critério maiores para toque */
+            .criteria-btn {
+                width: 2.75rem !important;
+                height: 2.75rem !important;
+                font-size: 13px !important;
+            }
+
+            /* Digital sheet: header grudado ao topo */
+            #digitalSheetModal .sticky.top-4 {
+                top: 0 !important;
+                border-radius: 0 !important;
+                padding: 10px 12px !important;
+            }
+            #digitalSheetModal > div { padding: 8px !important; }
+
+            /* Dashboard header */
+            #dashboardModal .sticky.top-0 { padding: 8px 12px !important; }
+
+            /* Modais centralizados */
+            #confirmModal > div,
+            #alertModal > div,
+            #custom-confirm-modal > div {
+                max-width: calc(100vw - 24px) !important;
+                width: 100% !important;
+            }
+
+            /* Modal de equipe: slide do rodapé */
+            #viewTeamModal {
+                align-items: flex-end !important;
+                padding: 0 !important;
+            }
+            #viewTeamModal > div {
+                max-width: 100% !important;
+                width: 100% !important;
+                max-height: 85vh;
+                border-radius: 20px 20px 0 0 !important;
+                padding-bottom: max(16px, env(safe-area-inset-bottom));
+            }
+
+            /* Cards KPI compactos */
+            .h-28 { height: auto !important; min-height: 5.5rem !important; }
+
+            /* Título mais compacto */
+            #headerTitle { font-size: 1.1rem !important; }
+            h2.text-2xl { font-size: 1.15rem !important; }
+
+            /* Settings panel: coluna única */
+            #settingsPanel .md\:grid-cols-2 { grid-template-columns: 1fr !important; }
+
+            /* Month picker mais compacto */
+            .min-w-40 { min-width: 150px; }
+            #monthPickerLabel { font-size: 13px; }
+
+            /* Max width containers full no mobile */
+            .max-w-\[95\%\] { max-width: 100% !important; }
+            .max-w-\[98\%\] { max-width: 100% !important; }
+
+            /* Navbar compacto */
+            header .max-w-\[95\%\] { padding-left: 12px; padding-right: 12px; }
+
+            /* Textarea na avaliação digital */
+            #digitalSheetModal textarea { font-size: 12px; min-height: 50px; }
+
+            /* Ocultar colunas menos importantes na tabela principal em mobile */
+            #table-section table th.hide-xs,
+            #table-section table td.hide-xs { display: none !important; }
+
+            /* Leader dashboard botão maior */
+            #leader-dashboard button.h-48 { height: 11rem !important; }
+
+            /* Dashboard: full screen scroll */
+            #dashboardModal { overflow-y: auto; }
+
+            /* Toast no mobile */
+            #toast-container { bottom: calc(72px + env(safe-area-inset-bottom)); right: 12px; }
+
+            /* Filtro de colaboradores: largura total no mobile */
+            #visal-dd-colab-panel,
+            #filterDropdown,
+            #digitalFilterDropdown {
+                left: 0 !important;
+                right: 0 !important;
+                min-width: unset !important;
+                width: calc(100vw - 32px) !important;
+                max-width: none !important;
+            }
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -130,6 +339,63 @@
     <!-- Toast Container -->
     <div id="toast-container"></div>
 
+    <!-- BARRA INFERIOR MOBILE -->
+    <div id="mobile-bottom-bar" class="admin-only no-print">
+        <button onclick="openDashboard()" title="Dashboard">
+            <i data-lucide="bar-chart-2" style="width:20px;height:20px;"></i>
+            Dashboard
+        </button>
+        <button onclick="openDigitalSheet()" class="mob-eval-btn" title="Avaliação Digital">
+            <i data-lucide="monitor-check" style="width:20px;height:20px;"></i>
+            Avaliar
+        </button>
+        <button onclick="printSimpleTable()" title="Imprimir">
+            <i data-lucide="printer" style="width:20px;height:20px;"></i>
+            Imprimir
+        </button>
+        <button onclick="downloadManualSheets()" title="Fichas">
+            <i data-lucide="clipboard-list" style="width:20px;height:20px;"></i>
+            Fichas
+        </button>
+        <button onclick="toggleMobileMenu()" id="mobileMenuBtn" title="Mais opções">
+            <i data-lucide="more-horizontal" style="width:20px;height:20px;"></i>
+            Mais
+        </button>
+    </div>
+
+    <!-- MENU MOBILE — SLIDE UP -->
+    <div id="mobile-more-menu" class="no-print" onclick="closeMobileMenu()">
+        <div id="mobile-more-panel" onclick="event.stopPropagation()">
+            <div style="width:36px;height:4px;background:#e2e8f0;border-radius:2px;margin:0 auto 14px;"></div>
+            <div style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding:0 4px;">Mais opções</div>
+            <button onclick="toggleSettings();closeMobileMenu()">
+                <span class="mob-icon-wrap" style="background:#eff6ff;"><i data-lucide="settings" style="width:16px;height:16px;color:#2563eb;"></i></span>
+                Regras de Cálculo
+            </button>
+            <button onclick="viewTeamDatabase();closeMobileMenu()">
+                <span class="mob-icon-wrap" style="background:#eef2ff;"><i data-lucide="users-2" style="width:16px;height:16px;color:#4f46e5;"></i></span>
+                Gestão de Equipe
+                <span id="mobileTeamBadge" style="margin-left:auto;background:#2563eb;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px;"></span>
+            </button>
+            <button onclick="forceRefreshSheets();closeMobileMenu()">
+                <span class="mob-icon-wrap" style="background:#ecfeff;"><i data-lucide="refresh-cw" style="width:16px;height:16px;color:#0891b2;"></i></span>
+                Atualizar da Planilha
+            </button>
+            <button onclick="document.getElementById('csvFileInput').click();closeMobileMenu()">
+                <span class="mob-icon-wrap" style="background:#f8fafc;"><i data-lucide="upload" style="width:16px;height:16px;color:#475569;"></i></span>
+                Importar CSV
+            </button>
+            <button onclick="exportToCSV();closeMobileMenu()">
+                <span class="mob-icon-wrap" style="background:#f0fdf4;"><i data-lucide="download" style="width:16px;height:16px;color:#16a34a;"></i></span>
+                Exportar CSV
+            </button>
+            <button onclick="resetData();closeMobileMenu()" class="mob-danger">
+                <span class="mob-icon-wrap"><i data-lucide="trash-2" style="width:16px;height:16px;color:#dc2626;"></i></span>
+                Limpar Dados do Mês
+            </button>
+        </div>
+    </div>
+
     <!-- Overlay de Sincronização -->
     <div id="sync-overlay" class="hidden fixed inset-0 z-[100] bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center gap-5">
         <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -140,8 +406,8 @@
     </div>
 
     <!-- TELA DE LOGIN -->
-    <section id="login-screen" class="fixed inset-0 z-50 bg-gray-50 flex items-center justify-center p-4" aria-label="Tela de Login">
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 w-full max-w-md animate-fade-in">
+    <section id="login-screen" class="fixed inset-0 z-50 bg-gray-50 flex items-center justify-center p-4 overflow-y-auto" aria-label="Tela de Login">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-8 w-full max-w-md animate-fade-in my-4">
             <header class="text-center mb-8">
                 <div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
                     <i data-lucide="lock" class="w-8 h-8 text-white"></i>
@@ -214,10 +480,10 @@
             <section class="space-y-4 no-print" aria-label="Barra de Ferramentas">
 
                 <!-- Linha 1: Título + Seletor de Mês -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <header>
-                        <h2 class="text-2xl font-bold text-slate-800" id="headerTitle">Relatório Geral</h2>
-                        <p class="text-slate-500 text-sm mt-0.5">Gerencie a produção e o desempenho da equipe.</p>
+                        <h2 class="text-xl md:text-2xl font-bold text-slate-800" id="headerTitle">Relatório Geral</h2>
+                        <p class="text-slate-500 text-xs md:text-sm mt-0.5 hidden sm:block">Gerencie a produção e o desempenho da equipe.</p>
                     </header>
 
                     <!-- Custom Month Picker + Refresh -->
@@ -263,7 +529,7 @@
                 </div>
 
                 <!-- Linha 2: Grupos de Ação -->
-                <div class="admin-only flex flex-wrap items-end gap-5">
+                <div class="admin-only admin-toolbar-groups flex flex-wrap items-end gap-5">
 
                     <!-- GRUPO: Filtros -->
                     <div class="flex flex-col gap-1.5">
@@ -495,11 +761,11 @@
                                         <th class="p-4 font-semibold text-slate-700">Nome</th>
                                         <th class="p-4 font-medium text-center text-xs uppercase tracking-wider">Caixas</th>
                                         <th class="p-4 font-medium text-center text-xs uppercase tracking-wider bg-blue-50/50">Prod.</th>
-                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400">Assid</th>
-                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400">Org</th>
-                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400">Part</th>
-                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400">Agil</th>
-                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400">Pont</th>
+                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Assid</th>
+                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Org</th>
+                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Part</th>
+                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Agil</th>
+                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Pont</th>
                                         <th class="p-4 font-medium text-center text-xs uppercase tracking-wider bg-emerald-50/50">Pts Totais</th>
                                         <th class="p-4 font-bold text-right text-emerald-600 financial-col">Bônus</th>
                                         <th class="p-4 font-bold text-right text-slate-800 financial-col">Total</th>
@@ -591,17 +857,26 @@
     <div id="digitalSheetModal" class="hidden fixed inset-0 bg-slate-100 z-50 overflow-y-auto no-print">
         <!-- AUMENTO DA LARGURA AQUI: max-w-7xl para max-w-[95%] -->
         <div class="max-w-[95%] mx-auto p-4 md:p-8 space-y-6">
-            <div class="flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-lg border border-slate-200 sticky top-4 z-20 gap-4">
-                <div class="flex-1">
-                    <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                        <div class="p-1.5 bg-blue-100 rounded text-blue-600"><i data-lucide="monitor-check" class="w-5 h-5"></i></div>
-                        Avaliação Digital em Lote
-                    </h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Realize o lançamento das avaliações e clique em "Enviar Dados"</p>
+            <div class="flex flex-col md:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-lg border border-slate-200 sticky top-4 z-20 gap-3">
+                <div class="flex items-center justify-between w-full md:w-auto md:flex-1 gap-2">
+                    <div>
+                        <h2 class="text-base md:text-xl font-bold text-slate-900 flex items-center gap-2">
+                            <div class="p-1.5 bg-blue-100 rounded text-blue-600"><i data-lucide="monitor-check" class="w-4 h-4 md:w-5 md:h-5"></i></div>
+                            Avaliação Digital
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5 hidden md:block">Realize o lançamento das avaliações e clique em "Enviar Dados"</p>
+                    </div>
+                    <!-- Botões compactos só no mobile (inline com o título) -->
+                    <div class="flex gap-2 md:hidden">
+                        <button onclick="exportDigitalSheetCSV()" class="px-3 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm flex items-center gap-1.5">
+                            <i data-lucide="send" class="w-3.5 h-3.5"></i> Enviar
+                        </button>
+                        <button onclick="closeDigitalSheet()" class="px-3 py-2 bg-gray-100 text-slate-600 rounded-lg font-medium text-sm">✕</button>
+                    </div>
                 </div>
 
                 <!-- ENVOLTÓRIO DOS FILTROS -->
-                <div class="flex flex-wrap items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                     <!-- FILTRO DE SETOR MODERNO -->
                     <div class="relative" id="digitalDeptDdWrap">
                         <button type="button" onclick="toggleDigitalDeptDd()"
@@ -644,17 +919,23 @@
                     </div>
                 </div>
 
-                <div class="flex gap-2 w-full md:w-auto">
+                <div class="hidden md:flex gap-2 w-full md:w-auto">
                     <!-- NOVO BOTÃO: Limpar Tudo -->
                     <button onclick="resetDigitalSheet()" class="px-4 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-medium text-sm transition-colors flex items-center gap-2" title="Zerar todas as avaliações ativas">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i> <span class="hidden sm:inline">Limpar</span>
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> <span>Limpar</span>
                     </button>
-                    
+
                     <button onclick="closeDigitalSheet()" class="px-4 py-2 bg-gray-50 hover:bg-gray-100 text-slate-600 border border-gray-200 rounded-lg font-medium text-sm transition-colors">
                         Cancelar
                     </button>
                     <button onclick="exportDigitalSheetCSV()" class="px-4 py-2 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
                         <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Enviar
+                    </button>
+                </div>
+                <!-- Reset visível só no mobile -->
+                <div class="flex md:hidden w-full">
+                    <button onclick="resetDigitalSheet()" class="flex-1 px-4 py-2.5 bg-white border border-red-200 text-red-600 rounded-lg font-medium text-sm flex items-center justify-center gap-2">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Zerar Avaliações
                     </button>
                 </div>
             </div>
@@ -770,29 +1051,29 @@
 
         <!-- Top bar sticky -->
         <div class="sticky top-0 z-20 bg-white border-b border-slate-200 shadow-sm">
-            <div class="max-w-[98%] mx-auto px-5 py-3 flex items-center gap-4">
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <div class="p-2 bg-slate-900 rounded-xl shrink-0">
-                        <i data-lucide="bar-chart-2" class="w-4 h-4 text-white"></i>
+            <div class="px-3 md:px-5 py-3 flex items-center gap-2 md:gap-4 overflow-x-auto">
+                <div class="flex items-center gap-2 md:gap-3 flex-1 min-w-0 shrink-0">
+                    <div class="p-1.5 md:p-2 bg-slate-900 rounded-xl shrink-0">
+                        <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 md:w-4 md:h-4 text-white"></i>
                     </div>
-                    <div class="min-w-0">
-                        <h2 class="text-sm font-black text-slate-900 leading-tight">Dashboard SPG Packing</h2>
+                    <div class="min-w-0 hidden sm:block">
+                        <h2 class="text-xs md:text-sm font-black text-slate-900 leading-tight">Dashboard SPG</h2>
                         <p class="text-[10px] text-slate-400 leading-tight" id="dashboardPeriod"></p>
                     </div>
                 </div>
-                <div class="flex gap-1 bg-slate-100 p-1 rounded-xl">
+                <div class="flex gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
                     <button id="dash-tab-btn-visal" onclick="switchDashTab('visal')"
-                        class="dash-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm">
+                        class="dash-tab-btn px-3 md:px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm">
                         Visão Geral
                     </button>
                     <button id="dash-tab-btn-comp" onclick="switchDashTab('comp')"
-                        class="dash-tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-600">
+                        class="dash-tab-btn px-3 md:px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-slate-600">
                         Comparativo
                     </button>
                 </div>
                 <button onclick="closeDashboard()"
-                    class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-500 rounded-lg text-xs font-semibold transition-colors shrink-0">
-                    <i data-lucide="x" class="w-3.5 h-3.5"></i> Fechar
+                    class="flex items-center gap-1 md:gap-1.5 px-2.5 md:px-3 py-1.5 bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-500 rounded-lg text-xs font-semibold transition-colors shrink-0">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Fechar</span>
                 </button>
             </div>
         </div>
@@ -810,7 +1091,7 @@
             <div id="dash-panel-visal" class="dash-tab-panel space-y-5">
 
                 <!-- Filtros Visão Geral -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-end gap-3">
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-3 md:p-4 flex flex-wrap items-end gap-2 md:gap-3">
 
                     <!-- Dropdown Mês -->
                     <div class="flex flex-col gap-1 relative" id="visal-dd-mes-wrap">
@@ -1169,9 +1450,10 @@
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-content').classList.remove('hidden');
                 document.getElementById('userRoleDisplay').innerText = currentUser.name;
-                
+
                 applyUserRole(currentUser.role);
                 lucide.createIcons();
+                _syncMobileTeamBadge();
                 setupActivityListeners();
                 autoSyncFromSheets();
             } else {
@@ -1200,6 +1482,7 @@
                     updateActivityTime();
                     setupActivityListeners();
                     lucide.createIcons();
+                    setTimeout(_syncMobileTeamBadge, 100);
                     setInterval(checkInactivity, 60000);
                     autoSyncFromSheets();
                 } else {
@@ -2219,11 +2502,11 @@
                         </td>
                         <td class="p-4 text-center text-slate-600">${boxesDisplay}</td>
                         <td class="p-4 text-center">${prodDisplay}</td>
-                        <td class="p-2 text-center text-xs ${emp.criteria.assiduity === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.assiduity < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.assiduity}</td>
-                        <td class="p-2 text-center text-xs ${emp.criteria.organization === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.organization < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.organization}</td>
-                        <td class="p-2 text-center text-xs ${emp.criteria.participation === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.participation < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.participation}</td>
-                        <td class="p-2 text-center text-xs ${emp.criteria.agility === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.agility < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.agility}</td>
-                        <td class="p-2 text-center text-xs ${emp.criteria.punctuality === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.punctuality < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.punctuality}</td>
+                        <td class="p-2 text-center text-xs hide-xs ${emp.criteria.assiduity === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.assiduity < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.assiduity}</td>
+                        <td class="p-2 text-center text-xs hide-xs ${emp.criteria.organization === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.organization < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.organization}</td>
+                        <td class="p-2 text-center text-xs hide-xs ${emp.criteria.participation === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.participation < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.participation}</td>
+                        <td class="p-2 text-center text-xs hide-xs ${emp.criteria.agility === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.agility < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.agility}</td>
+                        <td class="p-2 text-center text-xs hide-xs ${emp.criteria.punctuality === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.punctuality < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.punctuality}</td>
                         <td class="p-4 text-center font-bold ${calc.hasPenalty ? 'text-red-500' : 'text-slate-700'}">
                             ${calc.totalPts}
                             ${calc.hasPenalty ? '<div style="color: red; font-size: 8px; line-height: 1;">CANCELADO</div>' : ''}
@@ -4312,6 +4595,29 @@
             return `<svg width="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">` +
                 gridLines + areaPath + bars + colabLine + colabDots + xLabels + rAxisLabels + legend +
                 `</svg>`;
+        }
+
+        // ============================================================
+        // MOBILE MENU
+        // ============================================================
+
+        function _syncMobileTeamBadge() {
+            const badge = document.getElementById('mobileTeamBadge');
+            const mainBadge = document.getElementById('teamCountBadge');
+            if (badge && mainBadge) badge.textContent = mainBadge.textContent;
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-more-menu');
+            menu.classList.toggle('mobile-open');
+            if (menu.classList.contains('mobile-open')) {
+                lucide.createIcons();
+                _syncMobileTeamBadge();
+            }
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobile-more-menu').classList.remove('mobile-open');
         }
 
         function saveConfigUrl(value) {
