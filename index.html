@@ -673,6 +673,9 @@
                             <button onclick="printSimpleTable()" class="flex items-center gap-2 h-9 px-3 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm text-xs font-semibold" title="Imprimir relatório em A4">
                                 <i data-lucide="printer" class="w-3.5 h-3.5"></i> Imprimir
                             </button>
+                            <button onclick="printLaborInspectionReport()" class="flex items-center gap-2 h-9 px-3 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-all shadow-sm text-xs font-semibold" title="Gerar relatório A4 com dados da empresa para apresentar à fiscalização (ex.: Ministério do Trabalho)">
+                                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Fiscalização
+                            </button>
                             <button onclick="resetData()" class="flex items-center gap-2 h-9 px-3 bg-red-50 border border-red-100 text-red-500 hover:bg-red-100 hover:text-red-700 hover:border-red-200 rounded-lg transition-all shadow-sm text-xs font-semibold" title="Apagar todos os lançamentos do mês">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Limpar
                             </button>
@@ -714,6 +717,56 @@
                                 <span class="text-emerald-600 font-bold">%</span>
                             </div>
                             <p class="text-[10px] text-emerald-600 mt-1">Padrão: 3.0845%</p>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2 flex items-start gap-4">
+                        <div class="p-2 bg-white rounded-lg text-indigo-600 shadow-sm">
+                            <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-bold text-indigo-800 uppercase tracking-wide mb-2">
+                                Critérios avaliados neste mês
+                            </label>
+                            <div class="flex flex-wrap gap-x-4 gap-y-2">
+                                <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                                    <input type="checkbox" id="critToggle_caixas" checked onchange="toggleCriterionActive('caixas', this.checked)" class="w-4 h-4 rounded accent-indigo-600"> Produção (Caixas)
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                                    <input type="checkbox" id="critToggle_assiduity" checked onchange="toggleCriterionActive('assiduity', this.checked)" class="w-4 h-4 rounded accent-indigo-600"> Assiduidade
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                                    <input type="checkbox" id="critToggle_organization" checked onchange="toggleCriterionActive('organization', this.checked)" class="w-4 h-4 rounded accent-indigo-600"> Organização
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                                    <input type="checkbox" id="critToggle_participation" checked onchange="toggleCriterionActive('participation', this.checked)" class="w-4 h-4 rounded accent-indigo-600"> Participação
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                                    <input type="checkbox" id="critToggle_agility" checked onchange="toggleCriterionActive('agility', this.checked)" class="w-4 h-4 rounded accent-indigo-600"> Agilidade
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                                    <input type="checkbox" id="critToggle_punctuality" checked onchange="toggleCriterionActive('punctuality', this.checked)" class="w-4 h-4 rounded accent-indigo-600"> Pontualidade
+                                </label>
+                            </div>
+                            <p class="text-[10px] text-indigo-400 mt-2">Desativar um item redistribui o % máximo de bônus entre os que continuam ativos.</p>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2 flex items-start gap-4">
+                        <div class="p-2 bg-white rounded-lg text-slate-600 shadow-sm">
+                            <i data-lucide="building-2" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">
+                                Dados da empresa (Relatório de Fiscalização)
+                            </label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <input type="text" id="empresa_razaoSocial" placeholder="Razão social" onchange="updateEmpresaField('razaoSocial', this.value)" class="w-full p-2 rounded border border-gray-200 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-400">
+                                <input type="text" id="empresa_cnpj" placeholder="CNPJ" onchange="updateEmpresaField('cnpj', this.value)" class="w-full p-2 rounded border border-gray-200 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-400">
+                                <input type="text" id="empresa_endereco" placeholder="Endereço (rua, bairro, cidade/UF, CEP)" onchange="updateEmpresaField('endereco', this.value)" class="w-full p-2 rounded border border-gray-200 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-400">
+                                <input type="text" id="empresa_numero" placeholder="Número" onchange="updateEmpresaField('numero', this.value)" class="w-full p-2 rounded border border-gray-200 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-slate-400">
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-2">Aparecem no cabeçalho do Relatório de Fiscalização. Salvos na planilha.</p>
                         </div>
                     </div>
 
@@ -798,13 +851,13 @@
                                 <thead class="bg-white text-slate-500 border-b border-gray-100 sticky top-0 z-10 shadow-sm">
                                     <tr>
                                         <th class="p-4 font-semibold text-slate-700">Nome</th>
-                                        <th class="p-4 font-medium text-center text-xs uppercase tracking-wider">Caixas</th>
-                                        <th class="p-4 font-medium text-center text-xs uppercase tracking-wider bg-blue-50/50">Prod.</th>
-                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Assid</th>
-                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Org</th>
-                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Part</th>
-                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Agil</th>
-                                        <th class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Pont</th>
+                                        <th data-crit="caixas" class="p-4 font-medium text-center text-xs uppercase tracking-wider">Caixas</th>
+                                        <th data-crit="caixas" class="p-4 font-medium text-center text-xs uppercase tracking-wider bg-blue-50/50">Prod.</th>
+                                        <th data-crit="assiduity" class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Assid</th>
+                                        <th data-crit="organization" class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Org</th>
+                                        <th data-crit="participation" class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Part</th>
+                                        <th data-crit="agility" class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Agil</th>
+                                        <th data-crit="punctuality" class="p-2 text-center text-[10px] uppercase text-slate-400 hide-xs">Pont</th>
                                         <th class="p-4 font-medium text-center text-xs uppercase tracking-wider bg-emerald-50/50">Pts Totais</th>
                                         <th class="p-4 font-bold text-right text-emerald-600 financial-col">Bônus</th>
                                         <th class="p-4 font-bold text-right text-slate-800 financial-col">Total</th>
@@ -859,9 +912,9 @@
                                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Salário (R$)</label>
                                         <input type="text" id="empSalary" required placeholder="0,00" oninput="formatCurrencyField(this)" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
                                     </div>
-                                    <div>
+                                    <div id="empBoxesWrap">
                                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5">Caixas</label>
-                                        <input type="number" id="empBoxes" required placeholder="Qtd" oninput="updatePreview()" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
+                                        <input type="number" id="empBoxes" placeholder="Qtd" oninput="updatePreview()" class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all">
                                     </div>
                                 </div>
                             </div>
@@ -990,12 +1043,12 @@
                         <thead class="bg-white text-slate-500 border-b border-slate-200 uppercase text-xs font-semibold tracking-wide">
                             <tr>
                                 <th class="p-4 min-w-[200px]">Funcionário</th>
-                                <th class="p-4 text-center w-20">Assid</th>
-                                <th class="p-4 text-center w-20">Org</th>
-                                <th class="p-4 text-center w-20">Part</th>
-                                <th class="p-4 text-center w-20">Agil</th>
-                                <th class="p-4 text-center w-20">Pont</th>
-                                <th class="p-4 w-32">Caixas</th>
+                                <th data-crit="assiduity" class="p-4 text-center w-20">Assid</th>
+                                <th data-crit="organization" class="p-4 text-center w-20">Org</th>
+                                <th data-crit="participation" class="p-4 text-center w-20">Part</th>
+                                <th data-crit="agility" class="p-4 text-center w-20">Agil</th>
+                                <th data-crit="punctuality" class="p-4 text-center w-20">Pont</th>
+                                <th data-crit="caixas" class="p-4 w-32">Caixas</th>
                                 <th class="p-4 w-16 text-center">Ações</th>
                             </tr>
                         </thead>
@@ -1466,6 +1519,48 @@
             }
         }
 
+        // Busca a regra de cálculo e os critérios ativos salvos na aba "Configuracoes" da planilha,
+        // para que fiquem sincronizados entre dispositivos (em vez de só no localStorage deste navegador).
+        async function loadConfigFromSheets() {
+            if (!config.appsScriptUrl) return;
+            try {
+                const resp = await fetch(config.appsScriptUrl + '?op=config', { redirect: 'follow' });
+                const json = await resp.json();
+                if (!json.success || !json.data) return;
+
+                config.criteriaPercent = json.data.criteriaPercent;
+                config.productionPercent = json.data.productionPercent;
+                config.activeCriteria = json.data.activeCriteria;
+                if (json.data.empresa) config.empresa = json.data.empresa;
+                localStorage.setItem('bonusApp_config', JSON.stringify(config));
+
+                refreshConfigUI();
+            } catch (err) {
+                console.error('Erro ao carregar configurações da planilha — usando o que já está salvo localmente.', err);
+            }
+        }
+
+        // Envia a regra de cálculo e os critérios ativos para a aba "Configuracoes" da planilha (best-effort).
+        async function saveConfigToSheets() {
+            if (!config.appsScriptUrl) return;
+            try {
+                await fetch(config.appsScriptUrl, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        op: 'saveConfig',
+                        criteriaPercent: config.criteriaPercent,
+                        productionPercent: config.productionPercent,
+                        activeCriteria: config.activeCriteria,
+                        empresa: config.empresa
+                    })
+                });
+            } catch (err) {
+                console.error('Erro ao salvar configurações na planilha — permanece salvo apenas localmente.', err);
+            }
+        }
+
         async function handleLogin(e) {
             e.preventDefault();
 
@@ -1568,11 +1663,16 @@
 
         const DEFAULT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNg_0b7l74gk1BslqfC96D3vU0yIh6LXSYXxVlgVm7gJJI6haOUD8AMMOZtK_xAyLx/exec';
 
+        const DEFAULT_ACTIVE_CRITERIA = { caixas: true, assiduity: true, organization: true, participation: true, agility: true, punctuality: true };
+        const DEFAULT_EMPRESA = { razaoSocial: '', cnpj: '', numero: '', endereco: '' };
+
         let config = JSON.parse(localStorage.getItem('bonusApp_config')) || {
             criteriaPercent: 3.0845,
             productionPercent: 3.0845,
             referenceMonth: new Date().toISOString().slice(0, 7),
-            appsScriptUrl: DEFAULT_APPS_SCRIPT_URL
+            appsScriptUrl: DEFAULT_APPS_SCRIPT_URL,
+            activeCriteria: { ...DEFAULT_ACTIVE_CRITERIA },
+            empresa: { ...DEFAULT_EMPRESA }
         };
 
         // Garante que usuários com config salva sem a URL também recebam o padrão
@@ -1580,7 +1680,19 @@
             config.appsScriptUrl = DEFAULT_APPS_SCRIPT_URL;
             localStorage.setItem('bonusApp_config', JSON.stringify(config));
         }
-        
+
+        // Garante que usuários com config salva antes desta função existir recebam o padrão (tudo ativo)
+        if (!config.activeCriteria) {
+            config.activeCriteria = { ...DEFAULT_ACTIVE_CRITERIA };
+            localStorage.setItem('bonusApp_config', JSON.stringify(config));
+        }
+
+        // Garante que usuários com config salva antes dos dados da empresa existirem recebam o padrão (vazio)
+        if (!config.empresa) {
+            config.empresa = { ...DEFAULT_EMPRESA };
+            localStorage.setItem('bonusApp_config', JSON.stringify(config));
+        }
+
         if (config.pointValue !== undefined) {
             delete config.pointValue;
             config.criteriaPercent = 3.0845;
@@ -1629,6 +1741,28 @@
         let newCriteria = { assiduity: 10, organization: 10, participation: 10, agility: 10, punctuality: 10 };
         const criteriaLabels = { assiduity: 'Assiduidade', organization: 'Organização', participation: 'Participação', agility: 'Agilidade', punctuality: 'Pontualidade' };
 
+        // ---- Critérios ativos no mês (config.activeCriteria) ----
+        function getActiveCriteriaKeys() {
+            return Object.keys(criteriaLabels).filter(k => config.activeCriteria[k] !== false);
+        }
+        function isCriterionActive(key) {
+            return config.activeCriteria[key] !== false;
+        }
+        function isBoxesActive() {
+            return config.activeCriteria.caixas !== false;
+        }
+        // Redistribui o % máximo de bônus entre os "pools" (critérios / produção) que continuam ativos,
+        // para que o teto de bônus possível não caia quando um pool inteiro é desligado.
+        function getEffectivePercents() {
+            const activeCritCount = getActiveCriteriaKeys().length;
+            const boxesOn = isBoxesActive();
+            const total = config.criteriaPercent + config.productionPercent;
+            if (activeCritCount > 0 && boxesOn)  return { crit: config.criteriaPercent, prod: config.productionPercent };
+            if (activeCritCount > 0 && !boxesOn) return { crit: total, prod: 0 };
+            if (activeCritCount === 0 && boxesOn) return { crit: 0, prod: total };
+            return { crit: 0, prod: 0 };
+        }
+
         // Variável global para armazenar setor atual selecionado
         const ALL_SECTORS = ['Produção Packing', 'Escritório', 'Limpeza'];
         const SECTOR_LABELS = { 'Produção Packing': 'Packing', 'Escritório': 'Escritório', 'Limpeza': 'Limpeza' };
@@ -1643,18 +1777,16 @@
         let digitalFilterNames = [];
 
         window.onload = function() {
-            // Inicia carregamento de usuários em background (paralelo com a tela de login)
+            // Inicia carregamento de usuários e configurações em background (paralelo com a tela de login)
             _usersLoadPromise = loadUsersFromSheets();
+            loadConfigFromSheets();
 
             checkAuth();
             lucide.createIcons();
             document.getElementById('referenceMonth').value = config.referenceMonth;
             updateMonthPickerLabel();
-            
-            const cInput = document.getElementById('criteriaPercent');
-            const pInput = document.getElementById('productionPercent');
-            if(cInput) cInput.value = config.criteriaPercent;
-            if(pInput) pInput.value = config.productionPercent;
+
+            refreshConfigUI();
 
             updateTeamCountBadge();
 
@@ -2112,6 +2244,7 @@
         });
 
         function getProductionPoints(boxes) {
+            if (!isBoxesActive()) return 0;
             if (boxes >= 600) return 50;
             return 0;
         }
@@ -2121,79 +2254,82 @@
             const isFixedBonusRole = dbMember && (dbMember.jobTitle === "Líder" || dbMember.department === "Escritório");
             const boxes = emp.boxes || 0;
             const salary = Number(emp.salary) || 0;
-            
-            const perfPts = Object.values(emp.criteria).reduce((a, b) => a + Number(b), 0);
-            const hasPenalty = Object.values(emp.criteria).some(val => Number(val) === 0 || Number(val) === 5);
+
+            const activeCritKeys = getActiveCriteriaKeys();
+            const perfMax = activeCritKeys.length * 10;
+            const perfPts = activeCritKeys.reduce((a, k) => a + Number(emp.criteria[k] || 0), 0);
+            const hasPenalty = activeCritKeys.some(k => Number(emp.criteria[k]) === 0 || Number(emp.criteria[k]) === 5);
 
             // GERA O RELATO AUTOMÁTICO DO MOTIVO DO CANCELAMENTO
             let cancelReason = "";
             if (hasPenalty) {
                 const badCrits = [];
-                for (const k in emp.criteria) {
+                activeCritKeys.forEach(k => {
                     if (emp.criteria[k] === 0 || emp.criteria[k] === 5) {
                         badCrits.push(`${criteriaLabels[k]} (${emp.criteria[k]})`);
                     }
-                }
+                });
                 cancelReason = `Cancelado por nota baixa: ${badCrits.join(", ")}`;
             }
 
             // LOGICA PARA LÍDER / ESCRITÓRIO
             if (isFixedBonusRole) {
                 let bonusVal = 0;
-                // Ganha 100 se e somente se tirar nota 10 em TUDO e não tiver penalidade
-                if (!hasPenalty && perfPts === 50) {
+                // Ganha 100 se e somente se tirar nota 10 em TUDO (entre os critérios ativos) e não tiver penalidade
+                if (!hasPenalty && perfMax > 0 && perfPts === perfMax) {
                     bonusVal = 100;
                 }
 
-                return { 
-                    prodPts: '-', 
-                    originalProdPts: 0, 
-                    perfPts: perfPts, 
-                    totalPts: perfPts, 
-                    bonusPercentage: 0, 
-                    bonusVal: bonusVal, 
+                return {
+                    prodPts: '-',
+                    originalProdPts: 0,
+                    perfPts: perfPts,
+                    totalPts: perfPts,
+                    bonusPercentage: 0,
+                    bonusVal: bonusVal,
                     totalReceive: salary + bonusVal,
                     hasPenalty: hasPenalty,
                     isFixedBonus: true,
                     cancelReason: cancelReason
                 };
             }
-            
+
             // LOGICA PARA OPERACIONAL
             let totalBonusVal = 0;
             let finalPercent = 0;
             let prodPts = getProductionPoints(boxes);
             let originalProdPts = prodPts;
-            
+
             // AGORA CANCELA SE FOR 0 OU 5
             if (hasPenalty) {
-                return { 
-                    prodPts: 0, 
-                    originalProdPts: originalProdPts, 
-                    perfPts: perfPts, 
-                    totalPts: 0, 
-                    bonusPercentage: 0, 
-                    bonusVal: 0, 
-                    totalReceive: salary, 
+                return {
+                    prodPts: 0,
+                    originalProdPts: originalProdPts,
+                    perfPts: perfPts,
+                    totalPts: 0,
+                    bonusPercentage: 0,
+                    bonusVal: 0,
+                    totalReceive: salary,
                     hasPenalty: true,
                     isFixedBonus: false,
                     cancelReason: cancelReason
                 };
             }
 
-            // Lógica Padrão (Sem Fator Individual)
-            const criteriaBonusPercent = (perfPts / 50) * config.criteriaPercent;
+            // Lógica Padrão (Sem Fator Individual) — % redistribuído entre critérios/produção ativos
+            const effPercents = getEffectivePercents();
+            const criteriaBonusPercent = perfMax > 0 ? (perfPts / perfMax) * effPercents.crit : 0;
             const criteriaBonusVal = salary * (criteriaBonusPercent / 100);
 
             let productionBonusPercent = 0;
-            if (prodPts > 0) { 
-                    productionBonusPercent = config.productionPercent;
+            if (isBoxesActive() && prodPts > 0) {
+                    productionBonusPercent = effPercents.prod;
             }
             const productionBonusVal = salary * (productionBonusPercent / 100);
 
             totalBonusVal = criteriaBonusVal + productionBonusVal;
             finalPercent = criteriaBonusPercent + productionBonusPercent;
-            
+
             const totalPts = prodPts + perfPts;
 
             return { 
@@ -2214,10 +2350,64 @@
 
         function updateConfig(key, value) {
             config[key] = parseFloat(value);
-            if(key === 'referenceMonth') config[key] = value; 
-            
+            if(key === 'referenceMonth') config[key] = value;
+
             localStorage.setItem('bonusApp_config', JSON.stringify(config));
+            if (key === 'criteriaPercent' || key === 'productionPercent') queueSaveConfigToSheets();
             renderAll();
+        }
+
+        // Evita disparar uma requisição a cada tecla digitada nos campos de %
+        let _configSaveTimer = null;
+        function queueSaveConfigToSheets() {
+            clearTimeout(_configSaveTimer);
+            _configSaveTimer = setTimeout(saveConfigToSheets, 800);
+        }
+
+        // Marca/desmarca um dos 6 itens avaliados no mês (Caixas + 5 critérios).
+        // Nunca deixa desmarcar o último item ainda ativo.
+        function toggleCriterionActive(key, checked) {
+            const activeCount = Object.keys(DEFAULT_ACTIVE_CRITERIA).filter(k => config.activeCriteria[k] !== false).length;
+            if (!checked && activeCount <= 1) {
+                showToast('Pelo menos um critério precisa continuar ativo.');
+                refreshConfigUI();
+                return;
+            }
+
+            config.activeCriteria[key] = checked;
+            localStorage.setItem('bonusApp_config', JSON.stringify(config));
+            saveConfigToSheets();
+
+            renderCriteriaForm();
+            if (document.getElementById('digitalSheetModal') && !document.getElementById('digitalSheetModal').classList.contains('hidden')) {
+                renderDigitalSheet();
+            }
+            renderAll();
+        }
+
+        // Atualiza um dos 4 campos de dados da empresa (usados no cabeçalho do Relatório de Fiscalização)
+        function updateEmpresaField(key, value) {
+            config.empresa[key] = value;
+            localStorage.setItem('bonusApp_config', JSON.stringify(config));
+            queueSaveConfigToSheets();
+        }
+
+        // Sincroniza os campos/checkboxes do painel de Configurações com o estado atual de `config`
+        function refreshConfigUI() {
+            const cInput = document.getElementById('criteriaPercent');
+            const pInput = document.getElementById('productionPercent');
+            if (cInput) cInput.value = config.criteriaPercent;
+            if (pInput) pInput.value = config.productionPercent;
+
+            Object.keys(DEFAULT_ACTIVE_CRITERIA).forEach(key => {
+                const cb = document.getElementById('critToggle_' + key);
+                if (cb) cb.checked = config.activeCriteria[key] !== false;
+            });
+
+            Object.keys(DEFAULT_EMPRESA).forEach(key => {
+                const input = document.getElementById('empresa_' + key);
+                if (input && document.activeElement !== input) input.value = config.empresa[key] || '';
+            });
         }
 
         function saveData() { localStorage.setItem('bonusApp_employees', JSON.stringify(employees)); renderAll(); }
@@ -2539,13 +2729,13 @@
                             </div>
                             ${combinedObsUI ? `<div class="text-[11px] text-slate-500 mt-1.5 leading-tight italic bg-slate-100 p-1.5 rounded border border-slate-200">${combinedObsUI}</div>` : ''}
                         </td>
-                        <td class="p-4 text-center text-slate-600">${boxesDisplay}</td>
-                        <td class="p-4 text-center">${prodDisplay}</td>
-                        <td class="p-2 text-center text-xs hide-xs ${emp.criteria.assiduity === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.assiduity < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.assiduity}</td>
-                        <td class="p-2 text-center text-xs hide-xs ${emp.criteria.organization === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.organization < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.organization}</td>
-                        <td class="p-2 text-center text-xs hide-xs ${emp.criteria.participation === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.participation < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.participation}</td>
-                        <td class="p-2 text-center text-xs hide-xs ${emp.criteria.agility === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.agility < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.agility}</td>
-                        <td class="p-2 text-center text-xs hide-xs ${emp.criteria.punctuality === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.punctuality < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.punctuality}</td>
+                        <td data-crit="caixas" class="p-4 text-center text-slate-600">${boxesDisplay}</td>
+                        <td data-crit="caixas" class="p-4 text-center">${prodDisplay}</td>
+                        <td data-crit="assiduity" class="p-2 text-center text-xs hide-xs ${emp.criteria.assiduity === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.assiduity < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.assiduity}</td>
+                        <td data-crit="organization" class="p-2 text-center text-xs hide-xs ${emp.criteria.organization === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.organization < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.organization}</td>
+                        <td data-crit="participation" class="p-2 text-center text-xs hide-xs ${emp.criteria.participation === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.participation < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.participation}</td>
+                        <td data-crit="agility" class="p-2 text-center text-xs hide-xs ${emp.criteria.agility === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.agility < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.agility}</td>
+                        <td data-crit="punctuality" class="p-2 text-center text-xs hide-xs ${emp.criteria.punctuality === 0 ? 'text-red-600 font-extrabold bg-red-50 rounded' : (emp.criteria.punctuality < 10 ? 'text-amber-600 font-bold' : 'text-slate-500')}">${emp.criteria.punctuality}</td>
                         <td class="p-4 text-center font-bold ${calc.hasPenalty ? 'text-red-500' : 'text-slate-700'}">
                             ${calc.totalPts}
                             ${calc.hasPenalty ? '<div style="color: red; font-size: 8px; line-height: 1;">CANCELADO</div>' : ''}
@@ -2570,13 +2760,30 @@
             document.getElementById('totalBonusDisplay').innerText = formatCurrency(totalBonus);
             document.getElementById('totalFinalDisplay').innerText = formatCurrency(totalFinal);
             document.getElementById('totalEmployeesDisplay').innerText = displayedEmployees.length;
-            
+
+            applyMainTableColumnVisibility();
             lucide.createIcons();
         }
 
+        // Esconde/mostra as colunas de Caixas/Prod. e dos 5 critérios na tabela principal,
+        // conforme os itens desativados em config.activeCriteria (thead e tbody usam data-crit="chave")
+        function applyMainTableColumnVisibility() {
+            document.querySelectorAll('#table-section [data-crit]').forEach(el => {
+                const key = el.getAttribute('data-crit');
+                const active = key === 'caixas' ? isBoxesActive() : isCriterionActive(key);
+                el.classList.toggle('hidden', !active);
+            });
+        }
+
         function renderCriteriaForm() {
+            // Mostra/esconde o campo "Caixas" do formulário manual conforme a Produção estiver ativa no mês
+            const boxesWrap = document.getElementById('empBoxesWrap');
+            const boxesInput = document.getElementById('empBoxes');
+            if (boxesWrap) boxesWrap.classList.toggle('hidden', !isBoxesActive());
+            if (boxesInput) boxesInput.required = isBoxesActive();
+
             const c = document.getElementById('criteriaList'); c.innerHTML = '';
-            Object.keys(criteriaLabels).forEach(key => {
+            getActiveCriteriaKeys().forEach(key => {
                 const div = document.createElement('div');
                 div.className = "flex items-center justify-between bg-white p-2 rounded-lg border border-gray-100";
                 const v = newCriteria[key];
@@ -2596,30 +2803,18 @@
         function updatePreview() {
             const select = document.getElementById('empName');
             const selectedName = select.value;
-            const dbMember = teamDatabase.find(m => m.name === selectedName);
-            const isFixedBonusRole = dbMember && (dbMember.jobTitle === 'Líder' || dbMember.department === 'Escritório');
-
             const b = Number(document.getElementById('empBoxes').value) || 0;
-            const perfPts = Object.values(newCriteria).reduce((a,b)=>a+b,0);
-            const hasPenalty = Object.values(newCriteria).some(val => val === 0 || val === 5);
 
-            if (isFixedBonusRole) {
-                let valStr = (!hasPenalty && perfPts === 50) ? 'R$ 100,00' : 'R$ 0,00';
-                document.getElementById('previewPoints').innerText = `${perfPts} pts (Fixo: ${valStr})`;
+            // Reaproveita a mesma lógica/matemática de calculateBonus() para não duplicar a regra em dois lugares
+            const calc = calculateBonus({ name: selectedName, boxes: b, salary: 0, criteria: newCriteria });
+
+            if (calc.isFixedBonus) {
+                const valStr = calc.bonusVal > 0 ? 'R$ 100,00' : 'R$ 0,00';
+                document.getElementById('previewPoints').innerText = `${calc.perfPts} pts (Fixo: ${valStr})`;
                 return;
             }
 
-            const points = getProductionPoints(b) + perfPts;
-            const prodPts = getProductionPoints(b);
-            const cPercent = (perfPts / 50) * config.criteriaPercent;
-            let pPercent = 0;
-            
-            if (!hasPenalty && prodPts > 0) {
-                pPercent = config.productionPercent;
-            }
-            
-            const percent = cPercent + pPercent;
-            document.getElementById('previewPoints').innerText = `${points} pts (${percent.toFixed(1)}%)`;
+            document.getElementById('previewPoints').innerText = `${calc.totalPts} pts (${calc.bonusPercentage.toFixed(1)}%)`;
         }
 
         function editEmployee(id) {
@@ -2963,6 +3158,7 @@
 
             if(displayedMembers.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400 text-xs italic">Nenhum colaborador selecionado no filtro.</td></tr>';
+                applyDigitalSheetColumnVisibility();
                 return;
             }
 
@@ -3016,15 +3212,15 @@
                                class="w-full p-2 text-xs border border-slate-200 rounded-lg bg-white text-slate-600 placeholder:text-slate-300 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all resize-y min-h-[60px]"
                                rows="2">${obs}</textarea>
                     </td>
-                    <td class="p-4 text-center align-top pt-6">${btnHtml('assiduity', c.assiduity)}</td>
-                    <td class="p-4 text-center align-top pt-6">${btnHtml('organization', c.organization)}</td>
-                    <td class="p-4 text-center align-top pt-6">${btnHtml('participation', c.participation)}</td>
-                    <td class="p-4 text-center align-top pt-6">${btnHtml('agility', c.agility)}</td>
-                    <td class="p-4 text-center align-top pt-6">${btnHtml('punctuality', c.punctuality)}</td>
-                    <td class="p-4 align-top pt-5">
-                        ${isFixedBonusRole ? 
-                            `<div class="w-full p-2 rounded-lg text-center font-medium text-slate-300 text-xs italic mt-2 border border-dashed border-slate-200 bg-slate-50">Não se aplica</div>` : 
-                            `<input type="number" value="${boxes}" 
+                    <td data-crit="assiduity" class="p-4 text-center align-top pt-6">${btnHtml('assiduity', c.assiduity)}</td>
+                    <td data-crit="organization" class="p-4 text-center align-top pt-6">${btnHtml('organization', c.organization)}</td>
+                    <td data-crit="participation" class="p-4 text-center align-top pt-6">${btnHtml('participation', c.participation)}</td>
+                    <td data-crit="agility" class="p-4 text-center align-top pt-6">${btnHtml('agility', c.agility)}</td>
+                    <td data-crit="punctuality" class="p-4 text-center align-top pt-6">${btnHtml('punctuality', c.punctuality)}</td>
+                    <td data-crit="caixas" class="p-4 align-top pt-5">
+                        ${isFixedBonusRole ?
+                            `<div class="w-full p-2 rounded-lg text-center font-medium text-slate-300 text-xs italic mt-2 border border-dashed border-slate-200 bg-slate-50">Não se aplica</div>` :
+                            `<input type="number" value="${boxes}"
                                onchange="updateDigitalEmployee('${member.name}', 'boxes', this.value)"
                                class="w-full p-2 border border-slate-200 rounded-lg text-center font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">`
                         }
@@ -3037,7 +3233,17 @@
                 `;
                 tbody.appendChild(tr);
             });
+            applyDigitalSheetColumnVisibility();
             lucide.createIcons();
+        }
+
+        // Esconde/mostra as colunas de critérios/Caixas na avaliação digital, mesmo padrão da tabela principal
+        function applyDigitalSheetColumnVisibility() {
+            document.querySelectorAll('#digitalSheetTable [data-crit]').forEach(el => {
+                const key = el.getAttribute('data-crit');
+                const active = key === 'caixas' ? isBoxesActive() : isCriterionActive(key);
+                el.classList.toggle('hidden', !active);
+            });
         }
 
         function cycleDigitalValue(btn, name, criteriaKey) {
@@ -3246,6 +3452,15 @@
                 monthLabel = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
             }
 
+            // Só desenha as colunas dos itens ativos no mês (Caixas + critérios)
+            const activeCritKeys = getActiveCriteriaKeys();
+            const boxesOn = isBoxesActive();
+            const fichaCritLabels = { assiduity: 'ASSIDUIDADE', organization: 'ORGANIZAÇÃO', participation: 'PARTICIPAÇÃO', agility: 'AGILIDADE', punctuality: 'PONTUALIDADE' };
+
+            const critHeadersHtml = activeCritKeys.map(key =>
+                `<th style="border: 1px solid #000; padding: 4px; text-align: center;">${fichaCritLabels[key]}<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>`
+            ).join('');
+
             let html = `
                 <div style="font-family: 'Segoe UI', Arial, sans-serif; width: 100%; max-width: 297mm; margin: 0 auto;">
                     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px;">
@@ -3267,12 +3482,8 @@
                         <thead>
                             <tr style="background-color: #f3f4f6;">
                                 <th style="border: 1px solid #000; padding: 6px 4px; text-align: left; width: 25%;">COLABORADOR</th>
-                                <th style="border: 1px solid #000; padding: 6px 4px; text-align: center; width: 8%;">CAIXAS</th>
-                                <th style="border: 1px solid #000; padding: 4px; text-align: center;">ASSIDUIDADE<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>
-                                <th style="border: 1px solid #000; padding: 4px; text-align: center;">ORGANIZAÇÃO<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>
-                                <th style="border: 1px solid #000; padding: 4px; text-align: center;">PARTICIPAÇÃO<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>
-                                <th style="border: 1px solid #000; padding: 4px; text-align: center;">AGILIDADE<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>
-                                <th style="border: 1px solid #000; padding: 4px; text-align: center;">PONTUALIDADE<br><span style="font-size:8px; font-weight:normal;">(0 - 5 - 10)</span></th>
+                                ${boxesOn ? '<th style="border: 1px solid #000; padding: 6px 4px; text-align: center; width: 8%;">CAIXAS</th>' : ''}
+                                ${critHeadersHtml}
                             </tr>
                         </thead>
                         <tbody>
@@ -3293,8 +3504,15 @@
                 const mLoc = member.location || 'SPG Sede';
                 const isFixedBonusRole = member.jobTitle === 'Líder' || member.department === 'Escritório';
                 const isLider = member.jobTitle === 'Líder';
-                
+
                 const jobTitleHtml = isLider ? ` | <b>LÍDER</b>` : '';
+
+                const boxesCellHtml = boxesOn
+                    ? `<td style="border: 1px solid #000; padding: 4px 6px; text-align: center; vertical-align: bottom;">
+                            ${isFixedBonusRole ? '-' : '<div style="border-bottom: 1px solid #000; width: 80%; margin: 0 auto;"></div>'}
+                        </td>`
+                    : '';
+                const critCellsHtml = activeCritKeys.map(() => `<td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>`).join('');
 
                 html += `
                     <tr style="background-color: ${bg}; page-break-inside: avoid;">
@@ -3302,14 +3520,8 @@
                             <div style="font-weight: bold; text-transform: uppercase; font-size: 9px;">${member.name}</div>
                             <div style="font-size: 7px; color: #555; margin-top: 2px;">${mLoc} | ${mDept}${jobTitleHtml}</div>
                         </td>
-                        <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; vertical-align: bottom;">
-                            ${isFixedBonusRole ? '-' : '<div style="border-bottom: 1px solid #000; width: 80%; margin: 0 auto;"></div>'}
-                        </td>
-                        <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
-                        <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
-                        <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
-                        <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
-                        <td style="border: 1px solid #000; padding: 3px;">${checkBoxes()}</td>
+                        ${boxesCellHtml}
+                        ${critCellsHtml}
                     </tr>
                 `;
             });
@@ -4858,41 +5070,19 @@
         }
         
         // PRINT SIMPLE TABLE (For Admin Report) -> AGORA GERA RELATÓRIO FORMATADO
-        function printSimpleTable() {
-            // 1. Filtragem baseada na seleção atual
-            let filteredList = employees;
-            if (activeFilterNames.length > 0) {
-                filteredList = employees.filter(e => {
-                    const dbMember = teamDatabase.find(m => m.name === e.name);
-                    const deptMatch = mainActiveDepts.size === ALL_SECTORS.length || (dbMember && mainActiveDepts.has(dbMember.department || 'Produção Packing'));
-                    return activeFilterNames.includes(e.name) && deptMatch;
-                });
-            } else {
-                filteredList = [];
-            }
-
-            if (filteredList.length === 0) return showToast("Não há dados filtrados para imprimir.");
-
-            const container = document.getElementById('manual-sheets-content');
-            container.innerHTML = '';
-            
-            // Data atual formatada
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('pt-BR');
-            const timeStr = now.toLocaleTimeString('pt-BR');
-            
-            // Mês de referência
-            let monthLabel = "Geral";
-            if (config.referenceMonth) {
-                const [y, m] = config.referenceMonth.split('-');
-                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
-                monthLabel = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
-            }
-
-            // Totais
+        // Monta a tabela (thead+tbody+tfoot) compartilhada pelos relatórios impressos (Imprimir e Fiscalização),
+        // já respeitando quais colunas de critérios/Caixas estão ativas no mês.
+        function _buildBonusReportTable(filteredList) {
             let totalBonus = 0;
             let totalSalary = 0;
             let totalFinal = 0;
+
+            // Só desenha as colunas dos itens ativos no mês (Caixas/Prod + critérios)
+            const activeCritKeys = getActiveCriteriaKeys();
+            const boxesOn = isBoxesActive();
+            const reportCritAbbrev = { assiduity: 'Ass', organization: 'Org', participation: 'Part', agility: 'Agi', punctuality: 'Pont' };
+            const reportCritHeadersHtml = activeCritKeys.map(key => `<th style="padding:6px 7px; text-align:center;">${reportCritAbbrev[key]}</th>`).join('');
+            const totalsColspan = 3 + (boxesOn ? 2 : 0) + activeCritKeys.length + 2;
 
             let tableRows = '';
             const SECTOR_COLORS = { 'Produção Packing': '#3b82f6', 'Escritório': '#8b5cf6', 'Limpeza': '#10b981' };
@@ -4919,6 +5109,12 @@
                     ? `<div style="color:#dc2626;font-weight:800;">${calc.totalPts}<div style="font-size:6px;background:#fee2e2;color:#dc2626;border-radius:3px;padding:1px 3px;margin-top:1px;text-transform:uppercase;font-weight:800;">Cancelado</div></div>`
                     : `<strong style="color:#1e40af;">${calc.totalPts}</strong>`;
 
+                const boxesCellsHtml = boxesOn
+                    ? `<td style="padding:4px 7px; text-align:center; color:#475569;">${isFixedBonusRole ? '—' : emp.boxes}</td>
+                       <td style="padding:4px 7px; text-align:center; color:#475569;">${isFixedBonusRole ? '—' : (calc.prodPts || 0)}</td>`
+                    : '';
+                const critCellsHtml = activeCritKeys.map(key => `<td style="padding:4px 7px; text-align:center;">${c[key] ?? 0}</td>`).join('');
+
                 tableRows += `
                     <tr style="background:${bgRow}; border-bottom:1px solid #f1f5f9;">
                         <td style="padding:4px 7px; color:#94a3b8; font-size:7.5px; text-align:center;">${idx + 1}</td>
@@ -4926,13 +5122,8 @@
                         <td style="padding:4px 7px; text-align:center;">
                             <span style="background:${deptColor}18;color:${deptColor};border:1px solid ${deptColor}40;border-radius:4px;padding:1px 5px;font-size:7px;font-weight:700;">${deptLabel}</span>
                         </td>
-                        <td style="padding:4px 7px; text-align:center; color:#475569;">${isFixedBonusRole ? '—' : emp.boxes}</td>
-                        <td style="padding:4px 7px; text-align:center; color:#475569;">${isFixedBonusRole ? '—' : (calc.prodPts || 0)}</td>
-                        <td style="padding:4px 7px; text-align:center;">${c.assiduity ?? 0}</td>
-                        <td style="padding:4px 7px; text-align:center;">${c.organization ?? 0}</td>
-                        <td style="padding:4px 7px; text-align:center;">${c.participation ?? 0}</td>
-                        <td style="padding:4px 7px; text-align:center;">${c.agility ?? 0}</td>
-                        <td style="padding:4px 7px; text-align:center;">${c.punctuality ?? 0}</td>
+                        ${boxesCellsHtml}
+                        ${critCellsHtml}
                         <td style="padding:4px 7px; text-align:center; color:#475569;">${calc.perfPts}</td>
                         <td style="padding:4px 7px; text-align:center;">${ptsHtml}</td>
                         <td style="padding:4px 7px; text-align:right; color:#475569;">${formatCurrency(emp.salary)}</td>
@@ -4944,6 +5135,72 @@
 
             const cancelados = filteredList.filter(emp => calculateBonus(emp).hasPenalty).length;
             const aprovados  = filteredList.length - cancelados;
+
+            const tableHtml = `
+                <table style="width:100%; border-collapse:collapse; font-size:8.5px;">
+                    <thead>
+                        <tr style="background:#1e40af; color:#fff; text-transform:uppercase; font-size:7.5px; letter-spacing:.4px;">
+                            <th style="padding:6px 7px; text-align:left; border-radius:4px 0 0 0;">#</th>
+                            <th style="padding:6px 7px; text-align:left;">Colaborador</th>
+                            <th style="padding:6px 7px; text-align:center;">Setor</th>
+                            ${boxesOn ? '<th style="padding:6px 7px; text-align:center;">Cx</th><th style="padding:6px 7px; text-align:center;">Prod</th>' : ''}
+                            ${reportCritHeadersHtml}
+                            <th style="padding:6px 7px; text-align:center;">Crit</th>
+                            <th style="padding:6px 7px; text-align:center;">Total Pts</th>
+                            <th style="padding:6px 7px; text-align:right;">Salário</th>
+                            <th style="padding:6px 7px; text-align:right;">Bônus</th>
+                            <th style="padding:6px 7px; text-align:right; border-radius:0 4px 0 0;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#1e293b; color:#fff; font-weight:700; font-size:8.5px;">
+                            <td colspan="${totalsColspan}" style="padding:6px 7px; text-align:right; text-transform:uppercase; letter-spacing:.5px;">Totais</td>
+                            <td style="padding:6px 7px; text-align:right;">${formatCurrency(totalSalary)}</td>
+                            <td style="padding:6px 7px; text-align:right; color:#6ee7b7;">${formatCurrency(totalBonus)}</td>
+                            <td style="padding:6px 7px; text-align:right;">${formatCurrency(totalFinal)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            `;
+
+            return { tableHtml, totalBonus, totalSalary, totalFinal, cancelados, aprovados };
+        }
+
+        function printSimpleTable() {
+            // 1. Filtragem baseada na seleção atual
+            let filteredList = employees;
+            if (activeFilterNames.length > 0) {
+                filteredList = employees.filter(e => {
+                    const dbMember = teamDatabase.find(m => m.name === e.name);
+                    const deptMatch = mainActiveDepts.size === ALL_SECTORS.length || (dbMember && mainActiveDepts.has(dbMember.department || 'Produção Packing'));
+                    return activeFilterNames.includes(e.name) && deptMatch;
+                });
+            } else {
+                filteredList = [];
+            }
+
+            if (filteredList.length === 0) return showToast("Não há dados filtrados para imprimir.");
+
+            const container = document.getElementById('manual-sheets-content');
+            container.innerHTML = '';
+
+            // Data atual formatada
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+            const timeStr = now.toLocaleTimeString('pt-BR');
+
+            // Mês de referência
+            let monthLabel = "Geral";
+            if (config.referenceMonth) {
+                const [y, m] = config.referenceMonth.split('-');
+                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                monthLabel = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
+            }
+
+            const { tableHtml, totalBonus, totalSalary, totalFinal, cancelados, aprovados } = _buildBonusReportTable(filteredList);
 
             const html = `
                 <div id="print-scale-wrap" style="font-family: 'Segoe UI', Arial, sans-serif; width: 100vw; padding: 6mm 8mm; color: #1e293b; box-sizing: border-box;">
@@ -4984,38 +5241,7 @@
                     </div>
 
                     <!-- TABELA -->
-                    <table style="width:100%; border-collapse:collapse; font-size:8.5px;">
-                        <thead>
-                            <tr style="background:#1e40af; color:#fff; text-transform:uppercase; font-size:7.5px; letter-spacing:.4px;">
-                                <th style="padding:6px 7px; text-align:left; border-radius:4px 0 0 0;">#</th>
-                                <th style="padding:6px 7px; text-align:left;">Colaborador</th>
-                                <th style="padding:6px 7px; text-align:center;">Setor</th>
-                                <th style="padding:6px 7px; text-align:center;">Cx</th>
-                                <th style="padding:6px 7px; text-align:center;">Prod</th>
-                                <th style="padding:6px 7px; text-align:center;">Ass</th>
-                                <th style="padding:6px 7px; text-align:center;">Org</th>
-                                <th style="padding:6px 7px; text-align:center;">Part</th>
-                                <th style="padding:6px 7px; text-align:center;">Agi</th>
-                                <th style="padding:6px 7px; text-align:center;">Pont</th>
-                                <th style="padding:6px 7px; text-align:center;">Crit</th>
-                                <th style="padding:6px 7px; text-align:center;">Total Pts</th>
-                                <th style="padding:6px 7px; text-align:right;">Salário</th>
-                                <th style="padding:6px 7px; text-align:right;">Bônus</th>
-                                <th style="padding:6px 7px; text-align:right; border-radius:0 4px 0 0;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tableRows}
-                        </tbody>
-                        <tfoot>
-                            <tr style="background:#1e293b; color:#fff; font-weight:700; font-size:8.5px;">
-                                <td colspan="12" style="padding:6px 7px; text-align:right; text-transform:uppercase; letter-spacing:.5px;">Totais</td>
-                                <td style="padding:6px 7px; text-align:right;">${formatCurrency(totalSalary)}</td>
-                                <td style="padding:6px 7px; text-align:right; color:#6ee7b7;">${formatCurrency(totalBonus)}</td>
-                                <td style="padding:6px 7px; text-align:right;">${formatCurrency(totalFinal)}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    ${tableHtml}
 
                     <!-- ASSINATURAS -->
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:30px; margin-top:30px;">
@@ -5052,6 +5278,154 @@
             const scroll = window.scrollY;
 
             // Renderiza fora da tela (via CSS class) para medir sem mostrar ao usuário
+            container.classList.remove('hidden');
+            container.classList.add('print-ready');
+            document.body.classList.add('printing-report');
+
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                const wrap = document.getElementById('print-scale-wrap');
+                if (wrap) {
+                    const pageH = Math.round(210 * 96 / 25.4);
+                    wrap.style.zoom = 1;
+                    const contentH = wrap.scrollHeight;
+                    if (contentH > pageH) {
+                        const z = pageH / contentH;
+                        wrap.style.zoom = z;
+                        wrap.style.width = `${100 / z}vw`;
+                    }
+                }
+                window.print();
+                setTimeout(() => {
+                    document.body.classList.remove('printing-report');
+                    container.classList.add('hidden');
+                    container.classList.remove('print-ready');
+                    if (wrap) { wrap.style.zoom = ''; wrap.style.width = ''; }
+                    window.scrollTo(0, scroll);
+                }, 500);
+            }));
+        }
+
+        // Relatório A4 formal para apresentação a órgãos fiscalizadores (ex.: Ministério do Trabalho),
+        // com os dados da empresa (Configurações > Dados da empresa) e TODOS os colaboradores lançados
+        // no mês de referência — ignora os filtros de nome/setor da tela (documento oficial não é parcial).
+        function printLaborInspectionReport() {
+            const filteredList = employees;
+            if (filteredList.length === 0) return showToast("Não há dados lançados neste mês para gerar o relatório.");
+
+            const container = document.getElementById('manual-sheets-content');
+            container.innerHTML = '';
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+            const timeStr = now.toLocaleTimeString('pt-BR');
+
+            let monthLabel = "Geral";
+            if (config.referenceMonth) {
+                const [y, m] = config.referenceMonth.split('-');
+                const mn = new Date(y, m - 1).toLocaleString('pt-BR', { month: 'long' });
+                monthLabel = `${mn.charAt(0).toUpperCase() + mn.slice(1)} de ${y}`;
+            }
+
+            const emp = config.empresa || {};
+            const blank = '<span style="color:#cbd5e1;">não informado</span>';
+            const razaoSocial = emp.razaoSocial ? emp.razaoSocial.toUpperCase() : blank;
+            const cnpj = emp.cnpj || blank;
+            const enderecoCompleto = (emp.endereco || emp.numero)
+                ? `${emp.endereco || ''}${emp.numero ? ', ' + emp.numero : ''}`
+                : blank;
+
+            const { tableHtml, totalBonus, cancelados, aprovados } = _buildBonusReportTable(filteredList);
+
+            const html = `
+                <div id="print-scale-wrap" style="font-family: 'Segoe UI', Arial, sans-serif; width: 100vw; padding: 6mm 8mm; color: #1e293b; box-sizing: border-box;">
+
+                    <!-- CABEÇALHO -->
+                    <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #1e40af; padding-bottom:10px; margin-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <img src="https://i.imgur.com/CNJpqbX.png" style="height:44px; width:auto;" alt="Logo SPG">
+                            <div>
+                                <div style="font-size:16px; font-weight:800; color:#1e40af; letter-spacing:-0.3px; text-transform:uppercase;">Relatório de Avaliação de Desempenho e Pagamento de Bônus</div>
+                                <div style="font-size:9px; color:#64748b; margin-top:2px;">Documento para apresentação a órgãos fiscalizadores</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right; font-size:8.5px; color:#94a3b8; line-height:1.6;">
+                            <div>Emitido em: <strong>${dateStr} às ${timeStr}</strong></div>
+                            <div>Responsável: <strong>${currentUser ? formatNameForCSV(currentUser.name) : 'Sistema'}</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- DADOS DA EMPRESA -->
+                    <div style="border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px; margin-bottom:10px; font-size:9.5px; line-height:1.7; background:#f8fafc;">
+                        <div><strong>Razão social:</strong> ${razaoSocial}</div>
+                        <div><strong>CNPJ:</strong> ${cnpj}</div>
+                        <div><strong>Endereço:</strong> ${enderecoCompleto}</div>
+                        <div><strong>Competência do relatório:</strong> ${monthLabel}</div>
+                    </div>
+
+                    <!-- DECLARAÇÃO -->
+                    <p style="font-size:9px; color:#334155; line-height:1.6; margin:0 0 12px 0; text-align:justify;">
+                        Declaramos, para os devidos fins, que os valores discriminados abaixo referem-se ao pagamento de bônus por desempenho aos
+                        colaboradores da empresa acima identificada, referentes à competência de <strong>${monthLabel}</strong>, apurados conforme os
+                        critérios de avaliação (produção e/ou comportamento) e a regra de cálculo vigentes no período.
+                    </p>
+
+                    <!-- KPIs -->
+                    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;">
+                        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:8px 10px;">
+                            <div style="font-size:8px; font-weight:700; color:#3b82f6; text-transform:uppercase; letter-spacing:.5px;">Colaboradores</div>
+                            <div style="font-size:20px; font-weight:800; color:#1e40af; margin-top:2px;">${filteredList.length}</div>
+                        </div>
+                        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:8px 10px;">
+                            <div style="font-size:8px; font-weight:700; color:#16a34a; text-transform:uppercase; letter-spacing:.5px;">Aprovados</div>
+                            <div style="font-size:20px; font-weight:800; color:#15803d; margin-top:2px;">${aprovados}</div>
+                        </div>
+                        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:8px 10px;">
+                            <div style="font-size:8px; font-weight:700; color:#dc2626; text-transform:uppercase; letter-spacing:.5px;">Cancelados</div>
+                            <div style="font-size:20px; font-weight:800; color:#b91c1c; margin-top:2px;">${cancelados}</div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px;">
+                            <div style="font-size:8px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:.5px;">Total em Bônus</div>
+                            <div style="font-size:14px; font-weight:800; color:#059669; margin-top:4px;">${formatCurrency(totalBonus)}</div>
+                        </div>
+                    </div>
+
+                    <!-- TABELA -->
+                    ${tableHtml}
+
+                    <!-- ASSINATURAS -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:30px; margin-top:34px;">
+                        <div style="text-align:center;">
+                            <div style="border-top:1.5px solid #334155; padding-top:6px;">
+                                <div style="font-size:9px; color:#475569; font-weight:600;">Responsável Legal</div>
+                            </div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="border-top:1.5px solid #334155; padding-top:6px;">
+                                <div style="font-size:9px; color:#475569; font-weight:600;">Recursos Humanos</div>
+                            </div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="border-top:1.5px solid #334155; padding-top:6px;">
+                                <div style="font-size:9px; color:#475569; font-weight:600;">Avaliador</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RODAPÉ -->
+                    <div style="margin-top:14px; padding-top:6px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; font-size:7.5px; color:#94a3b8;">
+                        <span>${emp.razaoSocial ? emp.razaoSocial.toUpperCase() + ' — ' : ''}CNPJ: ${emp.cnpj || 'não informado'}</span>
+                        <span>Documento gerado automaticamente pelo sistema · ${dateStr}</span>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // Trigger Print Logic (mesmo mecanismo do "Imprimir")
+            const app = document.getElementById('app-content');
+            const modal = document.getElementById('digitalSheetModal');
+            const scroll = window.scrollY;
+
             container.classList.remove('hidden');
             container.classList.add('print-ready');
             document.body.classList.add('printing-report');
